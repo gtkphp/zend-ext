@@ -1,0 +1,24 @@
+#!/usr/bin/php
+<?php
+/* $] ./generate --version=3
+"3.22.30" */
+
+
+define('APP_DIR', realpath(__DIR__.'/..'));
+
+$tag = '2.56.4';
+$log_dir = APP_DIR."/log/glib-$tag";
+$tmp_dir = APP_DIR.'/tmp';
+$log = $log_dir.'/log.txt';
+
+`mkdir -p $log_dir`;
+//`chmod u+w $log_dir`;
+
+
+`touch $log`;
+
+`echo "Starting..." > $log`;
+
+//`echo "Add log" >> $log`;
+//`git clone https://github.com/GNOME/glib.git > $log`;
+//`git checkout tags/$tag -b <branch>`
