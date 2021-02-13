@@ -1,5 +1,5 @@
 {
-    "name": "glash-gnome/zend-ext",
+    "name": "gtkphp/zend-ext",
     "description": "provides tools for working with PHP extension",
     "version": "0.1.0",
     "type": "library",
