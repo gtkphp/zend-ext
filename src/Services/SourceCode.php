@@ -15,6 +15,7 @@ use Zend\C\PhpPrinter;
 use Zend\Ext\Exceptions\BadDeclarationException;
 use Zend\Ext\Exceptions\LogicFileException;
 use Zend\Ext\Exceptions\NoSuchFileException;
+use Zend\Ext\Exceptions\DeprecatedException;
 use Zend\Ext\Models\AbstractGenerator;
 use Zend\Ext\Models\EnumGenerator;
 
@@ -882,6 +883,7 @@ class CDump {
 class SourceCode {
     const GIT_COMMAND = 'git';
     protected $tmp_file = __DIR__.'/../../tmp/declaration.h';
+    protected $data_file = __DIR__.'/../../data/config-glib.h';
 
     /**
      * @var DOMXPath $xpath
@@ -919,6 +921,16 @@ class SourceCode {
     private $search = array();
     private $replace = array();
 
+    protected $blacklist = array();// array('STRUCT'=>array('mystruct'))
+
+    protected $_parse;// int : 0=> nop; 1=> parse(); 2=> parse() and evaluate()
+    protected $_item;// string of item to process( Typedef | Macro | Enum | Struct)
+    protected $_item_processed;// array of typedef processed successfully
+    protected $_item_remaining;// array of failed items
+    protected $_current_item;// string of current typedef
+    protected $_passed_item;// number of typedef processed successfully
+    protected $_total_item;// number of typedef successfully processed
+    protected $_skipable;
 
     /**
      * DocReference constructor.
@@ -945,7 +957,8 @@ class SourceCode {
             throw new Exception("No such file or directory : '$this->build_dir'");
         }
 
-        $tmp_dir = __DIR__.'/../../tmp';
+        // <root>/tmp/declaration.h
+        $tmp_dir = dirname($this->tmp_file);
         if (!file_exists($tmp_dir)) {
             `mkdir -p $tmp_dir`;
         }
@@ -953,6 +966,17 @@ class SourceCode {
             `touch $this->tmp_file`;
         }
         $this->tmp_file = realpath($this->tmp_file);
+
+        // <root>/data/config-glib.h
+        $data_dir = dirname($this->data_file);
+        if (!file_exists($data_dir)) {
+            `mkdir -p $data_dir`;
+        }
+        if (!file_exists($this->data_file)) {
+            `touch $this->data_file`;
+        }
+        $this->data_file = realpath($this->data_file);
+
 
         // check directory
         //home/dev/Projects/glib-build-doc/config.h
@@ -978,9 +1002,20 @@ class SourceCode {
         $this->build_dir = $build_dir;
     }
 
-    public function parseStruct() {
-
+    function addBlackList(array $data) {
+        $this->blacklist = $data;
     }
+
+    function isAllowed() {
+        if (isset($this->blacklist[$this->_item])) {
+            $blacklist = $this->blacklist[$this->_item];
+            if (in_array($this->_current_item, $blacklist)) {
+                return False;
+            }
+        }
+        return True;
+    }
+
     function getDeclarations(string $filepath, array $search=array(), array $replace=array())
     {
         $filename = realpath($filepath);
@@ -998,49 +1033,49 @@ class SourceCode {
         $lexer = new Lexer;
         $this->parser = new ExpressionParser($lexer);
         $this->preprocessor = new PreProcessor($this->context);
-        $tokens = $this->preprocessor->process(__DIR__ . '/../../data/config-glib.h');
-        $this->parser->parse($tokens, $this->context);
 
         $this->doc = new DOMDocument();
         $this->doc->loadXML($str_xml);
 
         $this->xpath = new DOMXPath($this->doc);
 
-        if (True) {
-            $expression = "/root/TYPEDEF";
-            $nodes = $this->xpath->query($expression);
-            echo "typedefs : ".count($nodes).PHP_EOL;
-            $typedefs = $this->getTypedefs($nodes);
-        }
+        /**
+         * Because certain type are used before being declared,
+         * we have to repeat the operation
+         */
         /*$types = $this->parser->getTypes();
         $keys = array_keys($types);
         print_r($keys);*/
+        $enable = True;
 
-        unset($this->array);
-
-        if (True) {
-            $expression = "/root/ENUM";
-            $nodes = $this->xpath->query($expression);
-
-            $enums = $this->getEnums($nodes);
-            //TODO $this->getOwnPackage()->addEnums($enums);
-            //print_r($enums);
-            $this->printer->evaluate($this->array);
-            //echo $this->printer->toString($this->array);
-            //print_r($this->array);
+        if ($enable) {
+            $this->getItems('TYPEDEF', 1);
+            unset($this->array);
         }
 
-        unset($this->array);
+        $tokens = $this->preprocessor->process($this->data_file);
+        $this->parser->parse($tokens, $this->context);
 
-        if (True) {
-            $expression = "/root/STRUCT";
-            $nodes = $this->xpath->query($expression);
-            $structs = $this->getStructs($nodes);
-            //TODO $this->getOwnPackage()->addStructs($structs);
-            //print_r($structs);
+        if ($enable) {
+            $this->getItems('MACRO');
+            //TODO: $model = $this->getPackage()->createEnum($name, $data);
+            //$model = new EnumGenerator(/*$data*/);
+            //TODO: $model = $this->getPackage()->createStruct($name, $data);
+            //$model = new StructGenerator($data);
+
+            unset($this->array);
         }
 
-        //$enums = $this->getMacros($nodes);
+        if ($enable) {
+            $this->getItems('ENUM', 2);
+            unset($this->array);
+        }
+
+        if ($enable) {
+            $this->getItems('STRUCT', 1, 2);
+            unset($this->array);
+        }
+
         //$enums = $this->getFunctions($nodes);
 
         unset($this->parser);
@@ -1053,39 +1088,87 @@ class SourceCode {
     }
 
     /* ----------------------------------------------------------------
-     * <TYPEDEF>
+     * <ITEM>
      * ---------------------------------------------------------------- */
-    function getTypedefs(DOMNodeList  $list) {
-        $typedefs = array();
-        foreach($list as $node) {
-            try {
-                $typedefs[] = $this->getTypedef($node);
-            } catch (BadDeclarationException $exc) {
-                //TODO: push error reporting
-                echo "TODO getTypedefs:".$exc->getMessage()."\n";
+    function getItems(string $item, int $parse=0, int $max_try=3) {
+        $this->_item = $item;
+        $this->_parse = $parse;
+        $expression = "/root/".$item;
+        $nodes = $this->xpath->query($expression);
+
+        $this->_total_item = count($nodes);
+        $this->_passed_item = 0;
+        $this->_item_remaining = array();
+        $this->_item_processed = array();
+        $this->_skipable = False;
+        $max_pass = $max_try;
+        $pass = 0;
+        while($pass<$max_pass) {
+            $pass++;
+            $items = $this->tryGetItems($nodes);
+            //$this->printer->evaluate($this->array);
+            if (0==count($this->_item_remaining)) {
+                break;
+            } else {
+                $this->_skipable = True;
             }
         }
-        return $typedefs;
+        echo $this->_passed_item.' of '. $this->_total_item ." $item processed in ${pass} pass( $max_pass max).".PHP_EOL;
+        if ($this->_passed_item<$this->_total_item) {
+            $remain = count($this->_item_remaining);
+            echo $remain." $item remaining.".PHP_EOL;
+            print_r($this->_item_remaining);
+            //throw new \Error($remain." $item remaining.");
+        }
     }
 
-    function getTypedef(DOMElement  $enum) {
+    function tryGetItems(DOMNodeList  $list) {
+        $items = array();
+        foreach($list as $node) {
+            try {
+                $this->getItem($node);
+            } catch (BadDeclarationException $exc) {
+                //TODO: push error reporting
+                echo $this->_item.'::'.$this->_current_item.': '.$exc->getMessage()."\n";
+            } catch (DeprecatedException $exc) {
+                $msg = $exc->getMessage();
+                $this->_item_remaining[$this->_current_item] = $msg;
+            } catch (\Zend\C\Engine\Error $exc) {
+                //$msg = substr($exc->getMessage(), 0, 32);
+                $msg = $exc->getMessage();
+                $this->_item_remaining[$this->_current_item] = $msg;
+            }
+        }
+        return $items;
+    }
+
+    function getItem(DOMElement  $node) {
         $name = '';
         $c_str = '';
-        foreach($enum->childNodes as $child) {
+        // $val = `echo $TERM`
+        // $val == "xterm-256color"
+        // "\e[1;31m red \e[0m "
+        foreach($node->childNodes as $child) {
             if ($child->nodeType==XML_TEXT_NODE) {
                 $c_str .= $child->nodeValue;
             } else if ($child->nodeName=='NAME') {
                 $name = trim($child->nodeValue);
+            } else if ($child->nodeName=='DEPRECATED') {
+                throw new DeprecatedException("$this->_item '$name' : is deprecated.");
             } else {
-                throw new BadDeclarationException("TYPEDEF '$name' : Unexpected xml structre.");
+                throw new BadDeclarationException("$this->_item '$name' : Unexpected xml structre.");
             }
         }
-        // if $c_str is empty it is an anonymous typedef struct
+        $this->_current_item = $name;
+        if (! $this->isAllowed())
+            return;
+        if(isset($this->_item_processed[$name]))
+            return;
 
         $c_str = str_replace($this->replace, $this->search, $c_str);
         $c_str = trim($c_str);
         if (empty($c_str)) {
-            echo "Empty typedef for $name".PHP_EOL;
+            //echo "Empty $this->_item for $name".PHP_EOL;
             return NULL;
         }/* else {
             echo PHP_EOL."Typedef for $name:".PHP_EOL;
@@ -1093,116 +1176,32 @@ class SourceCode {
         }*/
 
         // TODO accepte string for $parser->parse()
+        //$this->tmp_file = dirname($this->tmp_file).'/'.$name.'.h';
         file_put_contents($this->tmp_file, $c_str);
         $tokens = $this->preprocessor->process($this->tmp_file);
-        $this->parser->parse($tokens, $this->context);
-
-        return Null;
-    }
-
-    /* ----------------------------------------------------------------
-     * <STRUCT>
-     * ---------------------------------------------------------------- */
-    function getStructs(DOMNodeList  $list) {
-        $structs = array();
-        foreach($list as $node) {
-            try {
-                $structs[] = $this->getStruct($node);
-            } catch (BadDeclarationException $exc) {
-                //TODO: push error reporting
-                echo "TODO getStructs:".$exc->getMessage()."\n";
+//var_export($tokens);
+        if ($this->_parse>0) {
+            /*
+            if ($this->_item=="STRUCT") {
+                echo $this->_item.'::'.$this->_current_item."\n";
             }
-        }
-        return $structs;
-    }
+            */
+            $ast = $this->parser->parse($tokens, $this->context);
+            /*
+            if ($this->_parse>1) {
+                $this->printer->print($ast, $this->array);
+                $this->printer->evaluate($this->array);
+            }
+            */
 
-    function getStruct(DOMElement  $enum) {
-        $name = '';
-        $c_str = '';
-        foreach($enum->childNodes as $child) {
-            if ($child->nodeType==XML_TEXT_NODE) {
-                $c_str .= $child->nodeValue;
-            } else if ($child->nodeName=='NAME') {
-                $name = trim($child->nodeValue);
+            /*
+            if (is_null($ast)) {
+                echo __FUNCTION__.":at $name \$ast is null\n";
             } else {
-                throw new BadDeclarationException("STRUC '$name' : Unexpected xml structre.");
+                $this->printer->print($ast, $this->array);
             }
+            */
         }
-        // if $c_str is empty it is an anonymous typedef struct
-
-        $c_str = str_replace($this->replace, $this->search, $c_str);
-        $c_str = trim($c_str);
-        if (empty($c_str)) {
-            echo "Empty structure for $name".PHP_EOL;
-            return NULL;
-        } else {
-            echo PHP_EOL."Structure for $name:".PHP_EOL;
-            echo '<<<'.$c_str.'>>>'.PHP_EOL;
-        }
-
-        // TODO accepte string for $parser->parse()
-        file_put_contents($this->tmp_file, $c_str);
-        $tokens = $this->preprocessor->process($this->tmp_file);
-        $ast = $this->parser->parse($tokens, $this->context);
-
-        if (is_array($ast))
-        $this->printer->print($ast, $this->array);
-        else
-        echo __FUNCTION__.": \$ast is null\n";
-
-        // consistency check, get typedef before
-        //if ($name!=$data['name']) {
-        //    throw new LogicFileException("STRUCT {$data['name']} missmatch, expected '$name'");
-        //}
-
-        //TODO: $model = $this->getPackage()->createStruct($name, $data);
-        $model = NULL;//new StructGenerator($data);
-
-        return $model;
-    }
-
-    /* ----------------------------------------------------------------
-     * <ENUM>
-     * ---------------------------------------------------------------- */
-    function getEnums(DOMNodeList  $list) {
-        $enums = array();
-        foreach($list as $node) {
-            try {
-                $enums[] = $this->getEnum($node);
-            } catch (BadDeclarationException $exc) {
-                //TODO: push error reporting
-                echo "TODO getEnums:".$exc->getMessage()." \n";
-            }
-        }
-        return $enums;
-    }
-
-    function getEnum(DOMElement  $enum) {
-        $name = '';
-        $c_str = '';
-        foreach($enum->childNodes as $child) {
-            if ($child->nodeType==XML_TEXT_NODE) {
-                $c_str .= $child->nodeValue;
-            } else if ($child->nodeName=='NAME') {
-                $name = trim($child->nodeValue);
-            } else if ($child->nodeName=='DEPRECATED') {
-                echo "$name is DEPRECATED\n";
-            } else {
-                throw new BadDeclarationException("ENUM '$name' : Unexpected xml structre.");
-            }
-        }
-
-        $c_str = str_replace($this->replace, $this->search, $c_str);
-
-        // TODO accepte string for $parser->parse()
-        file_put_contents($this->tmp_file, $c_str);
-        $tokens = $this->preprocessor->process($this->tmp_file);
-        $ast = $this->parser->parse($tokens, $this->context);
-
-        if (is_array($ast))
-        $this->printer->print($ast, $this->array);
-        else
-        echo __FUNCTION__.": \$ast is null\n";
 
 
         // consistency check
@@ -1210,11 +1209,10 @@ class SourceCode {
             throw new LogicFileException('ENUM name missmatch');
         }
 
-        //TODO: $model = $this->getPackage()->createEnum($name, $data);
-        //TODO: $model = $this->getModule()->createEnum($name, $data);
-        $model = new EnumGenerator(/*$data*/);
-
-        return $model;
+        //echo "$this->_item \e[1;32m $this->_current_item \e[0m Done\n";
+        unset($this->_item_remaining[$this->_current_item]);
+        $this->_item_processed[$name]=True;
+        $this->_passed_item++;
     }
 
     function getCDump()  {

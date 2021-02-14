@@ -5,8 +5,8 @@
     "type": "library",
     "repositories": [
         {
-            "type": "git",
-            "url": "https://github.com/gtkphp/zend-c.git"
+            "type": "path",
+            "url": "../zend-c"
         }
     ],
     "require": {

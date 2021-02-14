@@ -24,15 +24,22 @@ class ClassGeneratorTest extends TestCase
     public function testGlibRepository()
     {
         $this->assertTrue(True);
-        try {
+        //try {
             $src_dir = '/home/dev/Projects/glib';
             $build_dir = '/home/dev/Projects/glib-build-doc';
             $service = new GlibSourceCode($src_dir, $build_dir);
+            //$service->setOrderList("white", "black", "");
+            $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
+            //$service->addWhiteList(); for deprecated
+            // $service->addOverrideList(array('STRUCT'=>array('utimbuf'=>'struct utimbuf;')));
+            // order deny,allow
+            // deny from all
+            // allow from env=let_me_in
             $service->loadTypes();
 
-        } catch (Error $ex) {
+        /*} catch (Error $ex) {
             echo $ex->getMessage() . PHP_EOL;
             $this->assertTrue(FALSE);
-        }
+        }*/
     }
 }

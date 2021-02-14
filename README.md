@@ -11,7 +11,7 @@ Generator of PHP extension
 
 The Zend\Ext component provides tools for working with Gtk sources. Currently, we offer Zend\Ext\CodeGenerator, which provides a unified interface for modeling and generating C-code.
 
-It will be used in PHP-GKT project.
+It will be used in GKT+PHP project.
 
 # Usage
 ```
@@ -42,9 +42,13 @@ It store resume file in <zend-ext>/data/<version>/enums|objects|boxed|data-struc
   /GlibDocSource.php
   /PangoDocSource.php
   /CairoDocSource.php
+  /GtkSourceCode.php (Load C-Code library interface)
+  /GlibSourceCode.php
+  /SourceCode.php
 ```
 
-It's these files than do the hard job.
-
-
-
+#Known Causes of Trouble
+Zend\C\Engine\Error: identifier_list identifier not implemented on line 11
+IDENTIFIER is not defined, the parser switch to another rule. 
+Define the unknown typedef in <root>/data/config-glib.h
+see <root>/tmp/declaration.h to find the last undeclared IDENTIFIER 
