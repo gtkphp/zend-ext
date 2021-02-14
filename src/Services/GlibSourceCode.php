@@ -8,52 +8,6 @@ use Exception;
 
 class GlibSourceCode extends SourceCode {
 
-    /**
-     * DocReference constructor.
-     * @param null $source_dir
-     * @param null $build_dir
-     * @throws Exception
-     */
-    function __construct($source_dir=NULL, $build_dir=NULL){
-        $this->source_dir = $source_dir;
-        $this->build_dir = $build_dir;
-        $this->sanityCheck();
-    }
-
-    function sanityCheck() {
-        $source_dir = realpath($this->source_dir.'/docs/reference/glib');
-        $build_dir = realpath($this->build_dir.'/docs/reference/glib');
-        if (empty($source_dir)){
-            throw new Exception("No such file or directory : '$this->source_dir'");
-        }
-        if (empty($build_dir)){
-            throw new Exception("No such file or directory : '$this->build_dir'");
-        }
-
-        // check directory
-        //home/dev/Projects/glib-build-doc/config.h
-        // #define PACKAGE_VERSION "2.56.4"
-        // #define PACKAGE_NAME "glib"
-        // have the documentation ?
-        // /home/dev/Projects/glib-build-doc/docs/reference/glib/html/index.html
-        // No ? have build ?
-        // check /home/dev/Projects/glib-build-doc/glib/.libs/libglib-2.0.so
-        // check
-        /*
-        $ret = preg_match("#/docs/reference/gobject$#", $source_dir, $match);
-        if (!$ret){
-            throw new Exception("Argument \$source_dir( \"$this->source_dir\") need to point to <glib-source>/docs/reference/gobject");
-        }
-        $ret = preg_match("#/docs/reference/gobject$#", $build_dir, $match);
-        if (!$ret){
-            throw new Exception("Argument \$build_dir( \"$this->build_dir\") need to point to <glib-source>/docs/reference/gobject");
-        }
-        */
-
-        $this->source_dir = $source_dir;
-        $this->build_dir = $build_dir;
-    }
-
     // Load the file Enum, Object, Boxed, Interface, Data structure( HashTable, GList,...)
     // 1) make reference for it and other ...
     // 2) make ZendCode

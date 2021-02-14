@@ -881,6 +881,7 @@ class CDump {
 
 class SourceCode {
     const GIT_COMMAND = 'git';
+    protected $tmp_file = __DIR__.'/../../tmp/declaration.h';
 
     /**
      * @var DOMXPath $xpath
@@ -918,6 +919,64 @@ class SourceCode {
     private $search = array();
     private $replace = array();
 
+
+    /**
+     * DocReference constructor.
+     * @param null $source_dir
+     * @param null $build_dir
+     * @throws Exception
+     */
+    function __construct($source_dir=NULL, $build_dir=NULL){
+        $this->source_dir = $source_dir;
+        $this->build_dir = $build_dir;
+        $this->sanityCheck();
+    }
+
+    /**
+     * Check & Initialize directory
+     */
+    function sanityCheck() {
+        $source_dir = realpath($this->source_dir.'/docs/reference/glib');
+        $build_dir = realpath($this->build_dir.'/docs/reference/glib');
+        if (empty($source_dir)){
+            throw new Exception("No such file or directory : '$this->source_dir'");
+        }
+        if (empty($build_dir)){
+            throw new Exception("No such file or directory : '$this->build_dir'");
+        }
+
+        $tmp_dir = __DIR__.'/../../tmp';
+        if (!file_exists($tmp_dir)) {
+            `mkdir -p $tmp_dir`;
+        }
+        if (!file_exists($this->tmp_file)) {
+            `touch $this->tmp_file`;
+        }
+        $this->tmp_file = realpath($this->tmp_file);
+
+        // check directory
+        //home/dev/Projects/glib-build-doc/config.h
+        // #define PACKAGE_VERSION "2.56.4"
+        // #define PACKAGE_NAME "glib"
+        // have the documentation ?
+        // /home/dev/Projects/glib-build-doc/docs/reference/glib/html/index.html
+        // No ? have build ?
+        // check /home/dev/Projects/glib-build-doc/glib/.libs/libglib-2.0.so
+        // check
+        /*
+        $ret = preg_match("#/docs/reference/gobject$#", $source_dir, $match);
+        if (!$ret){
+            throw new Exception("Argument \$source_dir( \"$this->source_dir\") need to point to <glib-source>/docs/reference/gobject");
+        }
+        $ret = preg_match("#/docs/reference/gobject$#", $build_dir, $match);
+        if (!$ret){
+            throw new Exception("Argument \$build_dir( \"$this->build_dir\") need to point to <glib-source>/docs/reference/gobject");
+        }
+        */
+
+        $this->source_dir = $source_dir;
+        $this->build_dir = $build_dir;
+    }
 
     public function parseStruct() {
 
@@ -1003,7 +1062,7 @@ class SourceCode {
                 $typedefs[] = $this->getTypedef($node);
             } catch (BadDeclarationException $exc) {
                 //TODO: push error reporting
-                echo "TODO:".$exc->getMessage()."\n";
+                echo "TODO getTypedefs:".$exc->getMessage()."\n";
             }
         }
         return $typedefs;
@@ -1034,9 +1093,8 @@ class SourceCode {
         }*/
 
         // TODO accepte string for $parser->parse()
-        $data_filename = realpath(__DIR__.'/../../tmp/typedef.h');
-        file_put_contents($data_filename, $c_str);
-        $tokens = $this->preprocessor->process($data_filename);
+        file_put_contents($this->tmp_file, $c_str);
+        $tokens = $this->preprocessor->process($this->tmp_file);
         $this->parser->parse($tokens, $this->context);
 
         return Null;
@@ -1052,7 +1110,7 @@ class SourceCode {
                 $structs[] = $this->getStruct($node);
             } catch (BadDeclarationException $exc) {
                 //TODO: push error reporting
-                echo "TODO:".$exc->getMessage()."\n";
+                echo "TODO getStructs:".$exc->getMessage()."\n";
             }
         }
         return $structs;
@@ -1083,12 +1141,14 @@ class SourceCode {
         }
 
         // TODO accepte string for $parser->parse()
-        $data_filename = realpath(__DIR__.'/../../tmp/struct.h');
-        file_put_contents($data_filename, $c_str);
-        $tokens = $this->preprocessor->process($data_filename);
+        file_put_contents($this->tmp_file, $c_str);
+        $tokens = $this->preprocessor->process($this->tmp_file);
         $ast = $this->parser->parse($tokens, $this->context);
 
+        if (is_array($ast))
         $this->printer->print($ast, $this->array);
+        else
+        echo __FUNCTION__.": \$ast is null\n";
 
         // consistency check, get typedef before
         //if ($name!=$data['name']) {
@@ -1111,7 +1171,7 @@ class SourceCode {
                 $enums[] = $this->getEnum($node);
             } catch (BadDeclarationException $exc) {
                 //TODO: push error reporting
-                echo "TODO: \n";
+                echo "TODO getEnums:".$exc->getMessage()." \n";
             }
         }
         return $enums;
@@ -1125,6 +1185,8 @@ class SourceCode {
                 $c_str .= $child->nodeValue;
             } else if ($child->nodeName=='NAME') {
                 $name = trim($child->nodeValue);
+            } else if ($child->nodeName=='DEPRECATED') {
+                echo "$name is DEPRECATED\n";
             } else {
                 throw new BadDeclarationException("ENUM '$name' : Unexpected xml structre.");
             }
@@ -1133,12 +1195,14 @@ class SourceCode {
         $c_str = str_replace($this->replace, $this->search, $c_str);
 
         // TODO accepte string for $parser->parse()
-        $data_filename = realpath(__DIR__.'/../../tmp/enum.h');
-        file_put_contents($data_filename, $c_str);
-        $tokens = $this->preprocessor->process($data_filename);
+        file_put_contents($this->tmp_file, $c_str);
+        $tokens = $this->preprocessor->process($this->tmp_file);
         $ast = $this->parser->parse($tokens, $this->context);
 
+        if (is_array($ast))
         $this->printer->print($ast, $this->array);
+        else
+        echo __FUNCTION__.": \$ast is null\n";
 
 
         // consistency check
