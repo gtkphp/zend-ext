@@ -1053,16 +1053,12 @@ class SourceCode {
             unset($this->array);
         }
 
-        $tokens = $this->preprocessor->process($this->data_file);
-        $this->parser->parse($tokens, $this->context);
-
         if ($enable) {
             $this->getItems('MACRO');
             //TODO: $model = $this->getPackage()->createEnum($name, $data);
             //$model = new EnumGenerator(/*$data*/);
             //TODO: $model = $this->getPackage()->createStruct($name, $data);
             //$model = new StructGenerator($data);
-
             unset($this->array);
         }
 
@@ -1071,8 +1067,15 @@ class SourceCode {
             unset($this->array);
         }
 
+        // Additional typedef
+        $tokens = $this->preprocessor->process($this->data_file);
+        $this->parser->parse($tokens, $this->context);
+
+        /**
+         * @see glib-decl.txt for <STRUC>GThread</STRUC> (is duplicated ?)
+         */
         if ($enable) {
-            $this->getItems('STRUCT', 1, 2);
+            $this->getItems('STRUCT', 1, 3);
             unset($this->array);
         }
 
@@ -1153,13 +1156,14 @@ class SourceCode {
                 $c_str .= $child->nodeValue;
             } else if ($child->nodeName=='NAME') {
                 $name = trim($child->nodeValue);
+                $this->_current_item = $name;
             } else if ($child->nodeName=='DEPRECATED') {
-                throw new DeprecatedException("$this->_item '$name' : is deprecated.");
+                //throw new DeprecatedException("$this->_item '$name' : is deprecated.");
             } else {
                 throw new BadDeclarationException("$this->_item '$name' : Unexpected xml structre.");
             }
         }
-        $this->_current_item = $name;
+        //$this->_current_item = $name;
         if (! $this->isAllowed())
             return;
         if(isset($this->_item_processed[$name]))
@@ -1169,8 +1173,11 @@ class SourceCode {
         $c_str = trim($c_str);
         if (empty($c_str)) {
             //echo "Empty $this->_item for $name".PHP_EOL;
-            return NULL;
-        }/* else {
+            //$all_typedefs = $this->parser->getTypes();
+            $c_str = 'typedef struct _'.$name.' '.$name.';'."\n";
+            //echo "$this->_item \e[1;31m$name\e[0m Skip\n";
+            //return NULL;
+        }/* else if ("GSource"==$name) {
             echo PHP_EOL."Typedef for $name:".PHP_EOL;
             echo '<<<'.$c_str.'>>>'.PHP_EOL;
         }*/

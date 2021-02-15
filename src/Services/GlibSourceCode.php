@@ -24,8 +24,8 @@ class GlibSourceCode extends SourceCode {
         // <SECTION>
         //<FILE>glist</FILE>
         //$this->getDeclarationsList($this->build_dir.'/glib-decl-list.txt');
-        $search = array('&(v)', ' << ', '/*< ', ' >*/', '&&', '&', '->', ' < ', ' > ', '_-|> <.');
-        $replace = array('V_REF_PASS', 'SHIFT_LEFT', '/* ', ' */', 'DOUBLE_PASS_REF', 'PASS_REF', 'SPECIAL_ARROW', ' GREATER ', ' LESSER ', 'EXCEPTIONEL');
+        $search = array('&(v)', ' << ', '/*< ', ' >*/', '&&', '&', '->', ' < ', ' > ', '_-|> <.', '<foo bar="baz">', '</foo>');
+        $replace = array('V_REF_PASS', 'SHIFT_LEFT', '/* ', ' */', 'DOUBLE_PASS_REF', 'PASS_REF', 'SPECIAL_ARROW', ' GREATER ', ' LESSER ', 'EXCEPTIONEL', 'OPEN_TAG_FOO', 'CLOSE_TAG_FOO');
         $this->getDeclarations($this->build_dir.'/glib-decl.txt', $search, $replace);
 
         //$constants = $this->getConstants();
