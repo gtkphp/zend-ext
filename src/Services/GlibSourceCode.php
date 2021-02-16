@@ -8,6 +8,12 @@ use Exception;
 
 class GlibSourceCode extends SourceCode {
 
+    function __construct($source_dir=NULL, $build_dir=NULL){
+        $this->doc_dir = 'docs/reference/glib';
+        $this->name = 'Glib';
+        parent::__construct($source_dir, $build_dir);
+    }
+
     // Load the file Enum, Object, Boxed, Interface, Data structure( HashTable, GList,...)
     // 1) make reference for it and other ...
     // 2) make ZendCode
@@ -31,86 +37,4 @@ class GlibSourceCode extends SourceCode {
         //$constants = $this->getConstants();
 
     }
-
-    function getDeclarationsList(string $filename, array $search=array(), array $replace=array())
-    {
-        return parent::getDeclarationsList($filename, $search, $replace);
-
-        $filename = realpath($filename);
-        $xml = file_get_contents($filename);
-        $str_xml = "<root>$xml</root>";
-
-        //$search = array('/* <private> */', '/* <public> */', '/*< ', ' >*/', '/* < ', ' > */', '<<', '&&', '<Space>', '<Return>', '&(v)', '& ', ' < ', ' > ', '_-|> <.', '&G_LOCK_NAME', '(val) &', "!$&'()*+,;=");
-        //$replace = array('/* private */', '/* public */', '/* ', ' */', '/* ', ' */', 'SHIFT_LEFT', 'AND', '{Space}', '{Return}', 'V_REF_PASS', 'REF_PASS', ' GREATER ', ' LESSER ', 'EXCEPTIONEL', 'REF_G_LOCK_NAME', 'VAL_REF_PASS', 'EXCEPTIONEL2');
-        $search = array('<SUBSECTION Standard>');
-        $replace = array('<SUBSECTION Standard="True"></SUBSECTION>');
-        $str_xml = str_replace($search, $replace, $str_xml);
-
-        $doc = new \DOMDocument();
-        $doc->loadXML($str_xml);
-
-
-    }
-
-    /**
-     * @return array Array('MyEnum'=>array('CONST_A', 'CONST_A'))
-     */
-    function getEnumsXXX(DOMNodeList  $list)
-    {
-        return parent::getEnums($list);
-
-        //$this->trace(__FUNCTION__);
-        $enums_data = array();
-
-
-        $filename = realpath($this->build_dir.'/glib-decl.txt');
-        $xml = file_get_contents($filename);
-
-        // si on veux retrouver les valeur des enumeration il faudra faire attention au &
-        $xml = str_replace(array('/* <private> */', '/* <public> */', '/*< ', ' >*/', '/* < ', ' > */', '<<', '&&', '<Space>', '<Return>', '&(v)', '& ', ' < ', ' > ', '_-|> <.', '&G_LOCK_NAME', '(val) &', "!$&'()*+,;="),
-            array('/* private */', '/* public */', '/* ', ' */', '/* ', ' */', 'SHIFT_LEFT', 'AND', '{Space}', '{Return}', 'V_REF_PASS', 'REF_PASS', ' GREATER ', ' LESSER ', 'EXCEPTIONEL', 'REF_G_LOCK_NAME', 'VAL_REF_PASS', 'EXCEPTIONEL2')
-            , $xml);
-        $str_xml = "<root>$xml</root>";
-        //file_put_contents("/home/dev/Projects/php-ubuntu-doc-dependency/zend-ext/data/types.xml", $str_xml);
-
-        $doc = new \DOMDocument();
-        $doc->loadXML($str_xml);
-
-
-
-        $xpath = new \DOMXPath($doc);
-        $expression = "/root/ENUM";
-        $enums = $xpath->query($expression);
-        //echo count($enums)." type of enum found".PHP_EOL;
-        $enum_name = NULL;
-        foreach($enums as $enum) {
-            $describe = $this->getEnum($enum);
-            $enums_data[$describe['name']]=$describe['constants'];
-        }
-
-        return $enums_data;
-    }
-
-
-    /*
-    function getEnum($enum_node)
-    {
-        //$this->trace(__FUNCTION__);
-        $describe = NULL;
-        foreach($enum_node->childNodes as $node) {
-            if ($node->nodeName == 'NAME') {
-                $enum_name = trim($node->nodeValue);
-            } else if ($node->nodeType == XML_TEXT_NODE) {
-                $c_enum_string = trim($node->nodeValue);
-                if (!empty($c_enum_string)) {
-                    //echo "<<$c_enum_string>>" . PHP_EOL;
-                    $describe = $this->getCDump()->describeEnum($c_enum_string);
-                    //$enum_name == $data['name'] else Error in docBook
-                }
-            }
-        }
-        return $describe;
-    }
-    */
-
 }

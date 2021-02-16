@@ -111,37 +111,10 @@ class TypeGenerator extends AbstractGenerator
     /**
      * @var bool
      */
-    protected $name;
     protected $isArray=False;
     protected $isPrimitive=False;
     protected $primitiveType=NULL;
     protected $expressionArray;
-
-    /**
-     *
-     */
-    public function __construct($name)
-    {
-        //parent::__construct($name);
-        $this->setName($name);
-    }
-
-    public function setName($name)
-    {
-        $this->name = $name;
-        $types = array_keys(self::$internalCTypes);
-        if (in_array($name, $types)) {
-            $this->isPrimitive = TRUE;
-            $this->primitiveType = self::$internalCTypes[$name];
-        }
-
-        return $this;
-    }
-
-    public function getName()
-    {
-        return $this->name;
-    }
 
     public function setArray($isArray=True)
     {
@@ -186,35 +159,4 @@ class TypeGenerator extends AbstractGenerator
     {
         return $this->isPrimitive;
     }
-
-
-    /**
-     * @return string
-     */
-    public function generate_arginfo()
-    {
-        return $this->getParentGenerator()->getName();
-    }
-    /**
-     * @return string
-     */
-    public function generate($scope)
-    {
-        $output = '';// const unsigned char *argv[3]
-
-        $output .= $this->getName();
-
-        /*
-        if ($this->isArray()) {
-            $output .= '[';
-            if ($this->expressionArray!=NULL) {
-                $output .= $this->expressionArray;
-            }
-            $output .= ']';
-        }
-        */
-
-        return $output;
-    }
-
 }

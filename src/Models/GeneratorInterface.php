@@ -12,5 +12,5 @@ namespace Zend\Ext\Models;
 // TODO remove this interface
 interface GeneratorInterface
 {
-    public function generate($scope);
+    //public function generate($scope);
 }

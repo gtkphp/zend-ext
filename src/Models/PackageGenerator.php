@@ -10,14 +10,14 @@
 namespace Zend\Ext\Models;
 
 use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\ParameterGenerator;
+use Zend\Ext\Models\TypeGenerator;
 
 class PackageGenerator extends AbstractGenerator
 {
 
-    /**
-     * @var string
-     */
-    protected $name;
     /**
      * @var array $list_type_object array('GtkWidget', 'GtkBin', ...)
      */
@@ -27,24 +27,29 @@ class PackageGenerator extends AbstractGenerator
      */
     protected $list_type_enum;
 
-    /**
-     *
-     */
-    public function __construct($name)
-    {
-        parent::__construct(NULL);
-        $this->setName($name);
+    public function createClass(string $name): ClassGenerator {
+        $class = new ClassGenerator($name);
+        $class->setParentGenerator($this);
+        $class->setOwnPackage($this);//CHECK me is Package has parent package
+        return $class;
     }
 
-    public function setName($name)
-    {
-        $this->name = $name;
-        return $this;
+    public function createMethod($name) {
+        $method = new MethodGenerator($name);
+        $method->setOwnPackage($this);
+        return $method;
     }
 
-    public function getName()
-    {
-        return $this->name;
+    public function createParameter($name) {
+        $method = new ParameterGenerator($name);
+        $method->setOwnPackage($this);
+        return $method;
+    }
+
+    public function createType($name) {
+        $type = new TypeGenerator($name);
+        $type->setOwnPackage($this);
+        return $type;
     }
 
     /**

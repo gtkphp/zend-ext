@@ -29,15 +29,26 @@ use function wordwrap;
 
 class ParameterGenerator extends AbstractGenerator
 {
-
     /**
-     * @var string
-     */
-    protected $name;
-    /**
-     * @var TypeGenerator
+     * @var TypeGenerator $type
      */
     protected $type;
+    /**
+     * const, volatile
+     * @var string $qualifier
+     */
+    protected $qualifier;
+    /**
+     * unsigned, short,..
+     * @var string $modifier
+     */
+    protected $modifier;
+    /**
+     * &, *, **, ...
+     * @var string $modifier
+     */
+    protected $pass='';
+
     /**
      * @var boolean
      */
@@ -48,34 +59,6 @@ class ParameterGenerator extends AbstractGenerator
     protected $isOptional=False;
 
 
-    /**
-     * @var bool
-     */
-    //protected $defaultValue='NULL';
-
-    /**
-     * @param $option Array|String
-     */
-    public function __construct($options)
-    {
-        if (is_string($options)) {
-            $this->setName($options);
-        }
-        if (is_array($options)) {
-            $this->setOptions($options);
-        }
-    }
-
-    public function setName($name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    public function getName()
-    {
-        return $this->name;
-    }
 
     public function setType($type)
     {
@@ -122,40 +105,18 @@ class ParameterGenerator extends AbstractGenerator
     }
 
     /**
-     * @return string
+     * *
+     * &
      */
-    public function generate_arginfo()
+    public function setPass($pass)
     {
-        $pass_by_ref = $this->getParentGenerator()->getPass() == '' ? 'FALSE': 'TRUE';
-        return $pass_by_ref . ', ' . $this->getName();
+        $this->pass = $pass;
+        return $this;
     }
 
-    /*
-    public function generate($scope)
+    public function getPass()
     {
-        $output = '';// const unsigned char *argv[]
-        $naming = new Naming\GnomeStrategy();
-        $function_name = $naming->generateFunctionName($this);
-
-        if ($this->isVariadic()) {
-            return '...';
-        }
-
-        $output .= $this->getType()->generate($scope);
-
-        $output .= ' ' . $function_name;
-
-        if ($this->getType()->isArray()) {
-            $output .= '[';
-            $expression = $this->getType()->getExpressionArray();
-            if ($expression!=NULL) {
-                $output .= $expression;
-            }
-            $output .= ']';
-        }
-
-        return $output;
+        return $this->pass;
     }
-    */
 
 }
