@@ -45,19 +45,9 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     protected $containingFileGenerator;
 
     /**
-     * @var string
-     */
-    protected $namespaceName;
-
-    /**
      * @var DocBlockGenerator
      */
     protected $docBlock;
-
-    /**
-     * @var string
-     */
-    protected $name;
 
     /**
      * @var bool
@@ -96,7 +86,6 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
 
     /**
      * @param  string $name
-     * @param  string $namespaceName
      * @param  array|string $flags
      * @param  string $extends
      * @param  array $interfaces
@@ -106,7 +95,6 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
      */
     public function __construct(
         $name = null,
-        $namespaceName = null,
         $flags = null,
         $extends = null,
         $interfaces = [],
@@ -118,9 +106,6 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
 
         if ($name !== null) {
             $this->setName($name);
-        }
-        if ($namespaceName !== null) {
-            $this->setNamespaceName($namespaceName);
         }
         if ($flags !== null) {
             $this->setFlags($flags);
@@ -140,49 +125,6 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         if ($docBlock !== null) {
             $this->setDocBlock($docBlock);
         }
-    }
-
-    /**
-     * @param  string $name
-     * @return self
-     */
-    public function setName($name)
-    {
-        if (strstr($name, '\\')) {
-            $pos = strrpos($name, '\\');
-            $namespace = substr($name, 0, $pos);
-            $name      = substr($name, $pos + 1);
-            $this->setNamespaceName($namespace);
-        }
-
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param  string $namespaceName
-     * @return self
-     */
-    public function setNamespaceName($namespaceName)
-    {
-        $this->namespaceName = str_replace('\\', '_', $namespaceName);
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getNamespaceName()
-    {
-        return $this->namespaceName;
     }
 
     /**
@@ -867,153 +809,6 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     }
 
 
-    public function generate_me()
-    {
-        $output = '';
-        $methods = $this->getMethods();
-
-        foreach ($methods as $method) {
-            $output .= $method->generate_PHP_METHOD() . self::LINE_FEED;
-        }
-
-        return $output;
-    }
-    public function generateSource()
-    {
-        // generate docBlockLicence
-        $naming = new Naming\GnomeStrategy();
-
-        $output = '';
-        $tab = str_repeat($this->getIndentation(), 1);
-
-        $function_name = $naming->generateFunctionName($this);
-        $type_name = $naming->generateTypeName($this);
-        $type_macro = $naming->generateMacroType($this);
-
-        // add member struct
-
-        $output .= 'G_DEFINE_TYPE ('.$type_name.', '.$function_name.', /G_TYPE_OBJECT/);'.PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= 'static void' . PHP_EOL;
-        $output .= $function_name.'_init ('.$type_name.' *object)' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= 'static void' . PHP_EOL;
-        $output .= $function_name.'_class_init ('.$type_name.'Class *klass)' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= $type_name.'*' . PHP_EOL;
-        $output .= $function_name.'_new ()' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= $tab . $type_name . ' *object = g_object_new('.$type_macro.', NULL);' . PHP_EOL;
-        $output .= $tab . 'return object;' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        // add virtual methods
-        // add override methods
-        // add methods
-        $methods = $this->getMethods();
-
-        foreach ($methods as $method) {
-            $output .= $method->generate('source') . self::LINE_FEED;
-        }
-
-
-
-        return $output;
-    }
-
-    public function generateHeader()
-    {
-        $output  = '';
-
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $camelCaseToDash = new \Zend\Filter\Word\CamelCaseToDash();
-        $stringToLower = new \Zend\Filter\StringToLower();
-        $stringToUpper = new \Zend\Filter\StringToUpper();
-
-
-        $OBJECT_NS = $stringToUpper->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $OBJECT_NAME = $stringToUpper->filter($camelCaseToUnderscore->filter($this->getName()));
-
-        $object_ns = $stringToLower->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-
-        $objectNs = $this->getNamespaceName();
-        $objectName = $this->getName();
-
-        $NS_OBJECT_TYPE = '';
-        if ( !empty($OBJECT_NS) ) {
-            $NS_OBJECT_TYPE = $OBJECT_NS . '_';
-        }
-        $NS_OBJECT_TYPE .= 'TYPE_' . $OBJECT_NAME;
-        // $naming->generateMacroType($this);
-        // $naming->generate($this, 'MacroType');
-        // $this->naming('MacroType');
-
-        $ns_object = '';
-        if ( !empty($object_ns) ) {
-            $ns_object = $object_ns . '_';
-        }
-        $ns_object .= $object_name;
-        //$ns_object = $this->namingClassType();
-
-        $nsObject = '';
-        if ( !empty($objectNs) ) {
-            $nsObject = $objectNs . '_';
-        }
-        $nsObject .= $objectName;
-
-        // Naming(GnomeStrategy())->macroName();
-        // Naming(GnomeStrategy())->className();
-        // Naming(GnomeStrategy())->callName();
-        // Naming(GnomeStrategy())->propertyName();
-        $output .= '#define ' . $NS_OBJECT_TYPE . ' ' . $ns_object . '_get_type ()' . self::LINE_FEED;
-        $output .= 'G_DECLARE_FINAL_TYPE (' . $objectNs.$objectName . ', ' . $ns_object . ', ' . $OBJECT_NS . ', ' . $OBJECT_NAME . ', ' . 'GObject' . ')' . self::LINE_FEED;
-
-        return $output;
-    }
-
-
-    /**
-     * @inheritDoc
-     */
-    public function generate_arginfo()
-    {
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-
-        $tab = $this->getIndentation();
-        $output = '';
-
-        $object_ns = $stringToLower->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-        $name = $object_name;
-        if (!empty($object_ns)) {
-            $name = $object_ns.'_'.$object_name;
-        }
-
-        foreach ($this->getMethods() as $method) {
-            $output .= $method->generate_arginfo() . self::LINE_FEED;
-        }
-
-
-        $output .= 'static const zend_function_entry '.$name.'_functions[] = {' . self::LINE_FEED;
-        foreach ($this->getMethods() as $method) {
-            $output .= $tab . $method->generate_me() . self::LINE_FEED;
-        }
-        $output .= $tab . 'PHP_FE_END' . self::LINE_FEED;
-        $output .= '};' . self::LINE_FEED;
-
-        return $output;
-    }
-
     /**
      * @param mixed $value
      *
@@ -1037,25 +832,5 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
             'Expected value for constant, value must be a "scalar" or "null", "%s" found',
             gettype($value)
         ));
-    }
-
-    /**
-     * @param string $fqnClassName
-     *
-     * @return string
-     */
-    private function generateShortOrCompleteClassname($fqnClassName)
-    {
-        $fqnClassName = ltrim($fqnClassName, '\\');
-        $parts = explode('\\', $fqnClassName);
-        $className = array_pop($parts);
-        $classNamespace = implode('\\', $parts);
-        $currentNamespace = (string) $this->getNamespaceName();
-
-        if ($classNamespace === $currentNamespace || in_array($fqnClassName, $this->getUses())) {
-            return $className;
-        }
-
-        return '\\' . $fqnClassName;
     }
 }
