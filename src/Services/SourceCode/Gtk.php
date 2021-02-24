@@ -1,11 +1,15 @@
 <?php
 
-class GtkSourceCode {
-    public function prerequisite() {
-        // creer les fichiers enum boxed
-        // flat array() serialized
-    }
+namespace Zend\Ext\Services\SourceCode;
+
+use Zend\Ext\Services\SourceCode;
+use Exception;
+
+
+class Gtk extends SourceCode
+{
 }
+
 // gtk, gdk, pangocairo, pango, atk, cairo-gobject, cairo, gdk_pixbuf, gio, gobject, glib
 // pkg-config -libs gtk+-3.0
 

@@ -1,41 +1,15 @@
 <?php
 
-namespace Zend\Ext\Services;
-
-use Zend\View\View;
-use Zend\View\Model\ViewModel;
-use Zend\View\Resolver\TemplatePathStack;
-use Zend\View\Renderer\PhpRenderer;
-use Zend\View\Strategy\PhpRendererStrategy;
-
-use Zend\Stdlib\Response;
-
-use Zend\Filter\Word\CamelCaseToUnderscore;
-use Zend\Filter\StripTags;
-use Zend\Filter\StripNewlines;
-use Zend\Filter\FilterChain;
-
-
-use Zend\Ext\Helpers\Php\Poo\NamespaceHelper;
-use Zend\Ext\Helpers\Php\Poo\CommentHelper;
-use Zend\Ext\Helpers\Php\Poo\NameclassHelper;
-use Zend\Ext\Helpers\Php\Poo\MethodHelper;
-use Zend\Ext\Helpers\Php\Poo\NamemethodHelper;
-use Zend\Ext\Helpers\Php\Poo\TypeHelper;
-use Zend\Ext\Helpers\Php\Poo\ParameterHelper;
-use Zend\Ext\Helpers\Php\Poo\NamepropertyHelper;
-
-use Zend\Ext\Services\DocBook;
-
-use Zend\Ext\Models\TypeGenerator;
-use Zend\Ext\Models\ParameterGenerator;
-use Zend\Ext\Models\MethodGenerator;
-use Zend\Ext\Models\ClassGenerator;
-use Zend\Ext\Models\PackageGenerator;
+namespace Zend\Ext\Services\DocBook;
 
 use SimpleXMLElement;
+use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\PackageGenerator;
+use Zend\Ext\Services\DocBook;
 
-class GlibDocBook extends DocBook
+
+class Glib extends DocBook
 {
     /**
      * @var Zend\Ext\Models\PackageGenerator $package
@@ -46,99 +20,9 @@ class GlibDocBook extends DocBook
      */
     protected $current_generator;
 
-    function save(string $dir)
-    {
-        $view = $this->getView();
-        $model = $this->getViewModel();
-
-        $view->render($model);
-        echo $view->getResponse()->getContent();
-    }
-
-    function getViewModel():ViewModel
-    {
-        $objects = $this->package->getListTypeObject();
-        $class = array_pop($objects);
-
-        // <?php echo $this->author
-        // <?php echo $this->date
-        $licenseModel = new ViewModel(array('author' => 'No Name'));
-        $licenseModel->setVariable('date', '31/12/1999');
-        $licenseModel->setTemplate('method.phtml');
-
-        // <?php echo $this->license
-        // <?php echo $this->message
-        $model = new ViewModel();
-        $model->setVariable('name', $class->getName());
-        $model->setVariable('description', $class->getDescription());
-        $model->setVariable('methods', $class->getMethods());
-        //$model->addChild($licenseModel, 'licenseHeader');
-        $model->setTemplate('class.phtml');
-
-        return $model;
-    }
-    function getView():View
-    {
-        $view = new View();
-        $view->setResponse(new Response());
-
-        $resolver = new TemplatePathStack();
-        $resolver->addPath(__DIR__.'/../Views/Php/Poo');
-
-        $renderer = new PhpRenderer();
-        $renderer->setResolver($resolver);
-
-        $rendererStrategy = new PhpRendererStrategy($renderer);
-        $rendererStrategy->attach($view->getEventManager());
-
-        /*$view->addResponseStrategy(function ($event) {
-            $event->getResponse()->setContent($event->getResult());
-        });
-        $view->addRenderingStrategy(function ($event) {
-            echo "Here we are\n";
-            $view = $event->getView();
-            $pluginManager = $view->getHelperPluginManager();
-            var_dump($event);
-            return $renderer;
-        });*/
-        $pluginManager = $renderer->getHelperPluginManager();
-
-        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
-            $filter = new CamelCaseToUnderscore;
-            NamespaceHelper::$filter = $filter;
-            $namespaceHelper = new NamespaceHelper;
-            return $namespaceHelper;
-        });
-        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
-            //$filter = new StripTags;
-            $filter = new FilterChain();
-            $filter->attach(new StripTags());
-            //       ->attach(new StripNewlines());
-            CommentHelper::$filter = $filter;
-            return new CommentHelper;
-        });
-        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            NameclassHelper::$filter = new CamelCaseToUnderscore;
-            return new NameclassHelper;
-        });
-        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
-            return new MethodHelper;
-        });
-        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            NamemethodHelper::$filter = new CamelCaseToUnderscore;
-            return new NamemethodHelper;
-        });
-        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new TypeHelper;
-        });
-        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
-            return new ParameterHelper;
-        });
-        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
-            return new NamepropertyHelper;
-        });
-
-        return $view;
+    function save($dirname) {
+        $service = current($this->codeGenerator);
+        echo $service->render($this->package);
     }
 
     /**
@@ -150,8 +34,6 @@ class GlibDocBook extends DocBook
      * </book>
      */
     function load() {
-
-
         $this->package = new PackageGenerator(array(
             'name'=>'G',
             'shortDescription'=>'Glib 2.64.22'
@@ -227,7 +109,7 @@ class GlibDocBook extends DocBook
         } else if ($xml->programlisting) {
             $str = strip_tags($xml->programlisting->asXml());
             $str = str_replace(' ', ' ', $str);
-            file_put_contents(__DIR__.'/../../tmp/declaration.h', $str);
+            file_put_contents(__DIR__.'/../../../tmp/declaration.h', $str);
             $data = $this->sourceCode['Glib']->parse($str);
         } else {
             echo "Error 88 unexpected\n";

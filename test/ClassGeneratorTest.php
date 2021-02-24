@@ -7,10 +7,9 @@ use PHPUnit\Framework\Error\Notice;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\Error\Error;
 
-use Zend\Ext\Services\GlibDocBook;
-use Zend\Ext\Services\GlibSourceCode;// rename by GlibParser
-
-use ClassGenerator;
+use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
+use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
+use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 
 class ClassGeneratorTest extends TestCase
 {
@@ -28,10 +27,13 @@ class ClassGeneratorTest extends TestCase
         $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
         $service->loadTypes();
 
+        $servicePhp = new Php8CodeGenerator();
+
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();
         $docBook->addSourceCode($service);
-        $docBook->load();
+        $docBook->addCodeGenerator($servicePhp);
+        $docBook->load(/*doc.sgml*/);
         $docBook->save('/home/dev/Projects/gtkphp/output');
 
         $this->assertTrue(True);

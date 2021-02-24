@@ -1,12 +1,12 @@
 <?php
 
-namespace Zend\Ext\Services;
+namespace Zend\Ext\Services\SourceCode;
 
 use Zend\Ext\Services\SourceCode;
 use Exception;
 
 
-class GlibSourceCode extends SourceCode {
+class Glib extends SourceCode {
 
     function __construct($source_dir=NULL, $build_dir=NULL){
         $this->doc_dir = 'docs/reference/glib';
