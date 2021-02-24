@@ -7,6 +7,7 @@ use PHPUnit\Framework\Error\Notice;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\Error\Error;
 
+use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
 use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
@@ -28,6 +29,7 @@ class ClassGeneratorTest extends TestCase
         $service->loadTypes();
 
         $servicePhp = new Php8CodeGenerator();
+        //$servicePhp->setStyle(CodeGenerator::POO_STYLE);
 
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();

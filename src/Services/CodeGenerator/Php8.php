@@ -26,9 +26,11 @@ use Zend\Ext\Services\CodeGenerator;
 
 class Php8 extends CodeGenerator
 {
-    function __construct()
+
+    function __construct($style=CodeGenerator::C_STYLE)
     {
         parent::__construct("php8");
+        $this->setStyle($style);
     }
 
     function render($package)
@@ -64,11 +66,13 @@ class Php8 extends CodeGenerator
     }
     function getView():View
     {
+        $map = array(0=>'Unknown', 1=>'C', 2=>'Poo');
+
         $view = new View();
         $view->setResponse(new Response());
 
         $resolver = new TemplatePathStack();
-        $resolver->addPath(__DIR__.'/../../Views/Php/Poo');
+        $resolver->addPath(__DIR__.'/../../Views/Php/'.$map[$this->style]);
 
         $renderer = new PhpRenderer();
         $renderer->setResolver($resolver);
@@ -86,42 +90,12 @@ class Php8 extends CodeGenerator
             var_dump($event);
             return $renderer;
         });*/
-        $pluginManager = $renderer->getHelperPluginManager();
 
-        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
-            $filter = new CamelCaseToUnderscore;
-            NamespaceHelper::$filter = $filter;
-            $namespaceHelper = new NamespaceHelper;
-            return $namespaceHelper;
-        });
-        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
-            //$filter = new StripTags;
-            $filter = new FilterChain();
-            $filter->attach(new StripTags());
-            //       ->attach(new StripNewlines());
-            CommentHelper::$filter = $filter;
-            return new CommentHelper;
-        });
-        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            NameclassHelper::$filter = new CamelCaseToUnderscore;
-            return new NameclassHelper;
-        });
-        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
-            return new MethodHelper;
-        });
-        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            NamemethodHelper::$filter = new CamelCaseToUnderscore;
-            return new NamemethodHelper;
-        });
-        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new TypeHelper;
-        });
-        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
-            return new ParameterHelper;
-        });
-        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
-            return new NamepropertyHelper;
-        });
+        if ($this->style==CodeGenerator::C_STYLE) {
+            $renderer->setHelperPluginManager($this->cStyleManager());
+        } else {
+            $renderer->setHelperPluginManager($this->pooStyleManager());
+        }
 
         return $view;
     }
