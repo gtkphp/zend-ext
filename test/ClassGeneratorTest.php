@@ -36,7 +36,7 @@ class ClassGeneratorTest extends TestCase
         $docBook->addSourceCode($service);
         $docBook->addCodeGenerator($servicePhp);
         $docBook->load(/*doc.sgml*/);
-        $docBook->save('/home/dev/Projects/gtkphp/output');
+        echo $docBook->save('/home/dev/Projects/gtkphp/output');
 
         $this->assertTrue(True);
     }

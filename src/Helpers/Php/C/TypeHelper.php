@@ -104,7 +104,7 @@ class TypeHelper extends AbstractHelper
                 // GtkApplication(prerequist) add use ...
                 // GtkWindowType (enum)
 
-                $output = "\e[1;31m".$name."\e[m";// red
+                $output = $name;
             }
 
             //$list_boxeds = $package->getListTypeBoxed();

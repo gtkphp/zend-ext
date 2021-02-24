@@ -20,9 +20,9 @@ class Glib extends DocBook
      */
     protected $current_generator;
 
-    function save($dirname) {
+    function save($dirname):string {
         $service = current($this->codeGenerator);
-        echo $service->render($this->package);
+        return $service->render($this->package);
     }
 
     /**

@@ -1,14 +1,12 @@
 <?php echo '<?php' ?>
 
-namespace <?php echo $this->namespaceHelper($this->name) ?>;
-
 /**
 <?php echo $this->commentHelper($this->description) ?>
-*/
+ */
 class <?php echo $this->nameclassHelper($this->name) ?> <?php echo isset($this->extends)?'extends '.$this->extends:''; ?>
 {
-<?php foreach($this->methods as $key=>$method): ?>
-    <?php echo $this->methodHelper($method); ?>
-<?php endforeach; ?>
-
 }
+
+<?php foreach($this->methods as $key=>$method): ?>
+<?php echo $this->methodHelper($method); ?>
+<?php endforeach; ?>

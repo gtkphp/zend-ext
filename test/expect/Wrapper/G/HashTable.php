@@ -6,6 +6,19 @@ use \G\HashTableIter;
 use \SplDoublyLinkedList;
 
 /*
+ * A convenience wrapper Gtkmm ?
+namespace G;
+class HashTable {
+    private $hashTable;
+    private $size;
+    function __getter(string $name) {
+        return g_hash_table_size($this->hashTable);
+    }
+}
+*/
+
+
+/*
 use G\HashFunc;
 use G\EqualFunc;
 use G\DestroyNotify;

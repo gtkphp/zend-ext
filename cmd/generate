@@ -3,22 +3,55 @@
 /* $] ./generate --version=3
 "3.22.30" */
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
+use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
+use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
 
 define('APP_DIR', realpath(__DIR__.'/..'));
 
 $tag = '2.56.4';
 $log_dir = APP_DIR."/log/glib-$tag";
 $tmp_dir = APP_DIR.'/tmp';
+$output_dir = APP_DIR.'/output';
 $log = $log_dir.'/log.txt';
 
 `mkdir -p $log_dir`;
+`mkdir -p $output_dir`;
 //`chmod u+w $log_dir`;
 
 
 `touch $log`;
+`touch $output_dir/GHashTable.php`;
+
 
 `echo "Starting..." > $log`;
 
 //`echo "Add log" >> $log`;
 //`git clone https://github.com/GNOME/glib.git > $log`;
 //`git checkout tags/$tag -b <branch>`
+
+$src_dir = '/home/dev/Projects/glib';
+$build_dir = '/home/dev/Projects/glib-build-doc';
+$service = new GlibSourceCode($src_dir, $build_dir);
+$service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
+$service->loadTypes();
+
+$servicePhp = new Php8CodeGenerator();
+//$servicePhp->setStyle(CodeGenerator::POO_STYLE);
+// TODO: CodeGenerator::C_STYLE_HEADER
+//       CodeGenerator::C_STYLE_SOURCE
+
+// compare glib-decl vs glib docBook
+$docBook = new GlibDocBook();
+$docBook->addSourceCode($service);
+$docBook->addCodeGenerator($servicePhp);
+$docBook->load(/*doc.sgml*/);
+$code = $docBook->save('/home/dev/Projects/gtkphp/output');
+
+// Output php-doc
+// Output php-x.x.x API
+// Output php-x.x.x Wrapper
+// Output zend_code_extension
+file_put_contents("$output_dir/GHashTable.php", $code);

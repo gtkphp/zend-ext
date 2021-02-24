@@ -14,7 +14,7 @@ use Zend\Ext\Helpers\Php\Poo\TypeHelper;
 
 use Zend\Ext\Helpers\Php\C\NamemethodHelper as CNamemethodHelper;
 use Zend\Ext\Helpers\Php\C\TypeHelper as CTypeHelper;
-
+use Zend\Ext\Helpers\Php\C\NameclassHelper as CNameclassHelper;
 
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
@@ -90,8 +90,7 @@ class CodeGenerator
             return new CommentHelper;
         });
         $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            NameclassHelper::$filter = new CamelCaseToUnderscore;
-            return new NameclassHelper;
+            return new CNameclassHelper;
         });
         $pluginManager->setFactory('methodHelper', function ($pluginManager) {
             return new MethodHelper;
