@@ -48,6 +48,8 @@ class TypeHelper extends AbstractHelper
         TypeGenerator::PRIMITIVE_UINT16 =>'int',
         TypeGenerator::PRIMITIVE_UINT32 =>'int',
         TypeGenerator::PRIMITIVE_UINT64 =>'int',
+
+        TypeGenerator::PRIMITIVE_POINTER=>'Object',// StdClass
     ];
 
     public function __invoke(TypeGenerator $type)
@@ -58,13 +60,14 @@ class TypeHelper extends AbstractHelper
         // check if internal php type primitive
 
         if ($type->isPrimitive()) {
-            $output = ': ' . "\e[3;34m".self::$internalPhpTypes[$type->getPrimitiveType()]."\e[m";
+            //$output = ': ' . "\e[3;34m".self::$internalPhpTypes[$type->getPrimitiveType()]."\e[m";
+            $output = self::$internalPhpTypes[$type->getPrimitiveType()];
             return $output;
         } else {
             // check if is an known type
             $package = $type->getOwnPackage();
             $list_objects = $package->getListTypeObject();
-            if (in_array($name, $list_objects)) {
+            if (isset($list_objects[$name])) {
                 $ns = $package->getName();
                 $type_ns = $this->getView()->namespaceHelper($name);
                 $name = $this->getView()->nameclassHelper($name);
@@ -74,7 +77,7 @@ class TypeHelper extends AbstractHelper
                     // TODO remove
                     $name = "\e[2;33m".$name."\e[m";// yellow
                 }
-                $output = ': ' . $name;
+                $output = $name;
                 return $output;
             }
             $list_enums = $package->getListTypeEnum();
@@ -98,7 +101,7 @@ class TypeHelper extends AbstractHelper
                 // GtkApplication(prerequist) add use ...
                 // GtkWindowType (enum)
 
-                $output = ': ' . "\e[1;31m".$name."\e[m#TODO";// red
+                $output = "\e[1;31m".$name."\e[m";// red
             }
 
             //$list_boxeds = $package->getListTypeBoxed();

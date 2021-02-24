@@ -39,12 +39,32 @@ class MethodGenerator extends AbstractGenerator
     protected $isStatic = FALSE;
     protected $isVirtual = FALSE;
     protected $isOverride = FALSE;
+    protected $isCallback = FALSE;
     /**
      * @var Array of ParameterGenerator
      */
     protected $parameters = [];
 
 
+    public function setIsStatic(bool $isStatic=True)
+    {
+        $this->isStatic = $isStatic;
+        return $this;
+    }
+    public function isStatic()
+    {
+        return $this->isStatic;
+    }
+
+    public function setIsCallback(bool $isCallback=True)
+    {
+        $this->isCallback = $isCallback;
+        return $this;
+    }
+    public function isCallback()
+    {
+        return $this->isCallback;
+    }
 
 
     /**

@@ -1,8 +1,20 @@
     /**
     <?php echo $this->commentHelper($this->short_description) ?>
      */
-    public function <?php
+    <?php echo $this->method->isStatic()?'static ':'' ?>function <?php
         echo $this->namemethodHelper($this->method)
-    ?> (...) <?php
+    ?> (<?php
+    $skip_self = !$this->method->isStatic() && !$this->method->isCallback();
+    $glue = '';
+    foreach($this->parameters as $parameter) {
+        if ($skip_self) {
+            $skip_self = False;
+            continue;
+        }
+        echo $glue;
+        echo $this->parameterHelper($parameter);
+        $glue = ', ';
+    }
+    ?>): <?php
     echo $this->typeHelper($this->type)
     ?>{/*Internal*/}

@@ -52,11 +52,6 @@ class SourceCode {
     protected $doc = NULL;
 
     /**
-     * @var AbstractGenerator $currentGenerator
-     */
-    protected $currentGenerator = NULL;
-
-    /**
      * @var ExpressionParser $parser
      */
     private $parser = NULL;
@@ -81,12 +76,12 @@ class SourceCode {
 
     protected $_parse;// int : 0=> nop; 1=> parse(); 2=> parse() and evaluate()
     protected $_item;// string of item to process( Typedef | Macro | Enum | Struct)
+    protected $_item_fixed;// some struct declaration are empty, let count
     protected $_item_processed;// array of typedef processed successfully
     protected $_item_remaining;// array of failed items
     protected $_current_item;// string of current typedef
     protected $_passed_item;// number of typedef processed successfully
     protected $_total_item;// number of typedef successfully processed
-    protected $_skipable;
 
     /**
      * DocReference constructor.
@@ -222,66 +217,123 @@ class SourceCode {
         /*$types = $this->parser->getTypes();
         $keys = array_keys($types);
         print_r($keys);*/
-        $enable = True;
 
-        if ($enable) {
-            $this->getItems('TYPEDEF', 2);
-            $this->data['TYPEDEF']=$this->array['typedefs'];
-            unset($this->array);
+        for ($i=0; $i<1; $i++) {
+            $enable = True;
+            if ($enable) {
+                $this->getItems('TYPEDEF', 2);
+                $this->data['TYPEDEF']=$this->array['typedefs'];
+                unset($this->array);
+            }
+
+            if ($enable) {
+                $this->getItems('MACRO');
+                //TODO: $model = $this->getPackage()->createEnum($name, $data);
+                //$model = new EnumGenerator(/*$data*/);
+                //TODO: $model = $this->getPackage()->createStruct($name, $data);
+                //$model = new StructGenerator($data);
+                $this->data['MACRO']=$this->array;
+                unset($this->array);
+            }
+
+            // Additional typedef
+            if ($i==0) {
+                $tokens = $this->preprocessor->process($this->data_file);
+                $this->parser->parse($tokens, $this->context);
+            }
+
+            if ($enable) {
+                $this->getItems('ENUM', 3);
+                $this->data['ENUM']=$this->array['enums'];
+                unset($this->array);
+            }
+
+            /**
+             * @see glib-decl.txt for <STRUC>GThread</STRUC> (is duplicated ?)
+             */
+            if ($enable) {
+                $this->getItems('STRUCT', 2, 3);
+                $this->data['STRUCT']=$this->array['structs'];
+                // concat $this->data['TYPEDEF'] + $this->array['typedefs']
+                unset($this->array);
+            }
+
+            //$enums = $this->getUserFunctions($nodes);
+            if ($enable) {
+                $this->getItems('USER_FUNCTION', 2, 1);
+                $this->data['TYPEDEF'] += $this->array['typedefs'];
+                unset($this->array);
+            }
+
+            if ($enable) {
+                $this->getItems('STRUCT', 2, 3);
+                $this->data['STRUCT']=$this->array['structs'];
+                // concat $this->data['TYPEDEF'] + $this->array['typedefs']
+                unset($this->array);
+            }
         }
 
-        if ($enable) {
-            $this->getItems('MACRO');
-            //TODO: $model = $this->getPackage()->createEnum($name, $data);
-            //$model = new EnumGenerator(/*$data*/);
-            //TODO: $model = $this->getPackage()->createStruct($name, $data);
-            //$model = new StructGenerator($data);
-            $this->data['MACRO']=$this->array;
-            unset($this->array);
-        }
+        // TODO parse the file and create FunctionGenerator
+        // TODO parse the file and create StructGenerator
+        // TODO parse the file and create EnumGenerator
 
-        if ($enable) {
-            $this->getItems('ENUM', 3);
-            $this->data['ENUM']=$this->array['enums'];
-            unset($this->array);
+        echo "\n";
+        echo '.../'.basename($filename)." parsed...\n";
+        echo "----------------------------------\n";
+        echo $this->reporting['TYPEDEF']['passed'].PHP_EOL;
+        echo $this->reporting['ENUM']['passed'].PHP_EOL;
+        echo $this->reporting['STRUCT']['passed'].PHP_EOL;
+            echo "\tstruct GMarkupParser not processed\n";
+            echo "\tutimbuf blacklisted\n";
+            echo "\tGWin32PrivateStat Doublon\n";
+            echo "\tGThread Doublon\n";
+            echo "\tTotal: 84/84\n";
+        echo $this->reporting['MACRO']['passed'].PHP_EOL;
+        echo $this->reporting['USER_FUNCTION']['passed'].PHP_EOL;
+        //print_r($this->reporting['USER_FUNCTION']['remaining']);
+        //echo count($this->reporting['STRUCT']['processed']).PHP_EOL;
+        //print_r($this->reporting['STRUCT']);
+        /*
+        $expression = "/root/STRUCT/NAME";
+        $nodes = $this->xpath->query($expression);
+        echo "Check ".count($nodes)." structs".PHP_EOL;
+        echo "Done ".count($this->reporting['STRUCT']['processed'])." structs".PHP_EOL;
+        $i=0;
+        $doublon = array();
+        foreach($nodes as $node) {
+            $name = trim($node->nodeValue);
+            if(isset($doublon[$name])) {
+                echo '>>'.$name ."\n";
+            }
+            $doublon[$name] = 1;
+            if (empty($name)) {
+                echo "One empty name \n";
+            }
+            if (!isset($this->reporting['STRUCT']['processed'][$name])) {
+                echo 'blacklist '.$name . PHP_EOL;
+            }
+            $i++;
         }
+        echo $i."\n";
+        */
 
-        // Additional typedef
-        $tokens = $this->preprocessor->process($this->data_file);
-        $this->parser->parse($tokens, $this->context);
 
-        /**
-         * @see glib-decl.txt for <STRUC>GThread</STRUC> (is duplicated ?)
-         */
-        if ($enable) {
-            $this->getItems('STRUCT', 2, 3);
-            $this->data['STRUCT']=$this->array['structs'];
-            // concat $this->data['TYPEDEF'] + $this->array['typedefs']
-            unset($this->array);
-        }
-
-        //$enums = $this->getUserFunctions($nodes);
-        if ($enable) {
-            $this->getItems('USER_FUNCTION', 2, 3);
-            $this->data['TYPEDEF'] += $this->array['typedefs'];
-            unset($this->array);
-        }
+        //echo $this->reporting['USER_FUNCTION']['passed'].PHP_EOL;
+        //print_r($this->reporting);
+        //echo $this->reporting['USER_FUNCTION']['passed'].PHP_EOL;
+        //print_r($this->reporting['USER_FUNCTION']['remaining']);
 
         $this->parser;
         //unset($this->parser);
         unset($this->xpath);
         unset($this->doc);
-
-        // TODO parse the file and create FunctionGenerator
-        // TODO parse the file and create StructGenerator
-        // TODO parse the file and create EnumGenerator
     }
 
     /* ----------------------------------------------------------------
      * <ITEM>
      * ---------------------------------------------------------------- */
     function getItems(string $item, int $parse=0, int $max_try=3) {
-        $this->array = array();
+        $this->array = array('typedefs'=>array(), 'enums'=>array(), 'structs'=> array(), 'unions'=> array());
 
         $this->_item = $item;
         $this->_parse = $parse;
@@ -292,7 +344,7 @@ class SourceCode {
         $this->_passed_item = 0;
         $this->_item_remaining = array();
         $this->_item_processed = array();
-        $this->_skipable = False;
+        $this->_item_fixed = array();
         $max_pass = $max_try;
         $pass = 0;
         while($pass<$max_pass) {
@@ -301,14 +353,13 @@ class SourceCode {
             //$this->printer->evaluate($this->array);
             if (0==count($this->_item_remaining)) {
                 break;
-            } else {
-                $this->_skipable = True;
             }
         }
         $this->reporting[$item]=array(
             'passed'=>$this->_passed_item.' of '. $this->_total_item
                 ." $item processed in ${pass} pass( $max_pass max).",
             'processed'=>$this->_item_processed,
+            'fixed'=>$this->_item_fixed,
             'remaining'=>$this->_item_remaining,
         );
     }
@@ -323,13 +374,16 @@ class SourceCode {
             } catch (DeprecatedException $exc) {
                 $msg = $exc->getMessage();
                 $this->_item_remaining[$this->_current_item] = $msg;
+                //echo $msg.PHP_EOL;
             } catch (\LogicException $exc) {
                 $msg = $exc->getMessage();
                 $this->_item_remaining[$this->_current_item] = $msg;
+                //echo $msg.PHP_EOL;
             } catch (\Zend\C\Engine\Error $exc) {
                 //$msg = substr($exc->getMessage(), 0, 32);
                 $msg = $exc->getMessage();
                 $this->_item_remaining[$this->_current_item] = $msg;
+                //echo $msg.PHP_EOL;
             }
         }
 
@@ -366,11 +420,18 @@ class SourceCode {
         $c_str = trim($c_str);
 
         if ('USER_FUNCTION'==$this->_item) {
-            if (empty($c_str)) echo "$name\n";
+            if (empty($c_str)) echo "$name is empty\n";
             $c_str = "typedef $return (*$name) ($c_str);";
         } elseif ('STRUCT'==$this->_item && empty($c_str)) {
             $c_str = 'typedef struct _'.$name.' '.$name.';'."\n";
+            //$this->_item_fixed[$name]="typedef struct";
         }
+
+        /*
+        if (in_array($name, array('GDestroyNotify', 'GHookFinalizeFunc', 'GSourceFunc', 'GSourceDummyMarshal'))) {
+            echo $c_str . PHP_EOL;
+        }
+        */
 
         // TODO accepte string for $parser->parse()
         //$this->tmp_file = dirname($this->tmp_file).'/'.$name.'.h';
@@ -390,6 +451,7 @@ class SourceCode {
 
             if ($this->_parse>1) {
                 $this->printer->print($ast, $this->array);
+
                 //print_r(array_keys($this->array));
                 //if (count($this->array) && $this->_item='STRUCT' && isset($this->array['name']) && $this->array['name']='_GArray')
                 //    print_r($this->array);
@@ -413,7 +475,7 @@ class SourceCode {
 
         //echo "$this->_item \e[1;32m $this->_current_item \e[0m Done\n";
         unset($this->_item_remaining[$this->_current_item]);
-        $this->_item_processed[$name]=True;
+        $this->_item_processed[$name]=1;
         $this->_passed_item++;
     }
 }

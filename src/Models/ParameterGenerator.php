@@ -57,7 +57,10 @@ class ParameterGenerator extends AbstractGenerator
      * @var bool
      */
     protected $isOptional=False;
-
+    /**
+     * @var bool $isCallback
+     */
+    protected $isCallback = FALSE;
 
 
     public function setType($type)
@@ -102,6 +105,16 @@ class ParameterGenerator extends AbstractGenerator
     public function setIsOptional(bool $isOptional): void
     {
         $this->isOptional = $isOptional;
+    }
+
+    public function setIsCallback(bool $isCallback=True)
+    {
+        $this->isCallback = $isCallback;
+        return $this;
+    }
+    public function isCallback()
+    {
+        return $this->isCallback;
     }
 
     /**

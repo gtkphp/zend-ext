@@ -32,7 +32,7 @@ class ClassGeneratorTest extends TestCase
         $docBook = new GlibDocBook();
         $docBook->addSourceCode($service);
         $docBook->load();
-
+        $docBook->save('/home/dev/Projects/gtkphp/output');
 
         $this->assertTrue(True);
     }

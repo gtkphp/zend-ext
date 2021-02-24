@@ -16,6 +16,11 @@ class NamemethodHelper extends AbstractHelper
 {
     static public $filter = NULL;
 
+    protected function getPackageName($method) {
+        $package = $method->getOwnPackage();
+        return $package->getName();
+    }
+
     protected function getObjectName($method) {
         $object = $method->getParentGenerator();
         return $object->getName();
@@ -27,15 +32,26 @@ class NamemethodHelper extends AbstractHelper
 
         $tmp = self::$filter->filter($object_name);
         $tmp = strtolower($tmp);
-        $pos = strlen($tmp);
+        $pos = strpos($method->getName(), $tmp);
 
-        $tmp = substr($method->getName(), $pos+1);
-        $filter = new UnderscoreToCamelCase();
-        $tmp = $filter->filter($tmp);
-        $tmp = lcfirst($tmp);
+        if (False!==$pos) {
+            $tmp = substr($method->getName(), $pos + strlen($tmp));
+            $filter = new UnderscoreToCamelCase();
+            $tmp = $filter->filter($tmp);
+            $tmp = lcfirst($tmp);
 
-        if ($tmp=='new') {
-            $tmp = '__construct';
+            if ($tmp == 'new') {
+                $tmp = '__construct';
+            }
+            if ($tmp == 'destroy') {
+                $tmp = '__destruct';
+            }
+        } else {
+            $filter = new UnderscoreToCamelCase;
+            $tmp = $filter->filter($method->getName());
+            $ns = $this->getPackageName($method);
+            $pos = strpos($tmp, $ns);
+            $tmp = substr($tmp, $pos+strlen($ns));
         }
 
         /*

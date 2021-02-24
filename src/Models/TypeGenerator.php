@@ -40,6 +40,7 @@ class TypeGenerator extends AbstractGenerator
     const PRIMITIVE_UINT32 = 0x19;
     const PRIMITIVE_UINT64 = 0x20;
 
+    const PRIMITIVE_POINTER = 0x21;
 
     // correspondance entre C->Model
 
@@ -105,7 +106,10 @@ class TypeGenerator extends AbstractGenerator
         'guint8'              => self::PRIMITIVE_UINT8,
         'guint16'             => self::PRIMITIVE_UINT16,
         'guint32'             => self::PRIMITIVE_UINT32,
-        'guint64'             => self::PRIMITIVE_UINT64
+        'guint64'             => self::PRIMITIVE_UINT64,
+
+        'gpointer'             => self::PRIMITIVE_POINTER,
+
     ];
 
     /**
@@ -116,6 +120,17 @@ class TypeGenerator extends AbstractGenerator
     protected $primitiveType=NULL;
     protected $expressionArray;
 
+    /**
+     * @param  string|array $options
+     */
+    public function __construct($options = NULL)
+    {
+        parent::__construct($options);
+        if (isset(self::$internalCTypes[$this->getName()])) {
+            $this->primitiveType = self::$internalCTypes[$this->getName()];
+            $this->isPrimitive = True;
+        }
+    }
     public function setArray($isArray=True)
     {
         $this->isArray = $isArray;

@@ -17,20 +17,22 @@ use Zend\Ext\Models\TypeGenerator;
 
 class PackageGenerator extends AbstractGenerator
 {
-
     /**
      * @var array $list_type_object array('GtkWidget', 'GtkBin', ...)
      */
-    protected $list_type_object;
+    protected $list_type_object = array();
     /**
      * @var array $list_type_enum array('GtkWindowType', ...)
      */
-    protected $list_type_enum;
+    protected $list_type_enum = array();
 
     public function createClass(string $name): ClassGenerator {
         $class = new ClassGenerator($name);
         $class->setParentGenerator($this);
         $class->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $this->list_type_object[$name] = $class;
+
         return $class;
     }
 

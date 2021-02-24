@@ -13,8 +13,6 @@ use Zend\View\Helper\AbstractHelper;
 
 class MethodHelper extends AbstractHelper
 {
-    static public $filter = NULL;
-
     public function __invoke($method)
     {
         $licenseModel = new ViewModel(array('author' => 'No Name'));
@@ -23,6 +21,7 @@ class MethodHelper extends AbstractHelper
         $licenseModel->setVariable('short_description', $method->getShortDescription());
         $licenseModel->setVariable('type', $method->getType());
         $licenseModel->setVariable('method', $method);
+        $licenseModel->setVariable('parameters', $method->getParameters());
         $licenseModel->setTemplate('method.phtml');
 
         $view = $this->getView();

@@ -11,7 +11,8 @@ class CommentHelper extends AbstractHelper
 
     public function __invoke($comment)
     {
-        //new \Send\Filter\StripTag()
+        $comment = self::$filter->filter($comment);
+        $comment = str_replace(["\r\n", "\r", "\n"], ' ', $comment);
         $len = strlen($comment);
         if ($len<75) {
             return ' * ' . $comment . PHP_EOL;
