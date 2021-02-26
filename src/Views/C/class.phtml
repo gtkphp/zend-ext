@@ -1,0 +1,48 @@
+<?php echo $this->license; ?>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <gtk/gtk.h>
+
+#include "php.h"
+#include "php_ini.h"
+#include "zend_interfaces.h"
+#include "ext/standard/info.h"
+
+//#include "php_gtk.h"
+#include "<?php echo strtolower($this->namespaceHelper($this->name)) ?>.h"
+
+<?php /* for each parent $this->class->getExtends();
+#include "widget.h"
+ */ ?>
+
+
+PHP_<?php echo $this->namespaceHelper($this->name) ?>_EXPORT zend_class_entry *php_<?php
+    echo $this->nameclassHelper($this->name);
+?>_class_entry;
+HashTable php_<?php
+    echo $this->nameclassHelper($this->name);
+?>_prop_handlers;
+
+<?php /*for each parent $this->class->getExtends();
+extern HashTable php_gtk_widget_prop_handlers;
+ */ ?>
+extern HashTable classes;
+
+<?php
+/*
+namespace <?php echo $this->namespaceHelper($this->name) ?>;
+
+/**
+<?php echo $this->commentHelper($this->description) ?>
+* /
+class <?php echo $this->nameclassHelper($this->name) ?> <?php echo isset($this->extends)?'extends '.$this->extends:''; ?>
+{
+<?php foreach($this->methods as $key=>$method): ?>
+    <?php echo $this->methodHelper($method); ?>
+<?php endforeach; ?>
+
+}
+*/

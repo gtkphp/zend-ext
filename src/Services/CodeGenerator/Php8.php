@@ -11,6 +11,7 @@ use Zend\View\Renderer\PhpRenderer;
 use Zend\View\Resolver\TemplatePathStack;
 use Zend\View\Strategy\PhpRendererStrategy;
 use Zend\View\View;
+/*
 use Zend\Ext\Helpers\Php\Poo\CommentHelper;
 use Zend\Ext\Helpers\Php\Poo\MethodHelper;
 use Zend\Ext\Helpers\Php\Poo\NameclassHelper;
@@ -19,6 +20,7 @@ use Zend\Ext\Helpers\Php\Poo\NamepropertyHelper;
 use Zend\Ext\Helpers\Php\Poo\NamespaceHelper;
 use Zend\Ext\Helpers\Php\Poo\ParameterHelper;
 use Zend\Ext\Helpers\Php\Poo\TypeHelper;
+*/
 
 use Zend\Ext\Models\PackageGenerator;
 
@@ -51,7 +53,7 @@ class Php8 extends CodeGenerator
         // <?php echo $this->date
         $licenseModel = new ViewModel(array('author' => 'No Name'));
         $licenseModel->setVariable('date', '31/12/1999');
-        $licenseModel->setTemplate('method.phtml');
+        $licenseModel->setTemplate('license.phtml');
 
         // <?php echo $this->license
         // <?php echo $this->message
@@ -59,7 +61,7 @@ class Php8 extends CodeGenerator
         $model->setVariable('name', $class->getName());
         $model->setVariable('description', $class->getDescription());
         $model->setVariable('methods', $class->getMethods());
-        //$model->addChild($licenseModel, 'licenseHeader');
+        $model->addChild($licenseModel, 'license');
         $model->setTemplate('class.phtml');
 
         return $model;
@@ -72,7 +74,11 @@ class Php8 extends CodeGenerator
         $view->setResponse(new Response());
 
         $resolver = new TemplatePathStack();
-        $resolver->addPath(__DIR__.'/../../Views/Php/'.$map[$this->style]);
+        if (self::C_CODE==$this->code) {
+            $resolver->addPath(__DIR__.'/../../Views/C');
+        } else {
+            $resolver->addPath(__DIR__.'/../../Views/Php/'.$map[$this->style]);
+        }
 
         $renderer = new PhpRenderer();
         $renderer->setResolver($resolver);
@@ -90,12 +96,14 @@ class Php8 extends CodeGenerator
             var_dump($event);
             return $renderer;
         });*/
-
-        if ($this->style==CodeGenerator::PP_STYLE) {
+        if (self::C_CODE==$this->code) {
+            $renderer->setHelperPluginManager($this->CStyleManager());
+        } else if ($this->style==self::PP_STYLE) {
             $renderer->setHelperPluginManager($this->phpPpStyleManager());
         } else {
             $renderer->setHelperPluginManager($this->PhpPooStyleManager());
         }
+
 
         return $view;
     }

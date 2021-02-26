@@ -16,6 +16,8 @@ use Zend\Ext\Helpers\Php\Pp\NamemethodHelper as NamemethodHelperPhpPp;
 use Zend\Ext\Helpers\Php\Pp\TypeHelper as TypeHelperPhpPp;
 use Zend\Ext\Helpers\Php\Pp\NameclassHelper as NameclassHelperPhpPp;
 
+use Zend\Ext\Helpers\C\NameclassHelper as NameclassHelperC;
+
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
 use Zend\Filter\Word\CamelCaseToUnderscore;
@@ -41,6 +43,7 @@ class CodeGenerator
      * @var int $style
      */
     protected $style = self::NO_STYLE;
+    protected $code = self::PHP_CODE;
 
     function __construct($name)
     {
@@ -74,6 +77,24 @@ class CodeGenerator
     function getStyle():int
     {
         return $this->style;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCode(): int
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param int $code
+     * @return CodeGenerator
+     */
+    public function setCode(int $code): CodeGenerator
+    {
+        $this->code = $code;
+        return $this;
     }
 
     public function phpPpStyleManager() {
@@ -134,6 +155,46 @@ class CodeGenerator
         $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
             NameclassHelper::$filter = new CamelCaseToUnderscore;
             return new NameclassHelper;
+        });
+        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
+            return new MethodHelper;
+        });
+        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
+            NamemethodHelper::$filter = new CamelCaseToUnderscore;
+            return new NamemethodHelper;
+        });
+        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
+            return new TypeHelper;
+        });
+        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
+            return new ParameterHelper;
+        });
+        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
+            return new NamepropertyHelper;
+        });
+
+        return $pluginManager;
+    }
+    public function CStyleManager() {
+        $pluginManager = new HelperPluginManager(new ServiceManager());
+
+        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
+            $filter = new CamelCaseToUnderscore;
+            NamespaceHelper::$filter = $filter;
+            $namespaceHelper = new NamespaceHelper;
+            return $namespaceHelper;
+        });
+        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
+            //$filter = new StripTags;
+            $filter = new FilterChain();
+            $filter->attach(new StripTags());
+            //       ->attach(new StripNewlines());
+            CommentHelper::$filter = $filter;
+            return new CommentHelper;
+        });
+        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
+            NameclassHelperC::$filter = new CamelCaseToUnderscore;
+            return new NameclassHelperC;
         });
         $pluginManager->setFactory('methodHelper', function ($pluginManager) {
             return new MethodHelper;

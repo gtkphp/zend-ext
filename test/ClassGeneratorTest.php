@@ -25,7 +25,7 @@ class ClassGeneratorTest extends TestCase
         $service->loadTypes();
 
         $servicePhp = new Php8CodeGenerator();
-        //$servicePhp->setStyle(CodeGenerator::POO_STYLE);
+        $servicePhp->setCode(CodeGenerator::C_CODE);
 
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();
