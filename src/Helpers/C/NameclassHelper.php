@@ -9,10 +9,14 @@ class NameclassHelper extends AbstractHelper
 {
     static public $filter = NULL;
 
-    public function __invoke($name)
+    public function __invoke($name, int $case=0)
     {
         $tmp = self::$filter->filter($name);
-        $tmp = strtolower($tmp);
+        if ($case==1) {
+            $tmp = strtoupper($tmp);
+        } else if ($case==-1) {
+            $tmp = strtolower($tmp);
+        }
         return $tmp;
     }
 }
