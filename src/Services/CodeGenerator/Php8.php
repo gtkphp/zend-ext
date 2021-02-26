@@ -27,7 +27,7 @@ use Zend\Ext\Services\CodeGenerator;
 class Php8 extends CodeGenerator
 {
 
-    function __construct($style=CodeGenerator::C_STYLE)
+    function __construct($style=CodeGenerator::PP_STYLE)
     {
         parent::__construct("php8");
         $this->setStyle($style);
@@ -66,7 +66,7 @@ class Php8 extends CodeGenerator
     }
     function getView():View
     {
-        $map = array(0=>'Unknown', 1=>'C', 2=>'Poo');
+        $map = array(0=>'Unknown', 1=>'Pp', 2=>'Poo');
 
         $view = new View();
         $view->setResponse(new Response());
@@ -91,7 +91,7 @@ class Php8 extends CodeGenerator
             return $renderer;
         });*/
 
-        if ($this->style==CodeGenerator::C_STYLE) {
+        if ($this->style==CodeGenerator::PP_STYLE) {
             $renderer->setHelperPluginManager($this->cStyleManager());
         } else {
             $renderer->setHelperPluginManager($this->pooStyleManager());

@@ -49,13 +49,14 @@ class TypeHelper extends AbstractHelper
         TypeGenerator::PRIMITIVE_UINT32 =>'int',
         TypeGenerator::PRIMITIVE_UINT64 =>'int',
 
-        TypeGenerator::PRIMITIVE_POINTER=>'Object',// StdClass
+        TypeGenerator::PRIMITIVE_POINTER=>'object',// StdClass
     ];
 
-    public function __invoke(TypeGenerator $type)
+    public function __invoke(TypeGenerator $type, $doc=False)
     {
         $output = '';
         $name = $type->getName();
+        // if isPrototype()
         // check if void,
         // check if internal php type primitive
 
@@ -88,6 +89,21 @@ class TypeHelper extends AbstractHelper
                 //$name = "\e[2;34m".'int'."\e[m";// yellow
                 return 'int';
             }
+            if ($type->isPrototype() && $doc) {
+                $data = $type->getPrototype();
+                //print_r($data);
+                $param = '';
+                $glue = '';
+                $returnType = new TypeGenerator($data['return']['type']);
+                $return = $this->getView()->typeHelper($returnType);
+                foreach($data['parameters'] as $parameter) {
+                    $paramType = new TypeGenerator($parameter['type']);
+                    $paramType->setParentGenerator($type->getParentGenerator());
+                    $param .= $glue . $this->getView()->typeHelper($paramType, True);
+                    $glue = ', ';
+                }
+                return "callback($param): $return";
+            }
 
             {
                 // GdkWindowTypeHint
@@ -115,6 +131,13 @@ class TypeHelper extends AbstractHelper
                 $output = ': ' . "\e[1;31m".$name."\e[m#TODO";// red
             }
             */
+            if ($name=='gconstpointer' || $name=='gpointer') {
+                if ($doc==False) {
+                    return '';
+                } else {
+                    return 'mixed';
+                }
+            }
 
         }
         return $output;

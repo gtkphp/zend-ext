@@ -12,8 +12,30 @@ use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
 use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 
+
 class ClassGeneratorTest extends TestCase
 {
+
+    public function testExtension()
+    {
+        $src_dir = '/home/dev/Projects/glib';
+        $build_dir = '/home/dev/Projects/glib-build-doc';
+        $service = new GlibSourceCode($src_dir, $build_dir);
+        $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
+        $service->loadTypes();
+
+        $servicePhp = new Php8CodeGenerator();
+        //$servicePhp->setStyle(CodeGenerator::POO_STYLE);
+
+        // compare glib-decl vs glib docBook
+        $docBook = new GlibDocBook();
+        $docBook->addSourceCode($service);
+        $docBook->addCodeGenerator($servicePhp);
+        $docBook->load(/*doc.sgml*/);
+        echo $docBook->save('/home/dev/Projects/gtkphp/output');
+
+        $this->assertTrue(True);
+    }
     public function testGlibDocBook()
     {
         /** clone glib-version */

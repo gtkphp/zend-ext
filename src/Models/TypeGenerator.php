@@ -117,6 +117,8 @@ class TypeGenerator extends AbstractGenerator
      */
     protected $isArray=False;
     protected $isPrimitive=False;
+    protected $isPrototype=False;
+    protected $prototype=array();
     protected $primitiveType=NULL;
     protected $expressionArray;
 
@@ -173,5 +175,41 @@ class TypeGenerator extends AbstractGenerator
     public function isPrimitive()
     {
         return $this->isPrimitive;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPrototype(): bool
+    {
+        return $this->isPrototype;
+    }
+
+    /**
+     * @param bool $isPrototype
+     * @return TypeGenerator
+     */
+    public function setIsPrototype(bool $isPrototype): TypeGenerator
+    {
+        $this->isPrototype = $isPrototype;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPrototype(): array
+    {
+        return $this->prototype;
+    }
+
+    /**
+     * @param array $prototype
+     * @return TypeGenerator
+     */
+    public function setPrototype(array $prototype): TypeGenerator
+    {
+        $this->prototype = $prototype;
+        return $this;
     }
 }

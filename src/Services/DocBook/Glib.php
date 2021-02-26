@@ -60,6 +60,9 @@ class Glib extends DocBook
         $class = $this->package->createClass($className);
         $this->current_generator = $class;
 
+        $description = (string) $xml->refnamediv->refpurpose;
+        $class->setDescription($description);
+
         $result = $xml->xpath("refsect1[@id='$id.functions_details']/refsect2");
         foreach($result as $node) {
             $method = $this->loadMethod($node);
@@ -169,6 +172,8 @@ class Glib extends DocBook
             if (isset($typedefs[$options['type']])) {
                 if ('function'==$typedefs[$options['type']]['type']) {
                     $parameter->setIsCallback();
+                    $parameterType->setIsPrototype(True);
+                    $parameterType->setPrototype($typedefs[$options['type']]['signature']);
                 }
             }
         }

@@ -12,14 +12,16 @@ class CommentHelper extends AbstractHelper
     public function __invoke($comment)
     {
         $comment = self::$filter->filter($comment);
-        $comment = str_replace(["\r\n", "\r", "\n"], ' ', $comment);
+        //$comment = str_replace(["\r\n", "\r", "\n"], ' ', $comment);
+        $comment = preg_replace('/[\r\n ]+/i', ' ', $comment);
+
         $len = strlen($comment);
         if ($len<75) {
             return ' * ' . $comment . PHP_EOL;
         }
         // get the first phrase
         $pos = strpos($comment, '.');
-        if ($pos<72) {
+        if (False!=$pos && $pos<72) {
             return ' * ' . substr($comment, 0, $pos+1) . PHP_EOL;
         }
         return ' * ' . substr($comment, 0, 69) . '...' . PHP_EOL;

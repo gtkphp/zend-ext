@@ -25,8 +25,12 @@ use Zend\View\HelperPluginManager;
 class CodeGenerator
 {
     const NO_STYLE = 0x00;
-    const C_STYLE = 0x01;// proCedural
+    const PP_STYLE = 0x01;// Procedural Programming
     const POO_STYLE = 0x02;// Programming Oriented Object
+
+    const NO_CODE = 0x00;
+    const PHP_CODE = 0x01;
+    const C_CODE = 0x02;
 
     /**
      * @var string $name

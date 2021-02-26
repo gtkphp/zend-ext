@@ -202,7 +202,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         if ($parent) {
             $this->ownPackage = $parent->getOwnPackage();
         } else {
-            throw new Exception("Your Generator is not a part of a PackageGenerator");
+            throw new \Exception("Your Generator is not a part of a PackageGenerator");
         }
         return $this->ownPackage;
     }
