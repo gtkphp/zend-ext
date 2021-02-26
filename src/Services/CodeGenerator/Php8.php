@@ -92,9 +92,9 @@ class Php8 extends CodeGenerator
         });*/
 
         if ($this->style==CodeGenerator::PP_STYLE) {
-            $renderer->setHelperPluginManager($this->cStyleManager());
+            $renderer->setHelperPluginManager($this->phpPpStyleManager());
         } else {
-            $renderer->setHelperPluginManager($this->pooStyleManager());
+            $renderer->setHelperPluginManager($this->PhpPooStyleManager());
         }
 
         return $view;

@@ -12,9 +12,9 @@ use Zend\Ext\Helpers\Php\Poo\NamespaceHelper;
 use Zend\Ext\Helpers\Php\Poo\ParameterHelper;
 use Zend\Ext\Helpers\Php\Poo\TypeHelper;
 
-use Zend\Ext\Helpers\Php\C\NamemethodHelper as CNamemethodHelper;
-use Zend\Ext\Helpers\Php\C\TypeHelper as CTypeHelper;
-use Zend\Ext\Helpers\Php\C\NameclassHelper as CNameclassHelper;
+use Zend\Ext\Helpers\Php\Pp\NamemethodHelper as NamemethodHelperPhpPp;
+use Zend\Ext\Helpers\Php\Pp\TypeHelper as TypeHelperPhpPp;
+use Zend\Ext\Helpers\Php\Pp\NameclassHelper as NameclassHelperPhpPp;
 
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
@@ -76,7 +76,7 @@ class CodeGenerator
         return $this->style;
     }
 
-    public function cStyleManager() {
+    public function phpPpStyleManager() {
         $pluginManager = new HelperPluginManager(new ServiceManager());
 
         $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
@@ -94,16 +94,16 @@ class CodeGenerator
             return new CommentHelper;
         });
         $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            return new CNameclassHelper;
+            return new NameclassHelperPhpPp;
         });
         $pluginManager->setFactory('methodHelper', function ($pluginManager) {
             return new MethodHelper;
         });
         $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            return new CNamemethodHelper;
+            return new NamemethodHelperPhpPp;
         });
         $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new CTypeHelper;
+            return new TypeHelperPhpPp;
         });
         $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
             return new ParameterHelper;
@@ -114,7 +114,7 @@ class CodeGenerator
 
         return $pluginManager;
     }
-    public function pooStyleManager() {
+    public function PhpPooStyleManager() {
         $pluginManager = new HelperPluginManager(new ServiceManager());
 
         $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
