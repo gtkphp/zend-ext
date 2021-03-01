@@ -58,9 +58,12 @@ class Php8 extends CodeGenerator
         // <?php echo $this->license
         // <?php echo $this->message
         $model = new ViewModel();
+        $model->setVariable('class', $class);
         $model->setVariable('name', $class->getName());
         $model->setVariable('description', $class->getDescription());
         $model->setVariable('methods', $class->getMethods());
+        $model->setVariable("vendor", 'My\\\\');
+        //$model->setVariable("vendor", '');
         $model->addChild($licenseModel, 'license');
         $model->setTemplate('class.phtml');
 

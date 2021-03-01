@@ -71,25 +71,49 @@ PHP_FUNCTION(<?php echo $method->getName()?>)
 
 static const zend_function_entry php_<?php echo $this->nameclassHelper($this->name, -1); ?>_functions[] = {
 <?php foreach($this->methods as $key=>$method): ?>
+<?php if(strstr($method->getName(), 'g_hash_table_iter')) continue; ?>
     PHP_FE(<?php echo $method->getName()
     ?>, arginfo_<?php echo $method->getName() ?>)
 <?php endforeach; ?>
     PHP_FE_END
 };
 
+static const zend_function_entry php_<?php echo $this->nameclassHelper($this->name, -1); ?>_iter_functions[] = {
+<?php foreach($this->methods as $key=>$method): ?>
+<?php if(!strstr($method->getName(), 'g_hash_table_iter')) continue; ?>
+    PHP_FE(<?php echo $method->getName()
+    ?>, arginfo_<?php echo $method->getName() ?>)
+<?php endforeach; ?>
+    PHP_FE_END
+};
 
-/*{{{ php_gobject_widget_class_init */
+<?php
+
+function class_init($ns, $nameClass) {
+    $output = <<<EOT
+/*{{{ php_{$nameClass}_class_init */
 zend_class_entry*
-php_<?php echo $this->nameclassHelper($this->name, -1); ?>_class_init(zend_class_entry *ce) {
-    INIT_NS_CLASS_ENTRY((*ce), "My\\Glib", php_<?php echo $this->nameclassHelper($this->name, -1); ?>_functions);
-    ce->create_object = php_<?php echo $this->nameclassHelper($this->name, -1); ?>_new_storage;
-    php_<?php echo $this->nameclassHelper($this->name, -1); ?>_class_entry = zend_register_internal_class_ex(ce, NULL);
-<?php //php_gobject_object_class_entry->ce_flags |= ZEND_ACC_FINAL | ZEND_ACC_ABSTRACT; ?>
-    zend_hash_init(&php_<?php echo $this->nameclassHelper($this->name, -1); ?>_prop_handlers, 0, NULL, php_glib_dtor_prop_handler, 1);
-<?php //php_gobject_register_prop_handler(&php_gobject_window_prop_handlers, "type", sizeof("type")-1, gtk_window_type_read, gtk_window_type_write); ?>
-<?php //zend_hash_merge(&php_gobject_object_prop_handlers, &php_gobject_widget_prop_handlers, php_gobject_copy_prop_handler, 0); ?>
-    zend_hash_add_ptr(&classes, ce->name, &php_<?php echo $this->nameclassHelper($this->name, -1); ?>_prop_handlers);
-
-    return php_<?php echo $this->nameclassHelper($this->name, -1); ?>_class_entry;
+php_{$nameClass}_class_init(zend_class_entry *ce) {
+    INIT_NS_CLASS_ENTRY((*ce), "$ns", php_{$nameClass}_functions);
+    ce->create_object = php_{$nameClass}_create_object;
+    php_{$nameClass}_class_entry = zend_register_internal_class_ex(ce, NULL);
+    zend_hash_init(&php_{$nameClass}_prop_handlers, 0, NULL, php_glib_dtor_prop_handler, 1);
+    zend_hash_add_ptr(&classes, ce->name, &php_{$nameClass}_prop_handlers);
+    
+    return php_{$nameClass}_class_entry;
 }/*}}} */
+EOT;
+    return $output;
+}
 
+foreach($this->class->getRelatedObjects() as $object){
+    $ns = $this->vendor.$this->class->getOwnPackage()->getName();
+    $nameClass = $this->nameclassHelper($object, -1);
+    echo class_init($ns, $nameClass);
+}
+
+echo "\n\n";
+
+$ns = $this->vendor.$this->class->getOwnPackage()->getName();
+$nameClass = $this->nameclassHelper($this->name, -1);
+echo class_init($ns, $nameClass/*call hinerited*/);

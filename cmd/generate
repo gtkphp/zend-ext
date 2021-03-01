@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
@@ -40,6 +41,7 @@ $service->loadTypes();
 
 $servicePhp = new Php8CodeGenerator();
 //$servicePhp->setStyle(CodeGenerator::POO_STYLE);
+$servicePhp->setCode(CodeGenerator::C_CODE);
 // TODO: CodeGenerator::C_STYLE_HEADER
 //       CodeGenerator::C_STYLE_SOURCE
 

@@ -52,7 +52,7 @@ class Glib extends DocBook
 
     protected function loadClass(SimpleXMLElement $xml): ClassGenerator {
         $map=array('Hash Tables'=>'GHashTable');// <------------------------------------------------------------------------
-        $id = trim((string) $xml['id']);
+        $id = trim((string) $xml['id']);//glib-Hash-Tables
 
         $className = (string) $xml->refmeta->refentrytitle;
         $className = $map[$className]?? $className;
@@ -85,6 +85,14 @@ class Glib extends DocBook
                 }
             }
         }
+
+        $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row/entry/link");
+        $relatedObjects = $this->getRelatedObjects($nodes, $className);
+        $class->setRelatedObjects($relatedObjects);
+
+        // load all class before render
+        //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
+
         return $class;
     }
 
@@ -244,7 +252,14 @@ class Glib extends DocBook
     protected function getStyles() {
 
     }
-    protected function getRelatedObjects() {
-
+    protected function getRelatedObjects($nodes, $className) {
+        $array = [];
+        foreach($nodes as $node) {
+            $objName = (string)$node;
+            if ($objName!=$className) {
+                $array[] = $objName;
+            }
+        }
+        return $array;
     }
 }

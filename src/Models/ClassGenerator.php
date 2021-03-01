@@ -85,6 +85,11 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     protected $traitUsageGenerator;
 
     /**
+     * @var array Objects related to this object
+     */
+    protected $relatedObjects;
+
+    /**
      * @param  string $name
      * @param  array|string $flags
      * @param  string $extends
@@ -810,6 +815,24 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
 
 
     /**
+     * @return array
+     */
+    public function getRelatedObjects(): array
+    {
+        return $this->relatedObjects;
+    }
+
+    /**
+     * @param array $relatedObjects
+     * @return ClassGenerator
+     */
+    public function setRelatedObjects(array $relatedObjects): ClassGenerator
+    {
+        $this->relatedObjects = $relatedObjects;
+        return $this;
+    }
+
+    /**
      * @param mixed $value
      *
      * @return void
@@ -833,4 +856,5 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
             gettype($value)
         ));
     }
+
 }
