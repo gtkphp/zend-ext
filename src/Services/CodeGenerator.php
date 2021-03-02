@@ -109,136 +109,30 @@ class CodeGenerator
     }
 
     public function phpPpStyleManager() {
-        $pluginManager = new HelperPluginManager(new ServiceManager());
-
-        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
-            $filter = new CamelCaseToUnderscore;
-            NamespaceHelper::$filter = $filter;
-            $namespaceHelper = new NamespaceHelper;
-            return $namespaceHelper;
-        });
-        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
-            //$filter = new StripTags;
-            $filter = new FilterChain();
-            $filter->attach(new StripTags());
-            //       ->attach(new StripNewlines());
-            CommentHelper::$filter = $filter;
-            return new CommentHelper;
-        });
-        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            return new NameclassHelperPhpPp;
-        });
-        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
-            return new MethodHelper;
-        });
-        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            return new NamemethodHelperPhpPp;
-        });
-        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new TypeHelperPhpPp;
-        });
-        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
-            return new ParameterHelper;
-        });
-        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
-            return new NamepropertyHelper;
-        });
+        $serviceManager = new ServiceManager();
+        $pluginManager = new HelperPluginManager($serviceManager);
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Pp/Helpers', 'Zend\\Ext\\Views\\Php\\Pp\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Helpers', 'Zend\\Ext\\Views\\Php\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
 
         return $pluginManager;
+
     }
     public function PhpPooStyleManager() {
-        $pluginManager = new HelperPluginManager(new ServiceManager());
-
-        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
-            $filter = new CamelCaseToUnderscore;
-            NamespaceHelper::$filter = $filter;
-            $namespaceHelper = new NamespaceHelper;
-            return $namespaceHelper;
-        });
-        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
-            //$filter = new StripTags;
-            $filter = new FilterChain();
-            $filter->attach(new StripTags());
-            //       ->attach(new StripNewlines());
-            CommentHelper::$filter = $filter;
-            return new CommentHelper;
-        });
-        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            NameclassHelper::$filter = new CamelCaseToUnderscore;
-            return new NameclassHelper;
-        });
-        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
-            return new MethodHelper;
-        });
-        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            NamemethodHelper::$filter = new CamelCaseToUnderscore;
-            return new NamemethodHelper;
-        });
-        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new TypeHelper;
-        });
-        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
-            return new ParameterHelper;
-        });
-        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
-            return new NamepropertyHelper;
-        });
+        $serviceManager = new ServiceManager();
+        $pluginManager = new HelperPluginManager($serviceManager);
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Poo/Helpers', 'Zend\\Ext\\Views\\Php\\Poo\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Helpers', 'Zend\\Ext\\Views\\Php\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
 
         return $pluginManager;
     }
 
     public function CStyleManager() {
-        //https://www.nikolaposa.in.rs/blog/2018/07/14/lazy-loading-services-using-zf-service-manager/
         $serviceManager = new ServiceManager();
         $pluginManager = new HelperPluginManager($serviceManager);
         $pluginManager->addPathHelper(__DIR__.'/../Views/C/Helpers', 'Zend\\Ext\\Views\\C\\Helpers');
         $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
-
-        /*$pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
-            $filter = new CamelCaseToUnderscore;
-            NamespaceHelper::$filter = $filter;
-            $namespaceHelper = new NamespaceHelper;
-            return $namespaceHelper;
-        });
-        $pluginManager->setFactory('commentHelper', function ($pluginManager) {
-            //$filter = new StripTags;
-            $filter = new FilterChain();
-            $filter->attach(new StripTags());
-            //       ->attach(new StripNewlines());
-            CommentHelper::$filter = $filter;
-            return new CommentHelper;
-        });
-        $pluginManager->setFactory('nameclassHelper', function ($pluginManager) {
-            NameclassHelperC::$filter = new CamelCaseToUnderscore;
-            return new NameclassHelperC;
-        });
-        $pluginManager->setFactory('methodHelper', function ($pluginManager) {
-            return new MethodHelper;
-        });
-        $pluginManager->setFactory('namemethodHelper', function ($pluginManager) {
-            NamemethodHelper::$filter = new CamelCaseToUnderscore;
-            return new NamemethodHelper;
-        });
-        $pluginManager->setFactory('typeHelper', function ($pluginManager) {
-            return new TypeHelper;
-        });
-        $pluginManager->setFactory('returntypeHelper', function ($pluginManager) {
-            return new ReturntypeHelperC;
-        });
-        $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
-            return new ParameterHelper;
-        });
-        $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
-            return new NamepropertyHelper;
-        });
-        $pluginManager->setFactory('maxargHelper', function ($pluginManager) {
-            return new MaxargHelperC;
-        });
-        $pluginManager->setFactory('requiredargHelper', function ($pluginManager) {
-            return new RequiredargHelperC;
-        });*/
-
-
 
         return $pluginManager;
     }
