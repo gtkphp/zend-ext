@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Poo;
+namespace Zend\Ext\Views\Php\Pp\Helpers;
 
 use Zend\Filter\Word\UnderscoreToDash;
 use Zend\View\Helper\AbstractHelper;
@@ -28,6 +28,8 @@ class NamemethodHelper extends AbstractHelper
 
     public function __invoke($method)
     {
+        return $method->getName();
+
         $object_name = $this->getObjectName($method);
 
         $tmp = self::$filter->filter($object_name);

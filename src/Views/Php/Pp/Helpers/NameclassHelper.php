@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Pp;
+namespace Zend\Ext\Views\Php\Pp\Helpers;
 
 use Zend\View\Helper\AbstractHelper;
 

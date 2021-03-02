@@ -1,7 +1,9 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Poo;
+namespace Zend\Ext\Views\Helpers;
 
+use Zend\Filter\FilterChain;
+use Zend\Filter\StripTags;
 use Zend\View\Helper\AbstractHelper;
 
 
@@ -11,6 +13,13 @@ class CommentHelper extends AbstractHelper
 
     public function __invoke($comment)
     {
+        if (empty(self::$filter)) {
+            $filter = new FilterChain();
+            $filter->attach(new StripTags());
+            //       ->attach(new StripNewlines());
+            self::$filter = $filter;
+        }
+
         $comment = self::$filter->filter($comment);
         //$comment = str_replace(["\r\n", "\r", "\n"], ' ', $comment);
         $comment = preg_replace('/[\r\n ]+/i', ' ', $comment);

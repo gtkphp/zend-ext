@@ -16,6 +16,10 @@ use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 class ClassGeneratorTest extends TestCase
 {
 
+    public function testImplementation()
+    {
+
+    }
     public function testExtension()
     {
         $src_dir = '/home/dev/Projects/glib';
@@ -36,7 +40,11 @@ class ClassGeneratorTest extends TestCase
 
         $this->assertTrue(True);
     }
-    public function testGlibDocBook()
+    public function testPhpWrapper()
+    {
+        // extends GtkWindow{ function add(); }
+    }
+    public function testPhpAPI()
     {
         /** clone glib-version */
         // step One : snif glib-decl.txt and store the result( Typedef, Enum, Struct...)

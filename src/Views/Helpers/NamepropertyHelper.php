@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Poo;
+namespace Zend\Ext\Views\Helpers;
 
 use Zend\View\Helper\AbstractHelper;
 use Zend\Filter\Word\UnderscoreToCamelCase;

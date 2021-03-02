@@ -17,22 +17,33 @@ use Zend\Ext\Helpers\Php\Pp\TypeHelper as TypeHelperPhpPp;
 use Zend\Ext\Helpers\Php\Pp\NameclassHelper as NameclassHelperPhpPp;
 
 use Zend\Ext\Helpers\C\NameclassHelper as NameclassHelperC;
+use Zend\Ext\Helpers\C\ReturntypeHelper as ReturntypeHelperC;
+use Zend\Ext\Helpers\C\MaxargHelper as MaxargHelperC;
+use Zend\Ext\Helpers\C\RequiredargHelper as RequiredargHelperC;
+
 
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
 use Zend\Filter\Word\CamelCaseToUnderscore;
 use Zend\ServiceManager\ServiceManager;
-use Zend\View\HelperPluginManager;
+//use Zend\View\HelperPluginManager;
+use Zend\Ext\Views\HelperPluginManager;
 
 class CodeGenerator
 {
-    const NO_STYLE = 0x00;
-    const PP_STYLE = 0x01;// Procedural Programming
-    const POO_STYLE = 0x02;// Programming Oriented Object
-
     const NO_CODE = 0x00;
     const PHP_CODE = 0x01;
     const C_CODE = 0x02;
+
+
+    const NO_STYLE = 0x00;
+    // For PHP_CODE
+    const PP_STYLE = 0x01;// Procedural Programming
+    const POO_STYLE = 0x02;// Programming Oriented Object
+
+    // For C_CODE
+    const C_HEADER_STYLE = 0x03;// PHP Ext class header file
+    const C_SOURCE_STYLE = 0x04;// PHP Ext class source file
 
     /**
      * @var string $name
@@ -42,7 +53,7 @@ class CodeGenerator
     /**
      * @var int $style
      */
-    protected $style = self::NO_STYLE;
+    protected $style = self::PP_STYLE;
     protected $code = self::PHP_CODE;
 
     function __construct($name)
@@ -175,10 +186,15 @@ class CodeGenerator
 
         return $pluginManager;
     }
-    public function CStyleManager() {
-        $pluginManager = new HelperPluginManager(new ServiceManager());
 
-        $pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
+    public function CStyleManager() {
+        //https://www.nikolaposa.in.rs/blog/2018/07/14/lazy-loading-services-using-zf-service-manager/
+        $serviceManager = new ServiceManager();
+        $pluginManager = new HelperPluginManager($serviceManager);
+        $pluginManager->addPathHelper(__DIR__.'/../Views/C/Helpers', 'Zend\\Ext\\Views\\C\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
+
+        /*$pluginManager->setFactory('namespaceHelper', function ($pluginManager) {
             $filter = new CamelCaseToUnderscore;
             NamespaceHelper::$filter = $filter;
             $namespaceHelper = new NamespaceHelper;
@@ -206,12 +222,23 @@ class CodeGenerator
         $pluginManager->setFactory('typeHelper', function ($pluginManager) {
             return new TypeHelper;
         });
+        $pluginManager->setFactory('returntypeHelper', function ($pluginManager) {
+            return new ReturntypeHelperC;
+        });
         $pluginManager->setFactory('parameterHelper', function ($pluginManager) {
             return new ParameterHelper;
         });
         $pluginManager->setFactory('namepropertyHelper', function ($pluginManager) {
             return new NamepropertyHelper;
         });
+        $pluginManager->setFactory('maxargHelper', function ($pluginManager) {
+            return new MaxargHelperC;
+        });
+        $pluginManager->setFactory('requiredargHelper', function ($pluginManager) {
+            return new RequiredargHelperC;
+        });*/
+
+
 
         return $pluginManager;
     }

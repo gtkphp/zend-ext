@@ -1,7 +1,8 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Pp;
+namespace Zend\Ext\Views\Helpers;
 
+use Zend\Filter\Word\CamelCaseToUnderscore;
 use Zend\Filter\Word\UnderscoreToDash;
 use Zend\View\Helper\AbstractHelper;
 
@@ -28,7 +29,9 @@ class NamemethodHelper extends AbstractHelper
 
     public function __invoke($method)
     {
-        return $method->getName();
+        if (empty(self::$filter)) {
+            self::$filter = new CamelCaseToUnderscore;
+        }
 
         $object_name = $this->getObjectName($method);
 

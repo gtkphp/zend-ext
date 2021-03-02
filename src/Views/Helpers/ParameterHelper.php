@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Poo;
+namespace Zend\Ext\Views\Helpers;
 
 use Zend\Ext\Php\TypeGenerator;
 use Zend\View\View;

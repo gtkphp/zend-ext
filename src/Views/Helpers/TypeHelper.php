@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Helpers\Php\Pp;
+namespace Zend\Ext\Views\Helpers;
 
 use Zend\View\Helper\AbstractHelper;
 
@@ -24,7 +24,7 @@ class TypeHelper extends AbstractHelper
      *  'iterable',   <= int var[]...
      *  'object'      <= (void*), GObject, ...
     */
-    private static $internalPhpTypes = [
+    protected static $internalPhpTypes = [
         TypeGenerator::PRIMITIVE_VOID   =>'void',
         TypeGenerator::PRIMITIVE_BOOL   =>'bool',
         TypeGenerator::PRIMITIVE_CHAR   =>'string',
@@ -49,14 +49,13 @@ class TypeHelper extends AbstractHelper
         TypeGenerator::PRIMITIVE_UINT32 =>'int',
         TypeGenerator::PRIMITIVE_UINT64 =>'int',
 
-        TypeGenerator::PRIMITIVE_POINTER=>'object',// StdClass
+        TypeGenerator::PRIMITIVE_POINTER=>'Object',// StdClass
     ];
 
-    public function __invoke(TypeGenerator $type, $doc=False)
+    public function __invoke(TypeGenerator $type)
     {
         $output = '';
         $name = $type->getName();
-        // if isPrototype()
         // check if void,
         // check if internal php type primitive
 
@@ -69,7 +68,6 @@ class TypeHelper extends AbstractHelper
             $package = $type->getOwnPackage();
             $list_objects = $package->getListTypeObject();
             if (isset($list_objects[$name])) {
-                /*
                 $ns = $package->getName();
                 $type_ns = $this->getView()->namespaceHelper($name);
                 $name = $this->getView()->nameclassHelper($name);
@@ -81,28 +79,11 @@ class TypeHelper extends AbstractHelper
                 }
                 $output = $name;
                 return $output;
-                */
-                return $name;
             }
             $list_enums = $package->getListTypeEnum();
             if (in_array($name, $list_enums)) {
                 //$name = "\e[2;34m".'int'."\e[m";// yellow
                 return 'int';
-            }
-            if ($type->isPrototype() && $doc) {
-                $data = $type->getPrototype();
-                //print_r($data);
-                $param = '';
-                $glue = '';
-                $returnType = new TypeGenerator($data['return']['type']);
-                $return = $this->getView()->typeHelper($returnType);
-                foreach($data['parameters'] as $parameter) {
-                    $paramType = new TypeGenerator($parameter['type']);
-                    $paramType->setParentGenerator($type->getParentGenerator());
-                    $param .= $glue . $this->getView()->typeHelper($paramType, True);
-                    $glue = ', ';
-                }
-                return "callback($param): $return";
             }
 
             {
@@ -120,7 +101,7 @@ class TypeHelper extends AbstractHelper
                 // GtkApplication(prerequist) add use ...
                 // GtkWindowType (enum)
 
-                $output = $name;
+                $output = "\e[1;31m".$name."\e[m";// red
             }
 
             //$list_boxeds = $package->getListTypeBoxed();
@@ -131,13 +112,6 @@ class TypeHelper extends AbstractHelper
                 $output = ': ' . "\e[1;31m".$name."\e[m#TODO";// red
             }
             */
-            if ($name=='gconstpointer' || $name=='gpointer') {
-                if ($doc==False) {
-                    return '';
-                } else {
-                    return 'mixed';
-                }
-            }
 
         }
         return $output;

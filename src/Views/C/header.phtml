@@ -1,2 +1,27 @@
-<?php echo $this->header ?>
+/* php_g/g-hash-table.h*/
+
+/*----------------------------------------------------------------------+
+ | PHP FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
+#define PHP_G_HASH_TABLE_FE() \
+    PHP_FE(g_str_hash, arginfo_g_str_hash) \
+    PHP_FE(g_str_equal, arginfo_g_str_equal) \
+    PHP_FE(g_hash_table_new, arginfo_g_hash_table_new) \
+    PHP_FE(g_hash_table_add, arginfo_g_hash_table_add) \
+    PHP_FE(g_hash_table_insert, arginfo_g_hash_table_insert)
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+zend_bool         php_g_hash_table_insert(php_g_hash_table *hash_table, zval *key, zval *value);
+
+
+/*----------------------------------------------------------------------+
+ | Exposed                                                              |
+ +----------------------------------------------------------------------*/
+ZEND_BEGIN_ARG_INFO_EX(arginfo_g_str_equal, 0, 0, 0)
+    ZEND_ARG_INFO(0, v1)
+    ZEND_ARG_INFO(0, v2)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_str_equal);
 

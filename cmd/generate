@@ -3,6 +3,20 @@
 /* $] ./generate --version=3
 "3.22.30" */
 
+/*
+get all version of PHP
+<php-src>$ git ls-remote --tags > /home/dev/Projects/php_tags.txt
+$tags='';
+$lines = file('/home/dev/Projects/php_tags.txt');
+foreach($lines as $line) {
+    if(preg_match('#refs/tags/(php-[4578]\.[0-9]+\.[0-9]+)$#', $line, $matches)) {
+        $tags .= $matches[1] . "\n";
+    }
+}
+file_put_contents('/home/dev/Projects/php_tags.txt', $tags);
+
+exit();*/
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Zend\Ext\Services\CodeGenerator;
@@ -20,11 +34,13 @@ $log = $log_dir.'/log.txt';
 
 `mkdir -p $log_dir`;
 `mkdir -p $output_dir`;
+`mkdir -p $output_dir/API`;
 //`chmod u+w $log_dir`;
 
 
 `touch $log`;
-`touch $output_dir/GHashTable.php`;
+`touch $output_dir/API/GHashTable.php`;
+`touch $output_dir/g-hash-table.c`;
 
 
 `echo "Starting..." > $log`;
@@ -40,20 +56,33 @@ $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
 $service->loadTypes();
 
 $servicePhp = new Php8CodeGenerator();
-//$servicePhp->setStyle(CodeGenerator::POO_STYLE);
-$servicePhp->setCode(CodeGenerator::C_CODE);
-// TODO: CodeGenerator::C_STYLE_HEADER
-//       CodeGenerator::C_STYLE_SOURCE
+
 
 // compare glib-decl vs glib docBook
 $docBook = new GlibDocBook();
 $docBook->addSourceCode($service);
 $docBook->addCodeGenerator($servicePhp);
 $docBook->load(/*doc.sgml*/);
+
+$servicePhp->setCode(CodeGenerator::PHP_CODE);
+$servicePhp->setStyle(CodeGenerator::PP_STYLE);
 $code = $docBook->save('/home/dev/Projects/gtkphp/output');
+file_put_contents("$output_dir/API/GHashTable.php", $code);
+
+/*
+$servicePhp->setCode(CodeGenerator::C_CODE);
+$servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
+$code = $docBook->save('php_g');
+file_put_contents("$output_dir/g-hash-table.h", $code);
+*/
+
+$servicePhp->setCode(CodeGenerator::C_CODE);
+$servicePhp->setStyle(CodeGenerator::C_SOURCE_STYLE);
+$code = $docBook->save('php_g');
+file_put_contents("$output_dir/g-hash-table.c", $code);
+
 
 // Output php-doc
 // Output php-x.x.x API
 // Output php-x.x.x Wrapper
 // Output zend_code_extension
-file_put_contents("$output_dir/GHashTable.php", $code);

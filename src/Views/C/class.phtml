@@ -6,20 +6,20 @@
 
 #include <gtk/gtk.h>
 
-#include "php.h"
-#include "php_ini.h"
-#include "zend_interfaces.h"
-#include "ext/standard/info.h"
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
 
 //#include "php_gtk.h"
-#include "<?php echo strtolower($this->namespaceHelper($this->name)) ?>.h"
+#include "<?php echo $this->namespaceHelper($this->name, -1) ?>.h"
 
 <?php /* for each parent $this->class->getExtends();
 #include "widget.h"
  */ ?>
 
 
-PHP_<?php echo $this->namespaceHelper($this->name) ?>_EXPORT zend_class_entry *php_<?php
+PHP_<?php echo $this->namespaceHelper($this->name, 1) ?>_EXPORT zend_class_entry *php_<?php
     echo $this->nameclassHelper($this->name, -1);
 ?>_class_entry;
 HashTable php_<?php
@@ -33,11 +33,16 @@ extern HashTable classes;
 
 
 <?php foreach($this->methods as $key=>$method): ?>
+
 /*----------------------------------------------------------------------+
  | <?php echo sprintf("%-69s", $method->getName())             ?>|
  +----------------------------------------------------------------------*/
+<?php $self_name = Null; ?>
 ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $method->getName() ?>, 0, 0, 0)
 <?php foreach($method->getParameters() as $key=>$parameter): ?>
+<?php if(!$method->isStatic() && $self_name==Null) {
+    $self_name = $parameter->getName();
+} ?>
     ZEND_ARG_INFO(0, <?php echo $parameter->getName() ?>)
 <?php endforeach; ?>
 ZEND_END_ARG_INFO()
@@ -45,23 +50,39 @@ ZEND_END_ARG_INFO()
 PHP_FUNCTION(<?php echo $method->getName()?>)
 {
 <?php foreach($method->getParameters() as $key=>$parameter): ?>
-    zval <?php echo $parameter->getName() ?>;
+    zval *<?php echo $parameter->getName() ?>;
 <?php endforeach; ?>
 
-    ZEND_PARSE_PARAMETERS_START(<?php echo count($method->getParameters()) ?>, -1)
+    ZEND_PARSE_PARAMETERS_START(<?php echo $this->requiredargHelper($method); ?>, <?php echo $this->maxargHelper($method); ?>)
 <?php foreach($method->getParameters() as $key=>$parameter): ?>
-        Z_PARAM_ZVAL(&<?php echo $parameter->getName() ?>);
+        Z_PARAM_ZVAL(<?php echo $parameter->getName() ?>);
 <?php endforeach; ?>
     ZEND_PARSE_PARAMETERS_END();
 
-    <?php echo $method->getName()?>(<?php
+<?php if(!$method->isStatic()): ?>
+    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *__self = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(<?php echo $self_name ?>->value.obj);
+<?php endif; ?>
+<?php if($method->getType()->isPrimitive() && $method->getType()->getName()!='void') {
+    echo '    zend_';
+    echo $this->returntypeHelper($method->getType(), -1);
+    echo ' __ret = ';
+} else {
+    echo '    ';
+}?>
+php_<?php echo $method->getName()?>(<?php
     $glue = '';
     foreach($method->getParameters() as $key=>$parameter) {
-        echo $glue . $parameter->getName();
+        if (!$method->isStatic() && $self_name==$parameter->getName()) {
+            echo '__self';
+        } else {
+            echo $glue . $parameter->getName();
+        }
         $glue = ', ';
     }
     ?>);
-
+<?php if($method->getType()->isPrimitive() && $method->getType()->getName()!='void'): ?>
+    RETURN_<?php echo $this->returntypeHelper($method->getType(), 1) ?>(__ret);
+<?php endif; ?>
 }
 /* }}} */
 
@@ -117,3 +138,4 @@ echo "\n\n";
 $ns = $this->vendor.$this->class->getOwnPackage()->getName();
 $nameClass = $this->nameclassHelper($this->name, -1);
 echo class_init($ns, $nameClass/*call hinerited*/);
+
