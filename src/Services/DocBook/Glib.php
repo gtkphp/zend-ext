@@ -42,6 +42,7 @@ class Glib extends DocBook
         //foreach xi:include
 
         $filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/hash_tables.xml';
+        $filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/linked_lists_double.xml';
         $xml = simplexml_load_file($filename);
         $class = $this->loadClass($xml);
         // $package->addClass($class);
@@ -51,7 +52,10 @@ class Glib extends DocBook
     }
 
     protected function loadClass(SimpleXMLElement $xml): ClassGenerator {
-        $map=array('Hash Tables'=>'GHashTable');// <------------------------------------------------------------------------
+        $map=array(
+            'Hash Tables'=>'GHashTable',
+            'Doubly-Linked Lists'=>'GList',
+        );// <------------------------------------------------------------------------
         $id = trim((string) $xml['id']);//glib-Hash-Tables
 
         $className = (string) $xml->refmeta->refentrytitle;
@@ -117,11 +121,21 @@ class Glib extends DocBook
             //print_r($data);
             // $method->setIsCallback();
             return Null;
-        } else if ($xml->programlisting) {
+        }
+        // check if if macro
+        else if ($xml->programlisting) {
             $str = strip_tags($xml->programlisting->asXml());
             $str = str_replace(' ', ' ', $str);
             file_put_contents(__DIR__.'/../../../tmp/declaration.h', $str);
-            $data = $this->sourceCode['Glib']->parse($str);
+            try {
+                $data = $this->sourceCode['Glib']->parse($str);
+            } catch(\Zend\C\Engine\Error $exc) {
+                echo $methodName, PHP_EOL;
+                echo $str, PHP_EOL;
+                // #define             g_list_previous(list)
+                echo $exc->getMessage().PHP_EOL;
+                return NULL;
+            }
         } else {
             echo "Error 88 unexpected\n";
         }
@@ -168,7 +182,12 @@ class Glib extends DocBook
 
         // <-- setParameter -->
         $parametersData = $func['signature']['parameters'];
+
         foreach($parametersData as $options) {
+            if (is_null($options['name']) && 'void'==$options['type']) {
+                // GList *g_list_alloc (void);
+                continue;
+            }
             $parameter = $this->package->createParameter($options['name']);
             $parameterType = $this->package->createType($options['type']);
             $parameter->setType($parameterType);
@@ -200,28 +219,30 @@ class Glib extends DocBook
 
         // <-- parameter::setDescription -->
         $refsect3 = $xml->xpath("refsect3[@id='$id.parameters']");
-        $rows = $refsect3[0]->informaltable->tgroup->tbody->row;
-        foreach($rows as $row) {
-            $parameterName = (string)$row->entry[0]->para[0];
-            $parameter = $method->getParameter($parameterName);
+        if(!empty($refsect3)) {
+            $rows = $refsect3[0]->informaltable->tgroup->tbody->row;
+            foreach($rows as $row) {
+                $parameterName = (string)$row->entry[0]->para[0];
+                $parameter = $method->getParameter($parameterName);
 
-            $parameterDescription = $row->entry[1]->para->asXml();
-            $parameter->setDescription($parameterDescription);
+                $parameterDescription = $row->entry[1]->para->asXml();
+                $parameter->setDescription($parameterDescription);
 
-            $parameterAnnotations = $row->entry[2]->emphasis->acronym;
-            if(isset($parameterAnnotations))
-            foreach($parameterAnnotations as $annotation) {
-                $acronym =(string)$annotation;
-                switch ($acronym) {
-                    case 'optional':
-                        $parameter->setIsOptional(True);
-                        break;
-                    case 'out':// Php as pass reference
-                    case 'nullable':
-                    case 'not nullable':
-                    default:
-                        //echo "Unimplemented annotation: '$acronym'\n";
-                        break;
+                $parameterAnnotations = $row->entry[2]->emphasis->acronym;
+                if(isset($parameterAnnotations))
+                foreach($parameterAnnotations as $annotation) {
+                    $acronym =(string)$annotation;
+                    switch ($acronym) {
+                        case 'optional':
+                            $parameter->setIsOptional(True);
+                            break;
+                        case 'out':// Php as pass reference
+                        case 'nullable':
+                        case 'not nullable':
+                        default:
+                            //echo "Unimplemented annotation: '$acronym'\n";
+                            break;
+                    }
                 }
             }
         }

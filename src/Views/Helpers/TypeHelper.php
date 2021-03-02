@@ -49,7 +49,7 @@ class TypeHelper extends AbstractHelper
         TypeGenerator::PRIMITIVE_UINT32 =>'int',
         TypeGenerator::PRIMITIVE_UINT64 =>'int',
 
-        TypeGenerator::PRIMITIVE_POINTER=>'Object',// StdClass
+        TypeGenerator::PRIMITIVE_POINTER=>'mixed',// StdClass
     ];
 
     public function __invoke(TypeGenerator $type)

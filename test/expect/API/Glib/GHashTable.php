@@ -1,6 +1,7 @@
 <?php
 namespace Glib\API;
-namespace Gio\API;
+
+use GList;
 
 /**
  * associations between keys and values so that given a key the value ca...
@@ -64,9 +65,9 @@ function g_hash_table_size (GHashTable $hashTable): int{ }
  * Looks up a key in a GHashTable.
  * @param GHashTable $hashTable  * a GHashTable
  * @param mixed $key  * the key to look up
- * @return object
+ * @return mixed
  */
-function g_hash_table_lookup (GHashTable $hashTable,  $key): object{ }
+function g_hash_table_lookup (GHashTable $hashTable,  $key):mixed { }
 /**
  * Looks up a key in the GHashTable, returning the original key and the ...
  * @param GHashTable $hashTable  * a GHashTable
@@ -166,20 +167,31 @@ function g_hash_table_ref (GHashTable $hashTable): GHashTable{ }
  * @param GHashTable $hashTable  * a valid GHashTable
  */
 function g_hash_table_unref (GHashTable $hashTable): void{ }
+
+
+
+
+
+class GHashTableIter {
+
+}
+
+
+
 /**
  * Initializes a key/value pair iterator and associates it with hash_tab...
  * @param GHashTableIter $iter  * an uninitialized GHashTableIter
  * @param GHashTable $hashTable  * a GHashTable
  */
-function g_hash_table_iter_init (GHashTableIter $iter, GHashTable $hashTable): void{ }
+function g_hash_table_iter_init (GHashTableIter &$iter, GHashTable $hashTable): void{ }
 /**
  * Advances iter and retrieves the key and/or value that are now pointed...
  * @param GHashTableIter $iter  * an initialized GHashTableIter
- * @param object $key  * a location to store the key.
- * @param object $value  * a location to store the value.
+ * @param mixed &$key  * a location to store the key.
+ * @param mixed &$value  * a location to store the value.
  * @return bool
  */
-function g_hash_table_iter_next (GHashTableIter $iter, object $key, object $value): bool{ }
+function g_hash_table_iter_next (GHashTableIter $iter, mixed &$key, mixed &$value): bool{ }
 /**
  * Returns the GHashTable associated with iter .
  * @param GHashTableIter $iter  * an initialized GHashTableIter
@@ -202,6 +214,14 @@ function g_hash_table_iter_remove (GHashTableIter $iter): void{ }
  * @param GHashTableIter $iter  * an initialized GHashTableIter
  */
 function g_hash_table_iter_steal (GHashTableIter $iter): void{ }
+
+
+
+
+
+
+
+
 /**
  * Compares two gpointer arguments and returns TRUE if they are equal.
  * @param mixed $v1  * a key.

@@ -16,6 +16,10 @@ use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 class ClassGeneratorTest extends TestCase
 {
 
+    public function testDocumentation()
+    {
+
+    }
     public function testImplementation()
     {
 
@@ -33,6 +37,7 @@ class ClassGeneratorTest extends TestCase
 
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();
+        //$docBook->addServiceAPI($service);
         $docBook->addSourceCode($service);
         $docBook->addCodeGenerator($servicePhp);
         $docBook->load(/*doc.sgml*/);
@@ -59,7 +64,6 @@ class ClassGeneratorTest extends TestCase
         $service->loadTypes();
 
         $servicePhp = new Php8CodeGenerator();
-        //$servicePhp->setStyle(CodeGenerator::POO_STYLE);
 
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();
