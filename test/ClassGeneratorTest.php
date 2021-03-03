@@ -19,10 +19,56 @@ class ClassGeneratorTest extends TestCase
     public function testDocumentation()
     {
 
+        $src_dir = '/home/dev/Projects/glib';
+        $build_dir = '/home/dev/Projects/glib-build-doc';
+        $service = new GlibSourceCode($src_dir, $build_dir);
+        $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
+        $service->loadTypes();
+
+        $servicePhp = new Php8CodeGenerator();
+        $servicePhp->setCode(CodeGenerator::XML_CODE);
+
+        // compare glib-decl vs glib docBook
+        $docBook = new GlibDocBook();
+        $docBook->addSourceCode($service);
+        $docBook->addCodeGenerator($servicePhp);
+        $docBook->load(/*doc.sgml*/);
+        echo $docBook->save('/home/dev/Projects/gtkphp/output');
+
+        $this->assertTrue(True);
     }
     public function testImplementation()
     {
+        $src_dir = '/home/dev/Projects/glib';
+        $build_dir = '/home/dev/Projects/glib-build-doc';
+        $service = new GlibSourceCode($src_dir, $build_dir);
+        $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
+        $service->loadTypes();
 
+        $servicePhp = new Php8CodeGenerator();
+        $servicePhp->setCode(CodeGenerator::C_CODE);
+        $servicePhp->setStyle(CodeGenerator::C_SOURCE_STYLE);
+
+        // compare glib-decl vs glib docBook
+        $docBook = new GlibDocBook(/*'Gnome/GLib'*/);
+        //$docBook->addServiceAPI($service);
+        $docBook->addSourceCode($service);
+        $docBook->addCodeGenerator($servicePhp);
+        $docBook->load(/*doc.sgml*/);
+        echo $docBook->save('/home/dev/Projects/gtkphp/output');
+
+        /**
+         * $extension = PhpExtension();
+         * $extension->addSourceCode($serviceCode);
+         * $extension->addAPICode($serviceReflexion);
+         * $extension->addGenerator($serviceGenerator);
+         * $extension->save('output/src|doc-en');
+         *
+         * 1) Generate PHP API ... edit manualy
+         * 2) Generate Extension( Doc, *.[hc], PhpWrapper)
+         *
+         */
+        $this->assertTrue(True);
     }
     public function testExtension()
     {
@@ -34,6 +80,7 @@ class ClassGeneratorTest extends TestCase
 
         $servicePhp = new Php8CodeGenerator();
         $servicePhp->setCode(CodeGenerator::C_CODE);
+        $servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
 
         // compare glib-decl vs glib docBook
         $docBook = new GlibDocBook();

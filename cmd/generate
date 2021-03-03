@@ -64,23 +64,24 @@ $docBook->addSourceCode($service);
 $docBook->addCodeGenerator($servicePhp);
 $docBook->load(/*doc.sgml*/);
 
+/*
 $servicePhp->setCode(CodeGenerator::PHP_CODE);
 $servicePhp->setStyle(CodeGenerator::PP_STYLE);
 $code = $docBook->save('/home/dev/Projects/gtkphp/output');
 file_put_contents("$output_dir/API/GHashTable.php", $code);
-
-/*
-$servicePhp->setCode(CodeGenerator::C_CODE);
-$servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
-$code = $docBook->save('php_g');
-file_put_contents("$output_dir/g-hash-table.h", $code);
 */
 
 $servicePhp->setCode(CodeGenerator::C_CODE);
+$servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
+$code = $docBook->save('php_g');
+file_put_contents("$output_dir/g-list.h", $code);
+
+/*
+$servicePhp->setCode(CodeGenerator::C_CODE);
 $servicePhp->setStyle(CodeGenerator::C_SOURCE_STYLE);
 $code = $docBook->save('php_g');
-file_put_contents("$output_dir/g-hash-table.c", $code);
-
+file_put_contents("$output_dir/g-list.c", $code);
+*/
 
 // Output php-doc
 // Output php-x.x.x API

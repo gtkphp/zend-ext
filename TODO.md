@@ -11,6 +11,15 @@ Where generate Php
 - Fixe requiredargHelper();// check Nullable argument
 - Fixe maxargHelper();// return -1 if has variadic
 
+- <<<???
+- Refactor Services/DocBook by Services/PhpExtension
+- Refactor Services/CodeGenerator by Services/Generator(C/C++, PHP5/7/8)
+- Add Services/ApiCode (Php reflexion)
+- ???>>>
+
+- When C Source generator
+- FIXME Assume no parameter, g_list_alloc (pas de parametre)
+- FIXME Assume g-list.h
 
 - remove <src>/Php
 

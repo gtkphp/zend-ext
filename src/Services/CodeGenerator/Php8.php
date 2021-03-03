@@ -35,12 +35,15 @@ class Php8 extends CodeGenerator
         $this->setStyle($style);
     }
 
+    // Controller::Action
     function render($package)
     {
         $view = $this->getView();
         $model = $this->getViewModel($package);
 
         $view->render($model);
+        //$this->getCode();
+        //$this->getStyle();
         return $view->getResponse()->getContent();
     }
 
@@ -62,7 +65,7 @@ class Php8 extends CodeGenerator
         $model->setVariable('name', $class->getName());
         $model->setVariable('description', $class->getDescription());
         $model->setVariable('methods', $class->getMethods());
-        $model->setVariable("vendor", 'My\\\\');
+        $model->setVariable("vendor", 'Gnome\\\\');
         //$model->setVariable("vendor", '');
         $model->addChild($licenseModel, 'license');
         $model->setTemplate('class.phtml');
@@ -72,13 +75,18 @@ class Php8 extends CodeGenerator
     function getView():View
     {
         $map = array(0=>'Unknown', 1=>'Pp', 2=>'Poo');
+        $map_style = array(3=>'Header', 4=>'Source');
 
         $view = new View();
         $view->setResponse(new Response());
 
         $resolver = new TemplatePathStack();
+
         if (self::C_CODE==$this->code) {
-            $resolver->addPath(__DIR__.'/../../Views/C');
+            $resolver->addPath(__DIR__.'/../../Views/C/Header');
+            $resolver->addPath(__DIR__.'/../../Views/C/'.$map_style[$this->style]);
+        } else if (self::XML_CODE==$this->code) {
+            $resolver->addPath(__DIR__.'/../../Views/DocBook');
         } else {
             $resolver->addPath(__DIR__.'/../../Views/Php/'.$map[$this->style]);
         }
@@ -100,13 +108,16 @@ class Php8 extends CodeGenerator
             return $renderer;
         });*/
         if (self::C_CODE==$this->code) {
-            $renderer->setHelperPluginManager($this->CStyleManager());
+            $renderer->setHelperPluginManager($this->cStyleManager());
+        } else if (self::XML_CODE==$this->code) {
+            $renderer->setHelperPluginManager($this->xmlStyleManager());
         } else if ($this->style==self::PP_STYLE) {
+            // PHP_CODE / PP_STYLE
             $renderer->setHelperPluginManager($this->phpPpStyleManager());
         } else {
-            $renderer->setHelperPluginManager($this->PhpPooStyleManager());
+            // PHP_CODE / POO_STYLE
+            $renderer->setHelperPluginManager($this->phpPooStyleManager());
         }
-
 
         return $view;
     }

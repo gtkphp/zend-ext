@@ -34,6 +34,7 @@ class CodeGenerator
     const NO_CODE = 0x00;
     const PHP_CODE = 0x01;
     const C_CODE = 0x02;
+    const XML_CODE = 0x03;
 
 
     const NO_STYLE = 0x00;
@@ -116,9 +117,9 @@ class CodeGenerator
         $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
 
         return $pluginManager;
-
     }
-    public function PhpPooStyleManager() {
+
+    public function phpPooStyleManager() {
         $serviceManager = new ServiceManager();
         $pluginManager = new HelperPluginManager($serviceManager);
         $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Poo/Helpers', 'Zend\\Ext\\Views\\Php\\Poo\\Helpers');
@@ -128,10 +129,18 @@ class CodeGenerator
         return $pluginManager;
     }
 
-    public function CStyleManager() {
+    public function cStyleManager() {
         $serviceManager = new ServiceManager();
         $pluginManager = new HelperPluginManager($serviceManager);
         $pluginManager->addPathHelper(__DIR__.'/../Views/C/Helpers', 'Zend\\Ext\\Views\\C\\Helpers');
+        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
+
+        return $pluginManager;
+    }
+
+    public function xmlStyleManager() {
+        $serviceManager = new ServiceManager();
+        $pluginManager = new HelperPluginManager($serviceManager);
         $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
 
         return $pluginManager;

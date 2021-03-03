@@ -10,7 +10,7 @@ class NameclassHelper extends AbstractHelper
 {
     static public $filter = NULL;
 
-    public function __invoke($name)
+    public function __invoke($name, $case=0)
     {
         if (empty(self::$filter)) {
             self::$filter = new CamelCaseToUnderscore;
