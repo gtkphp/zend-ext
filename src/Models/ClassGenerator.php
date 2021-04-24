@@ -510,6 +510,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         }
 
         $this->properties[$propertyName] = $property;
+        $property->setParentGenerator($this);
         return $this;
     }
 

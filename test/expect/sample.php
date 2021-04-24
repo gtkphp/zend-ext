@@ -17,8 +17,8 @@ $toplevels = Window::ListToplevels();
  */
 $current = Null;
 
-for ($toplevels->rewind(); $toplevels->valid(); $toplevels->next()) {
-    $current = $toplevels->current()->data;
+for ($toplevels = g_list_first($toplevels); $toplevels; $toplevels = $toplevels->next) {
+    $current = $toplevels->data;
     $title = $current->getTitle();
     if ($title != Null && strstr ($title, "Mozilla Firefox") !== False) {
         break;

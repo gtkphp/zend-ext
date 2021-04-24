@@ -28,6 +28,15 @@ class DocBook
         $this->sourceCode[$serviceName] = $service;
     }
 
+    public function getSourceCode($name):SourceCode
+    {
+        return $this->sourceCode[$name];
+    }
+
+    /**
+     * TODO: remove
+     * @param \Zend\Ext\Services\CodeGenerator $service
+     */
     public function addCodeGenerator(CodeGenerator $service)
     {
         $serviceName = $service->getName();

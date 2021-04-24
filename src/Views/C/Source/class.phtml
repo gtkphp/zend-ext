@@ -4,393 +4,468 @@
 #include "config.h"
 #endif
 
-#include <glib.h>
-
 #include <php.h>
 #include <php_ini.h>
 #include <zend_interfaces.h>
 #include <ext/standard/info.h>
 
-#include "<?php echo $this->filenameHelper($this->name) ?>.h"
-
-
+#include "<?php echo $this->headerFile ?>"
 
 extern HashTable         classes;
-extern zend_module_entry <?php echo $this->namespaceHelper($this->name, -1) ?>_module_entry;
+extern zend_module_entry gtk_module_entry;
 
 
-zend_class_entry    *php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry;
-HashTable            php_<?php echo $this->nameclassHelper($this->name, -1) ?>_prop_handlers;
-zend_object_handlers php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers;
+zend_class_entry     *php_<?php echo $this->nameFunction ?>_class_entry;
+zend_object_handlers  php_<?php echo $this->nameFunction ?>_handlers;
+
+//#define TRACE(format, string, option) php_printf(format, string, option)
+#define TRACE(format, string, option)
 
 /*----------------------------------------------------------------------+
- | zend_object_handlers                                                 |
+| Internal                                                             |
++----------------------------------------------------------------------*/
+
+static const zend_function_entry php_<?php echo $this->nameFunction ?>_methods[] = {
+    PHP_ME(<?php echo $this->nameFunction ?>, __construct, arginfo_<?php echo $this->nameFunction ?>___construct, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
  +----------------------------------------------------------------------*/
+<?php
+/*foreach($this->implementations->handler as $func) {
+    $cb = array($this->implementations, $func);
+    echo call_user_func ($cb);
+    echo PHP_EOL, PHP_EOL;
+}*/
+?>
 
-static void php_<?php echo $this->nameclassHelper($this->name, -1) ?>_dtor_prop_handler(zval *zv) /* {{{ */
+<?php if(True): ?>
+
+/* {{{ php_<?php echo $this->nameFunction ?>_create_object */
+static zend_object*
+php_<?php echo $this->nameFunction ?>_create_object(zend_class_entry *class_type)
 {
-    TRACE();
-    free(Z_PTR_P(zv));
+    php_<?php echo $this->nameFunction ?> *intern = ecalloc(1, sizeof(php_<?php echo $this->nameFunction ?>) + zend_object_properties_size(class_type));
+
+    zend_object_std_init(&intern->std, class_type);
+    object_properties_init(&intern->std, class_type);
+
+    intern->ptr = NULL;
+
+    intern->std.handlers = &php_<?php echo $this->nameFunction ?>_handlers;
+
+    TRACE("php_<?php echo $this->nameFunction ?>_create_object(%p) / %d\n", &intern->std, intern->std.gc.refcount);
+    return &intern->std;
 }
+/* }}} php_<?php echo $this->nameFunction ?>_create_object */
 
-/* {{{ dom_objects_free_storage */
-void php_<?php echo $this->nameclassHelper($this->name, -1) ?>_free_storage(zend_object *object)
-{
-    TRACE();
 
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *intern = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(object);
-    #if defined(__GNUC__) && __GNUC__ >= 3
-        int retcount __attribute__((unused)); /* keep compiler quiet */
-    #else
-        int retcount;
-    #endif
+static void
+php_<?php echo $this->nameFunction ?>_dtor_object(zend_object *obj) {
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_SAMPLE_NODE(obj);
+    TRACE("php_<?php echo $this->nameFunction ?>_dtor_object(\e[1;31m\"%s\"\e[0;m) / %d\n", intern->data.value.str->val, obj->gc.refcount);
 
-    zend_object_std_dtor(&intern->std);// maybe use PHP_STD_FROM_G_HASH_TABLE()
-    efree(intern);
-    // FIXME
-    #if 0
-        if (intern->ptr != NULL ) {
-        /*
-            if (((xmlNodePtr) ((php_libxml_node_ptr *)intern->ptr)->node)->type != XML_DOCUMENT_NODE && ((xmlNodePtr) ((php_libxml_node_ptr *)intern->ptr)->node)->type != XML_HTML_DOCUMENT_NODE) {
-            php_libxml_node_decrement_resource((php_libxml_node_object *) intern);
-            } else {
-            php_libxml_decrement_node_ptr((php_libxml_node_object *) intern);
-            retcount = php_libxml_decrement_doc_ref((php_libxml_node_object *)intern);
-            }
-        */
-        intern->ptr = NULL;
-        }
-    #endif
-}
-/* }}} */
-
-zval *php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_property_ptr_ptr(zval *object, zval *member, int type, void **cache_slot) /* {{{ */
-{
-    TRACE();
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(Z_OBJ_P(object));
-    zend_string *member_str = zval_get_string(member);
-    zval *retval = NULL;
-
-    g_print("%s\n", "php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_property_ptr_ptr");
-    if (!obj->prop_handler || !zend_hash_exists(obj->prop_handler, member_str)) {
-        zend_object_handlers *std_hnd = zend_get_std_object_handlers();
-        retval = std_hnd->get_property_ptr_ptr(object, member, type, cache_slot);
+    if (intern->child) {
+        zend_object_release(&intern->child->std);
+        intern->child=NULL;
     }
 
-    zend_string_release(member_str);
-    return retval;
+    if (intern->parent!=NULL) {
+        zend_object_release(&intern->parent->std);
+        intern->parent=NULL;
+    }
 }
-/* }}} */
+
+/* {{{ php_<?php echo $this->nameFunction ?>_free_object */
+static void
+php_<?php echo $this->nameFunction ?>_free_object(zend_object *object)
+{
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_SAMPLE_NODE(object);
+    TRACE("php_<?php echo $this->nameFunction ?>_free_object(\e[1;31m\"%s\"\e[0;m) / %d\n", intern->data.value.str->val, object->gc.refcount);
+
+    free(intern->ptr);
+    if (intern->properties!=NULL) {
+        zend_hash_destroy(intern->properties);
+        efree(intern->properties);
+        intern->properties=NULL;
+    }
+
+    zend_object_std_dtor(&intern->std);
+    //efree(intern);
+}
+/* }}} php_<?php echo $this->nameFunction ?>_free_object */
+
 
 /* {{{ gtk_read_property */
-zval *php_<?php echo $this->nameclassHelper($this->name, -1) ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
+static zval*
+php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
 {
-    TRACE();
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(Z_OBJ_P(object));
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
     zend_string *member_str = zval_get_string(member);
     zval *retval;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_prop_handler *hnd = NULL;
-    g_print("%s(%s)\n", "php_glib_read_property", member->value.str->val);
+    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
 
-    if (obj->prop_handler != NULL) {
-        hnd = zend_hash_find_ptr(obj->prop_handler, member_str);
-    } else if (instanceof_function(obj->std.ce, php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry)) {
-        php_error(E_WARNING, "Couldn't fetch %s. Widget no longer exists", ZSTR_VAL(obj->std.ce->name));
-    }
-
-    if (hnd) {
-        int ret = hnd->read_func(obj, rv);
-        if (ret == SUCCESS) {
-            retval = rv;
-        } else {
-            retval = &EG(uninitialized_zval);
-        }
-    } else {
-        zend_object_handlers *std_hnd = zend_get_std_object_handlers();
-        retval = std_hnd->read_property(object, member, type, cache_slot, rv);
-    }
+    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
+    retval = std_hnd->read_property(object, member, type, cache_slot, rv);
 
     zend_string_release(member_str);
     return retval;
 }
 /* }}} */
 
-/* {{{ gtk_write_property */
-void php_<?php echo $this->nameclassHelper($this->name, -1) ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
+/* {{{ php_<?php echo $this->nameFunction ?>_write_property */
+static void
+php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
 {
-    TRACE();
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(Z_OBJ_P(object));
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
     zend_string *member_str = zval_get_string(member);
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_prop_handler *hnd = NULL;
+    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
 
-    if (obj->prop_handler != NULL) {
-        hnd = zend_hash_find_ptr(obj->prop_handler, member_str);
+    if (zend_string_equals_literal(member->value.str, "child")
+     || zend_string_equals_literal(member->value.str, "parent") ) {
+#if 1
+        zend_error(E_USER_WARNING, "Readonly property Node::$%s", member->value.str->val);
+#else
+        if (ZVAL_IS_PHP_SAMPLE_NODE(value)) {
+            // do unset(object->child) and php_<?php echo $this->nameFunction ?>_insert(object, value, 0);
+        } else {
+            zend_string *type = zend_zval_get_type(value);
+            zend_error(E_USER_WARNING, "Cannot assign %s to property Node::$child of type Node", type->val);
+        }
+#endif
+        return;
     }
-    if (hnd) {
-        hnd->write_func(obj, value);
-    } else {
-        zend_object_handlers *std_hnd = zend_get_std_object_handlers();
-        std_hnd->write_property(object, member, value, cache_slot);
-    }
+    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
+    std_hnd->write_property(object, member, value, cache_slot);
 
     zend_string_release(member_str);
 }
 /* }}} */
 
+static void
+php_<?php echo $this->nameFunction ?>_unset_property(zval *object, zval *member, void **cache_slot) {
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
+    zend_string *member_str = zval_get_string(member);
+    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
 
-
-/* {{{ dom_read_na */
-int php_<?php echo $this->nameclassHelper($this->name, -1) ?>_read_na(php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj, zval *retval)
-{
-    TRACE();
-    zend_throw_error(NULL, "Cannot read property");
-    return FAILURE;
-}
-/* }}} */
-
-/* {{{ dom_write_na */
-int php_<?php echo $this->nameclassHelper($this->name, -1) ?>_write_na(php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj, zval *newval)
-{
-    TRACE();
-    zend_throw_error(NULL, "Cannot write property");
-    return FAILURE;
-}
-/* }}} */
-
-static char *php_<?php echo $this->nameclassHelper($this->name, -1) ?>_tostring_object(zval *obj, char *salt) {
-    char *name = obj->value.obj->ce->name->val;
-    guint id = Z_OBJ_HANDLE_P(obj);
-    gchar default_format[]="object(%s)#%d";
-    gchar *format=default_format;
-    if (salt!=NULL) {
-        format = salt;
+    if (zend_string_equals_literal(member->value.str, "child")
+     || zend_string_equals_literal(member->value.str, "parent")
+     || zend_string_equals_literal(member->value.str, "data") ) {
+#if 0
+        zend_error(E_USER_WARNING, "Readonly property Node::$%s", member->value.str->val);
+#else
+        if (ZVAL_IS_PHP_SAMPLE_NODE(value)) {
+            // do unset(object->child) and php_<?php echo $this->nameFunction ?>_insert(object, value, 0);
+        } else {
+            zend_string *type = zend_zval_get_type(value);
+            zend_error(E_USER_WARNING, "Cannot assign %s to property Node::$child of type Node", type->val);
+        }
+#endif
+        return;
     }
-    gchar *key = g_strdup_printf (format, name, id);
-    return key;
+    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
+    std_hnd->unset_property(object, member, cache_slot);
+
+    zend_string_release(member_str);
 }
-
-
 
 static HashTable*
-php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_debug_info_helper(zval *object, int *is_temp) /* {{{ */
+php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp) /* {{{ */
 {
-    TRACE();
-
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *obj =  PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(Z_OBJ_P(object));
-    HashTable              *debug_info,
-    *prop_handlers = obj->prop_handler,
+    php_<?php echo $this->nameFunction ?>  *obj =  ZVAL_GET_PHP_SAMPLE_NODE(object);
+    HashTable   *debug_info,
     *std_props;
-    zend_string            *string_key;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_prop_handler  *entry;
-    zend_string            *object_str;
+    zend_string *string_key = NULL;
+    zval *value;
 
     *is_temp = 1;
     std_props = zend_std_get_properties(object);
     debug_info = zend_array_dup(std_props);
 
-    if (!prop_handlers) {
-        return debug_info;
-    }
-/*
-    int i=0;
-    char *str;
-    zend_string *key;
-    GList *it;
-    for(it=g_list_first(obj->ptr); it; it=it->next) {
-        zval *val = it->data;
-        str = g_strdup_printf("%d", i);
-        key = zend_string_init(str, strlen(str), 0);
-        zend_hash_add(debug_info, key, val);
 
-        i++;
-    }
-*/
+    ZEND_HASH_FOREACH_STR_KEY_VAL(obj->std.properties, string_key, value) {
+        zend_hash_add(debug_info, string_key, value);
+    } ZEND_HASH_FOREACH_END();
+
+
+    zval data; ZVAL_COPY(&data, &obj->data);
+    zend_hash_str_update(debug_info, "data", 4, &data);
+
+    zval child; ZVAL_SET_PHP_SAMPLE_NODE(&child, obj->child);
+    zend_hash_str_update(debug_info, "child", 5, &child);
+
+    zval parent; ZVAL_SET_PHP_SAMPLE_NODE(&parent, obj->parent);
+    zend_hash_str_update(debug_info, "parent", 6, &parent);
 
     return debug_info;
 }
 /* }}} */
 
-HashTable*
-php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_debug_info(zval *object, int *is_temp)
-{
-    TRACE();
-    return php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_debug_info_helper(object, is_temp);
+
+static HashTable*
+php_<?php echo $this->nameFunction ?>_get_properties(zval *object){
+    php_<?php echo $this->nameFunction ?>  *self =  ZVAL_GET_PHP_SAMPLE_NODE(object);
+    HashTable *props = self->properties;
+    if (props==NULL) {
+        ALLOC_HASHTABLE(self->properties);
+        props = self->properties;
+    } else {
+        // TODO: rebuild the props( update)
+        return props;// Else leaks : zend_hash_next_index_insert
+    }
+
+    zend_long length = php_<?php echo $this->nameFunction ?>_length(self);
+
+    zend_hash_init(props, length, NULL, ZVAL_PTR_DTOR, 1);
+
+    zval data;
+
+    php_<?php echo $this->nameFunction ?> *it;
+    for(it=php_<?php echo $this->nameFunction ?>_first(self); it; it = it->child){
+        ZVAL_COPY(&data, &it->data);
+        zend_hash_next_index_insert(props, &data);
+    }
+
+    return props;
 }
+
+
+static int
+php_<?php echo $this->nameFunction ?>_cast_object(zval *readobj, zval *retval, int type)
+{
+    ZVAL_NULL(retval);
+
+    return FAILURE;
+}
+
+
+/* updates *count to hold the number of elements present and returns SUCCESS.
+* Returns FAILURE if the object does not have any sense of overloaded dimensions */
+static int
+php_<?php echo $this->nameFunction ?>_count_elements(zval *object, zend_long *count) {
+
+    *count = php_<?php echo $this->nameFunction ?>_length(ZVAL_GET_PHP_SAMPLE_NODE(object));
+
+    return SUCCESS;
+}
+
+static int
+php_<?php echo $this->nameFunction ?>_has_dimension(zval *object, zval *member, int check_empty) {
+    //return FAILURE;
+    return SUCCESS;
+}
+
+static zval*
+php_<?php echo $this->nameFunction ?>_read_dimension(zval *object, zval *offset, int type, zval *rv) /* {{{ */
+{
+    if (!offset) {
+    return NULL;
+    }
+
+    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?> *list;
+    void *cache=NULL;
+
+    if (Z_TYPE_P(offset)==IS_LONG) {
+        list = php_<?php echo $this->nameFunction ?>_nth(intern, offset->value.lval);
+        if (list) {
+            ZVAL_COPY(rv, &list->data);
+        } else {
+            ZVAL_NULL(rv);
+            zend_error(E_USER_WARNING, "Undefined offset: %d", offset->value.lval);
+        }
+        return rv;
+    } else if (Z_TYPE_P(offset)==IS_STRING) {
+        return php_<?php echo $this->nameFunction ?>_read_property(object, offset, type, &cache, rv);
+    } else {
+        // error
+    }
+
+    return rv;
+} /* }}} end php_g_hash_table_read_dimension */
+
+
+static void
+php_<?php echo $this->nameFunction ?>_write_dimension(zval *object, zval *offset, zval *value)
+{
+    void *cache = NULL;
+    zval member;
+    ZVAL_COPY(&member, offset);
+    php_<?php echo $this->nameFunction ?>_write_property(object, &member, value, &cache);
+}
+
+static void
+php_<?php echo $this->nameFunction ?>_unset_dimension(zval *object, zval *offset) {
+    //php_g_list *list = ZVAL_GET_PHP_G_LIST(object);
+    void *cache;
+
+    switch(Z_TYPE_P(offset)) {
+    case IS_LONG:
+    // @TODO
+    //zend_hash_index_del(list->prop_handler, );
+    // php_g_list
+    break;
+    case IS_STRING:
+        php_<?php echo $this->nameFunction ?>_unset_property(object, offset, &cache);
+    break;
+    default:
+    break;
+    }
+}
+<?php endif; ?>
 
 static zend_object_handlers*
-php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_handlers()
+php_<?php echo $this->nameFunction ?>_get_handlers()
 {
-    TRACE();
-    memcpy(&php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.offset = XtOffsetOf(php_<?php echo $this->nameclassHelper($this->name, -1) ?>, std);
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.free_obj = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_free_storage;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.read_property = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_read_property;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.write_property = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_write_property;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.get_property_ptr_ptr = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_property_ptr_ptr;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.get_debug_info = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_get_debug_info;
+    memcpy(&php_<?php echo $this->nameFunction ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    php_<?php echo $this->nameFunction ?>_handlers.offset = PHP_SAMPLE_NODE_OFFSET;
+    //php_<?php echo $this->nameFunction ?>_handlers.clone_obj;
+    //php_<?php echo $this->nameFunction ?>_handlers.compare;
+    //php_<?php echo $this->nameFunction ?>_handlers.compare_objects;
+    //php_<?php echo $this->nameFunction ?>_handlers.get_constructor;
+    php_<?php echo $this->nameFunction ?>_handlers.dtor_obj = php_<?php echo $this->nameFunction ?>_dtor_object;
+    php_<?php echo $this->nameFunction ?>_handlers.free_obj = php_<?php echo $this->nameFunction ?>_free_object;
+    php_<?php echo $this->nameFunction ?>_handlers.read_property = php_<?php echo $this->nameFunction ?>_read_property;
+    php_<?php echo $this->nameFunction ?>_handlers.write_property = php_<?php echo $this->nameFunction ?>_write_property;
+    php_<?php echo $this->nameFunction ?>_handlers.unset_property = php_<?php echo $this->nameFunction ?>_unset_property;
+    //php_<?php echo $this->nameFunction ?>_handlers.get_property_ptr_ptr = php_<?php echo $this->nameFunction ?>_get_property_ptr_ptr;
 
-    /*
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.has_dimension;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.read_dimension;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.unset_dimension;
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers.write_dimension;
-    */
-    return &php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers;
+    php_<?php echo $this->nameFunction ?>_handlers.get_debug_info = php_<?php echo $this->nameFunction ?>_get_debug_info;
+    php_<?php echo $this->nameFunction ?>_handlers.get_properties = php_<?php echo $this->nameFunction ?>_get_properties;//get_properties_for TODO php 8.0
+    //php_<?php echo $this->nameFunction ?>_handlers.set = php_<?php echo $this->nameFunction ?>_set;
+    php_<?php echo $this->nameFunction ?>_handlers.cast_object = php_<?php echo $this->nameFunction ?>_cast_object;
+
+    php_<?php echo $this->nameFunction ?>_handlers.count_elements = php_<?php echo $this->nameFunction ?>_count_elements;
+    php_<?php echo $this->nameFunction ?>_handlers.has_dimension = php_<?php echo $this->nameFunction ?>_has_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.read_dimension = php_<?php echo $this->nameFunction ?>_read_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.unset_dimension = php_<?php echo $this->nameFunction ?>_unset_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.write_dimension = php_<?php echo $this->nameFunction ?>_write_dimension;
+
+
+    return &php_<?php echo $this->nameFunction ?>_handlers;
 }
 
 
-static php_<?php echo $this->nameclassHelper($this->name, -1) ?>*
-php_<?php echo $this->nameclassHelper($this->name, -1) ?>_set_class(zend_class_entry *class_type,
-    zend_bool hash_copy) /* {{{ */
-{
-    TRACE();
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *intern = ecalloc(1, sizeof(php_<?php echo $this->nameclassHelper($this->name, -1) ?>) + zend_object_properties_size(class_type));
-    zend_class_entry *base_class = class_type;
-    while ((   base_class->type != ZEND_INTERNAL_CLASS
-        || base_class->info.internal.module->module_number != gtk_module_entry.module_number
-        )
-        && base_class->parent != NULL) {
-        base_class = base_class->parent;
-    }
-
-    intern->prop_handler = zend_hash_find_ptr(&classes, base_class->name);
-
-    zend_object_std_init(&intern->std, class_type);
-
-    if (hash_copy) {
-        object_properties_init(&intern->std, class_type);
-    }
-
-    intern->ptr = NULL;
-
-    return intern;
-}
-/* }}} */
-
-/* {{{ php_glib_create_object */
-zend_object *php_<?php echo $this->nameclassHelper($this->name, -1) ?>_create_object(zend_class_entry *class_type)
-{
-    TRACE();
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *intern = php_<?php echo $this->nameclassHelper($this->name, -1) ?>_set_class(class_type, 1);
-    intern->std.handlers = &php_<?php echo $this->nameclassHelper($this->name, -1) ?>_handlers;
-    return &intern->std;
-}
-/* }}} */
 
 /*----------------------------------------------------------------------+
- | Implementation                                                       |
- +----------------------------------------------------------------------*/
-<?php foreach($this->methods as $key=>$method): ?>
-// if typeName == $name, then use php_<?php echo $this->nameclassHelper($this->name, -1) ?>*
-static <?php echo $method->getType()->getName(); ?>
+| PHP_MINIT                                                            |
++----------------------------------------------------------------------*/
 
-php_<?php echo $method->getName()?>(<?php
+/*{{{ php_<?php echo $this->nameFunction ?>_class_init */
+zend_class_entry*
+php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *ce) {
+    php_<?php echo $this->nameFunction ?>_get_handlers();
+    //INIT_NS_CLASS_ENTRY((*ce), "Gnome\\G", "List", php_<?php echo $this->nameFunction ?>_methods);
+    INIT_CLASS_ENTRY((*ce), "<?php echo $this->nameType ?>", php_<?php echo $this->nameFunction ?>_methods);
+    php_<?php echo $this->nameFunction ?>_class_entry = zend_register_internal_class_ex(ce, NULL);
+    php_<?php echo $this->nameFunction ?>_class_entry->create_object = php_<?php echo $this->nameFunction ?>_create_object;
+    //ce->serialize;
+    /*
+    zend_hash_init(&php_<?php echo $this->nameFunction ?>_prop_handlers, 0, NULL, php_<?php echo $this->nameFunction ?>_dtor_prop_handler, 1);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "prev", sizeof("prev")-1, php_<?php echo $this->nameFunction ?>_read_prev, php_<?php echo $this->nameFunction ?>_write_prev);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "data", sizeof("data")-1, php_<?php echo $this->nameFunction ?>_read_data, php_<?php echo $this->nameFunction ?>_write_data);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "next", sizeof("next")-1, php_<?php echo $this->nameFunction ?>_read_next, php_<?php echo $this->nameFunction ?>_write_next);
+    zend_hash_add_ptr(&classes, ce->name, &php_<?php echo $this->nameFunction ?>_prop_handlers);
+    */
+
+    return php_<?php echo $this->nameFunction ?>_class_entry;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+<?php
+foreach($this->implementations->require as $func) {
+    $cb = array($this->implementations, $func);
+    echo call_user_func ($cb);
+    echo PHP_EOL, PHP_EOL;
+}
+?>
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+<?php foreach($this->methods as $name=>$method): ?>
+<?php echo $method->type ?>
+
+php_<?php echo $method->name ?>(<?php
     $glue = '';
-    foreach($method->getParameters() as $key=>$parameter) {
-        echo $glue . $parameter->getType()->getName() . ' ' . $parameter->getName();
+    foreach($method->parameters as $parameter) {
+        echo $glue.$parameter->type;
+        echo $parameter->name;
         $glue = ', ';
     }
-    ?>) {
-    // TODO...
+?>) {
+<?php
+    $cb = array($this->implementations, 'php_'.$method->name);
+    if (is_callable($cb)) {
+        echo call_user_func ( $cb);
+    } else {
+        echo '    // TODO: implementation';
+    }
+?>
+
 }
+
 <?php endforeach; ?>
 
 
-<?php foreach($this->methods as $key=>$method): ?>
 
 /*----------------------------------------------------------------------+
- | <?php echo sprintf("%-69s", $method->getName())             ?>|
- +----------------------------------------------------------------------*/
-<?php $self_name = Null; ?>
-<?php foreach($method->getParameters() as $key=>$parameter): ?>
-    <?php if(!$method->isStatic() && $self_name==Null) {
-        $self_name = $parameter->getName();
-    } ?>
-<?php endforeach; ?>
+| PHP_METHOD                                                           |
++----------------------------------------------------------------------*/
 
-/* {{{ */
-PHP_FUNCTION(<?php echo $method->getName()?>)
+/* {{{ <?php echo $this->nameType ?>::__construct() */
+PHP_METHOD(<?php echo $this->nameFunction ?>, __construct)
 {
-<?php foreach($method->getParameters() as $key=>$parameter): ?>
-    zval *<?php echo $parameter->getName() ?>;
-<?php endforeach; ?>
+    zval *data=NULL;
 
-    ZEND_PARSE_PARAMETERS_START(<?php echo $this->requiredargHelper($method); ?>, <?php echo $this->maxargHelper($method); ?>)
-<?php foreach($method->getParameters() as $key=>$parameter): ?>
-        Z_PARAM_ZVAL(<?php echo $parameter->getName() ?>);
-<?php endforeach; ?>
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(data)
     ZEND_PARSE_PARAMETERS_END();
 
-<?php if(!$method->isStatic()): ?>
-    php_<?php echo $this->nameclassHelper($this->name, -1) ?> *__self = PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_FROM_STD(<?php echo $self_name ?>->value.obj);
-<?php endif; ?>
-<?php if($method->getType()->getName()!='void') {
-    echo '    zend_';
-    if ($method->getType()->isPrimitive()) {
-        echo $this->returntypeHelper($method->getType(), -1);
-    } else {
-        echo 'object';
-    }
-    echo ' __ret = ';
-} else {
-    echo '    ';
-}?>
-php_<?php echo $method->getName()?>(<?php
-    $glue = '';
-    foreach($method->getParameters() as $key=>$parameter) {
-        if (!$method->isStatic() && $self_name==$parameter->getName()) {
-            echo '__self';
-        } else {
-            echo $glue . $parameter->getName();
-        }
-        $glue = ', ';
-    }
-    ?>);
-<?php if($method->getType()->getName()!='void') {
-    echo '    RETURN_';
-    if ($method->getType()->isPrimitive()) {
-        echo $this->returntypeHelper($method->getType(), 1);
-    } else {
-        echo 'OBJECT';
-    }
-    echo '(__ret);';
-} ?>
+    zend_object *zobj = Z_OBJ_P(getThis());
+    php_<?php echo $this->nameFunction ?> *self = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(zobj);
 
+    if (data!=NULL) {
+        ZVAL_COPY(&self->data, data);
+    }
 }
 /* }}} */
 
+/*----------------------------------------------------------------------+
+| PHP_FUNCTION                                                         |
++----------------------------------------------------------------------*/
+
+<?php foreach($this->methods as $name=>$method): ?>
+/* {{{ <?php echo $method->docblock ?> */
+PHP_FUNCTION(<?php echo $name ?>)
+{
+<?php echo $this->argHelper($method->generator, true); ?>
+
+<?php echo $this->argHelper($method->generator); ?>
+
+<?php foreach($method->parameters as $parameter): ?>
+<?php if (strstr($parameter->type, 'php_')): ?>
+    <?php echo $parameter->type; $param_type=str_replace(' *', '', $parameter->type);
+    ?><?php echo $parameter->name ?> = ZVAL_IS_<?php echo strtoupper($param_type) ?>(z<?php echo $parameter->name ?>)? ZVAL_GET_<?php echo strtoupper($param_type) ?>(z<?php echo $parameter->name ?>): NULL;
+<?php endif; ?>
 <?php endforeach; ?>
 
+    <?php echo $name ?>(<?php $glue='';
+foreach($method->parameters as $parameter): ?>
+<?php if (strstr($parameter->type, 'php_')): ?>
+<?php echo $glue, $parameter->name, '->ptr'; ?>
+<?php else: ?>
+<?php echo $glue, $parameter->name; ?>
+<?php endif; ?>
+<?php $glue=', '; ?>
+<?php endforeach; ?>);
 
-static const zend_function_entry php_<?php echo $this->nameclassHelper($this->name, -1); ?>_functions[] = {
-<?php foreach($this->methods as $key=>$method): ?>
-    <?php if(strstr($method->getName(), 'g_hash_table_iter')) continue; ?>
-    PHP_FE(<?php echo $method->getName()
-    ?>, arginfo_<?php echo $method->getName() ?>)
+
+}/* }}} */
+
 <?php endforeach; ?>
-PHP_FE_END
-};
-
-<?php
-
-function php_class_init($ns, $class_name, $className) {
-    $output = <<<EOT
-/*{{{ php_{$class_name}_class_init */
-zend_class_entry*
-php_{$class_name}_class_init(zend_class_entry *ce) {
-    INIT_NS_CLASS_ENTRY((*ce), "$ns", {$className}, php_{$class_name}_functions);
-    ce->create_object = php_{$class_name}_create_object;
-    php_{$class_name}_class_entry = zend_register_internal_class_ex(ce, NULL);
-    zend_hash_init(&php_{$class_name}_prop_handlers, 0, NULL, php_glib_dtor_prop_handler, 1);
-    zend_hash_add_ptr(&classes, ce->name, &php_{$class_name}_prop_handlers);
-    
-    return php_{$class_name}_class_entry;
-}/*}}} */
-EOT;
-    return $output;
-}
-
-$nameSpace = $this->vendor.$this->class->getOwnPackage()->getName();
-$class_name = $this->nameclassHelper($this->name, -1);
-echo php_class_init($nameSpace, $class_name, $this->name/*call hinerited*/);
-

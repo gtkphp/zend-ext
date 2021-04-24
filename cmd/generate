@@ -20,9 +20,10 @@ exit();*/
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Zend\Ext\Services\CodeGenerator;
-use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
+use Zend\Ext\Services\DocBook\Cairo as CairoDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
+use Zend\Ext\Services\SourceCode\Gtk as GtkSourceCode;
 
 define('APP_DIR', realpath(__DIR__.'/..'));
 
@@ -49,6 +50,66 @@ $log = $log_dir.'/log.txt';
 //`git clone https://github.com/GNOME/glib.git > $log`;
 //`git checkout tags/$tag -b <branch>`
 
+/**
+$src_dir = '/home/dev/Projects/glib';
+$build_dir = '/home/dev/Projects/glib-build-doc';
+$sourceCode = new GlibSourceCode($src_dir, $build_dir);
+$sourceCode->addBlackList(array('STRUCT'=>array('utimbuf')));
+$sourceCode->loadTypes();
+
+$docBook = new GlibDocBook();
+$docBook->addSourceCode($sourceCode);
+
+
+
+$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+$generator->setDocBook($docBook);
+$generator->save($output_dir);
+
+$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+$generator->setDocBook($docBook);
+$generator->save($output_dir);
+**/
+
+$src_dir = '/home/dev/Projects/gtk';
+$build_dir = '/home/dev/Projects/gtk-build-doc';
+$sourceCode = new GtkSourceCode($src_dir, $build_dir);
+$sourceCode->addBlackList(array('STRUCT'=>array('utimbuf')));
+$sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/glib/glib-decl.txt');
+$sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/gobject/gobject-decl.txt');// depend on glib-decl.txt
+
+$sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// depend on glib-decl.txt
+
+//gdk3-decl.txt fixed by $sourceCode->loadTypes('/home/dev/Documents/gtk-test.txt');
+///$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gdk/gdk3-decl.txt');// depend on cairo-decl.txt
+//$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gtk/gtk3-decl.txt');
+
+
+//var_dump($sourceCode->data);
+//print_r($sourceCode->getStruct('GList'));
+
+//print_r(array_keys($sourceCode->data['TYPEDEF']));
+//print_r($sourceCode->getProto('GTypePluginCompleteInterfaceInfo'));
+//print_r($sourceCode->getStruct('GInterfaceInfo'));
+
+//print_r($sourceCode->data['TYPEDEF']['GType']);
+//print_r($sourceCode->getStruct('GType'));
+//print_r($sourceCode->getStruct('GtkWidgetClass'));
+//print_r($sourceCode->getStruct('GtkContainer'));
+//print_r($sourceCode->getStruct('GtkBin'));
+//print_r($sourceCode->getStruct('GtkWindow'));
+
+$docBook = new CairoDocBook();
+$docBook->addSourceCode($sourceCode);
+
+//$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+$generator->setDocBook($docBook);
+$generator->save($output_dir);
+
+
+
+/*
 $src_dir = '/home/dev/Projects/glib';
 $build_dir = '/home/dev/Projects/glib-build-doc';
 $service = new GlibSourceCode($src_dir, $build_dir);
@@ -56,13 +117,16 @@ $service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
 $service->loadTypes();
 
 $servicePhp = new Php8CodeGenerator();
+*/
 
 
-// compare glib-decl vs glib docBook
+
+/*
 $docBook = new GlibDocBook();
 $docBook->addSourceCode($service);
 $docBook->addCodeGenerator($servicePhp);
-$docBook->load(/*doc.sgml*/);
+$docBook->load();
+*/
 
 /*
 $servicePhp->setCode(CodeGenerator::PHP_CODE);
@@ -70,18 +134,18 @@ $servicePhp->setStyle(CodeGenerator::PP_STYLE);
 $code = $docBook->save('/home/dev/Projects/gtkphp/output');
 file_put_contents("$output_dir/API/GHashTable.php", $code);
 */
-
+/*
 $servicePhp->setCode(CodeGenerator::C_CODE);
 $servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
 $code = $docBook->save('php_g');
 file_put_contents("$output_dir/g-list.h", $code);
 
-/*
 $servicePhp->setCode(CodeGenerator::C_CODE);
 $servicePhp->setStyle(CodeGenerator::C_SOURCE_STYLE);
 $code = $docBook->save('php_g');
 file_put_contents("$output_dir/g-list.c", $code);
 */
+
 
 // Output php-doc
 // Output php-x.x.x API

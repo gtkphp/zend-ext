@@ -10,11 +10,20 @@ use PHPUnit\Framework\Error\Error;
 use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
-use Zend\Ext\Services\CodeGenerator\Php8 as Php8CodeGenerator;
 
 
 class ClassGeneratorTest extends TestCase
 {
+
+    public function testRefactory()
+    {
+        //$generator = CodeGenerator::Factory('Xml/Glib', 'Glib');
+        //$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+        $generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+        //$generator = CodeGenerator::Factory('C/Glib', 'Glib');
+
+        $generator->save('output/dir/path');
+    }
 
     public function testDocumentation()
     {

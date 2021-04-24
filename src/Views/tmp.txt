@@ -1,3 +1,178 @@
+<?php echo $this->license; ?>
+
+#ifndef PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H
+#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+<?php
+
+//echo '#ifndef', $this->headerGuard;
+//echo $this->headerFile;// g-list.h
+//echo '#define ', $this->functionMacro, '_CLASS ';// #define PHP_G_LIST_CLASS
+//echo $this->vendorName, $this->extensionName, $this->objectName, $this->functionName;// php, g, list, append
+//echo $this->prefixMacro;// PHP_G_LIST
+//echo $this->prefixName;// php_g_list
+//echo $this->prefixType;// PhpGList =>
+
+#include <gtk/gtk.h>
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+?>
+
+//#include "php_gtk.h"
+#include "<?php echo $this->namespaceHelper($this->name, -1) ?>.h"
+
+<?php /* for each parent $this->class->getExtends();
+#include "widget.h"
+ */ ?>
+
+
+#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(ptr)           ((php_<?php echo $this->nameclassHelper($this->name, -1) ?>*)(ptr))
+#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_CLASS          php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry
+#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_OFFSET_STD     (sizeof(php_<?php echo $this->nameclassHelper($this->name, -1) ?>) - sizeof(zend_object))
+
+#define ZOBJ_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry)
+#define ZOBJ_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(std)  PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>( ((void*)(std))-PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_OFFSET_STD )
+
+#define ZVAL_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>((val)->value.obj))
+#define ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>((val)->value.obj))
+
+typedef struct _php_<?php echo $this->nameclassHelper($this->name, -1) ?> php_<?php echo $this->nameclassHelper($this->name, -1) ?>;
+struct _php_<?php echo $this->nameclassHelper($this->name, -1) ?> {
+    // TODO...
+    zend_object std;
+};
+
+PHP_<?php echo $this->namespaceHelper($this->name, 1) ?>_EXPORT zend_class_entry *php_<?php
+    echo $this->nameclassHelper($this->name, -1);
+?>_class_entry;
+HashTable php_<?php
+    echo $this->nameclassHelper($this->name, -1);
+?>_prop_handlers;
+
+<?php /*for each parent $this->class->getExtends();
+extern HashTable php_gtk_widget_prop_handlers;
+ */ ?>
+extern HashTable classes;
+
+<?php foreach($this->methods as $key=>$method): ?>
+<?php
+$self_name = Null;
+foreach($method->getParameters() as $key=>$parameter) {
+    if(!$method->isStatic() && $self_name==Null) {
+        $self_name = $parameter->getName();
+    }
+} ?>
+//php_<?php echo $method->getName().'(';
+    $glue = '';
+    foreach($method->getParameters() as $key=>$parameter) {
+        if (!$method->isStatic() && $self_name==$parameter->getName()) {
+            //echo 'php_g_list *list';
+            echo $this->typeHelper($parameter->getType());
+            echo $parameter->getName();
+        } else {
+            echo $glue
+                . $this->typeHelper($parameter->getType())
+                //. ' '
+                . $parameter->getName();
+        }
+        $glue = ', ';
+    }
+    ?>);
+<?php endforeach; ?>
+
+#define PHP_<?php echo $this->nameclassHelper($this->name, 1); ?>_FE() \
+<?php foreach($this->methods as $key=>$method): ?>
+    <?php if(strstr($method->getName(), 'g_hash_table_iter')) continue; ?>
+    PHP_FE(<?php echo $method->getName()
+    ?>, arginfo_<?php echo $method->getName() ?>) \
+<?php endforeach; ?>
+
+
+<?php foreach($this->methods as $key=>$method): ?>
+
+/*----------------------------------------------------------------------+
+ | <?php echo sprintf("%-69s", $method->getName())             ?>|
+ +----------------------------------------------------------------------*/
+<?php $self_name = Null; ?>
+ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $method->getName() ?>, 0, 0, 0)
+<?php foreach($method->getParameters() as $key=>$parameter): ?>
+<?php if(!$method->isStatic() && $self_name==Null) {
+    $self_name = $parameter->getName();
+} ?>
+    ZEND_ARG_INFO(0, <?php echo $parameter->getName() ?>)
+<?php endforeach; ?>
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(<?php echo $method->getName()?>);
+
+<?php endforeach; ?>
+
+
+<?php
+
+function class_init($ns, $nameClass) {
+    $output = <<<EOT
+zend_class_entry *php_{$nameClass}_class_init(zend_class_entry *ce);
+EOT;
+    return $output;
+}
+
+foreach($this->class->getRelatedObjects() as $object){
+    $ns = $this->vendor.$this->class->getOwnPackage()->getName();
+    $nameClass = $this->nameclassHelper($object, -1);
+    echo class_init($ns, $nameClass);
+}
+
+echo "\n\n";
+
+$ns = $this->vendor.$this->class->getOwnPackage()->getName();
+$nameClass = $this->nameclassHelper($this->name, -1);
+echo class_init($ns, $nameClass/*call hinerited*/);
+
+?>
+
+
+
+#endif	/* PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <?php
 
     public function generate_me()

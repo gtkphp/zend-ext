@@ -61,6 +61,23 @@ class PackageGenerator extends AbstractGenerator
     {
         return $this->list_type_object;
     }
+    /**
+     * @param string $name
+     */
+    public function getObject($name)
+    {
+        if (isset($this->list_type_object[$name])) {
+            return $this->list_type_object[$name];
+        }
+        return Null;
+    }
+    /**
+     * @return array
+     */
+    public function getListObject(): array
+    {
+        return array_keys($this->list_type_object);
+    }
 
     /**
      * @param array $list_type_object

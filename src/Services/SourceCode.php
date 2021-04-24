@@ -12,6 +12,7 @@ use Zend\C\Engine\Context;
 use Zend\C\Engine\PreProcessor;
 use Zend\C\ExpressionParser;
 use Zend\C\PhpPrinter;
+use Exception;
 use Zend\Ext\Exceptions\BadDeclarationException;
 use Zend\Ext\Exceptions\LogicFileException;
 use Zend\Ext\Exceptions\NoSuchFileException;
@@ -26,7 +27,7 @@ class SourceCode {
 
     protected $doc_dir = '';
 
-    public $data = array();
+    public $data = array('TYPEDEF'=>[], 'MACRO'=>[], 'MACRO'=>[], 'ENUM'=>[], 'STRUCT'=>[]);
 
     /**
      * @var string $name
@@ -93,6 +94,13 @@ class SourceCode {
         $this->source_dir = $source_dir;
         $this->build_dir = $build_dir;
         $this->sanityCheck();
+
+        $this->printer = new PhpPrinter;
+        $this->context = new Context;
+        $lexer = new Lexer;
+        $this->parser = new ExpressionParser($lexer);
+        $this->preprocessor = new PreProcessor($this->context);
+
     }
 
     /**
@@ -187,6 +195,42 @@ class SourceCode {
         return True;
     }
 
+    function getStruct($name) {
+        //TYPEDEF, MACRO, ENUM, STRUCT
+        $structs = $this->data['STRUCT'];
+        $struct = Null;
+        if (isset($structs[$name])) {
+            return $structs[$name];
+        } else if (isset($structs['_'.$name])) {
+            return $structs['_'.$name];
+        }
+        return Null;
+    }
+    function getProto($name)
+    {
+        $prototypes = $this->data['TYPEDEF'];
+        $proto = Null;
+        if (isset($prototypes[$name])) {
+            return $prototypes[$name];
+        } else if (isset($prototypes['_'.$name])) {
+            return $prototypes['_'.$name];
+        }
+        return Null;
+    }
+/*
+    function getProto($name) {
+        //print_r($this->sourceCode['Glib']->data['STRUCT']['_GList']);
+        $structs = $this->data['STRUCT'];
+        $struct = Null;
+        if (isset($structs[$name])) {
+            return $structs[$name];
+        } else if (isset($structs['_'.$name])) {
+            return $structs['_'.$name];
+        }
+        return Null;
+    }
+*/
+
     function getDeclarations(string $filepath, array $search=array(), array $replace=array())
     {
         $filename = realpath($filepath);
@@ -198,12 +242,6 @@ class SourceCode {
         $str_xml = str_replace($search, $replace, $str_xml);
         $this->search = $search;
         $this->replace = $replace;
-
-        $this->printer = new PhpPrinter;
-        $this->context = new Context;
-        $lexer = new Lexer;
-        $this->parser = new ExpressionParser($lexer);
-        $this->preprocessor = new PreProcessor($this->context);
 
         $this->doc = new DOMDocument();
         $this->doc->loadXML($str_xml);
@@ -222,7 +260,8 @@ class SourceCode {
             $enable = True;
             if ($enable) {
                 $this->getItems('TYPEDEF', 2);
-                $this->data['TYPEDEF']=$this->array['typedefs'];
+                //$this->data['TYPEDEF']=$this->array['typedefs'];
+                $this->data['TYPEDEF'] = array_merge($this->data['TYPEDEF'], $this->array['typedefs']);
                 unset($this->array);
             }
 
@@ -232,7 +271,10 @@ class SourceCode {
                 //$model = new EnumGenerator(/*$data*/);
                 //TODO: $model = $this->getPackage()->createStruct($name, $data);
                 //$model = new StructGenerator($data);
-                $this->data['MACRO']=$this->array;
+                //$this->data['MACRO']=$this->array;
+                $this->data['MACRO'] = array_merge($this->data['MACRO'], $this->array);
+                //$macros = $this->preprocessor->getDefinitions();
+                //print_r($macros['g_list_previous']);
                 unset($this->array);
             }
 
@@ -244,7 +286,8 @@ class SourceCode {
 
             if ($enable) {
                 $this->getItems('ENUM', 3);
-                $this->data['ENUM']=$this->array['enums'];
+                //$this->data['ENUM']=$this->array['enums'];
+                $this->data['ENUM'] = array_merge($this->data['ENUM'], $this->array['enums']);
                 unset($this->array);
             }
 
@@ -253,7 +296,8 @@ class SourceCode {
              */
             if ($enable) {
                 $this->getItems('STRUCT', 2, 3);
-                $this->data['STRUCT']=$this->array['structs'];
+                //$this->data['STRUCT']=$this->array['structs'];
+                $this->data['STRUCT'] = array_merge($this->data['STRUCT'], $this->array['structs']);
                 // concat $this->data['TYPEDEF'] + $this->array['typedefs']
                 unset($this->array);
             }
@@ -261,16 +305,26 @@ class SourceCode {
             //$enums = $this->getUserFunctions($nodes);
             if ($enable) {
                 $this->getItems('USER_FUNCTION', 2, 1);
-                $this->data['TYPEDEF'] += $this->array['typedefs'];
+                //$this->data['TYPEDEF'] += $this->array['typedefs'];
+                $this->data['TYPEDEF'] = array_merge($this->data['TYPEDEF'], $this->array['typedefs']);
                 unset($this->array);
             }
 
             if ($enable) {
                 $this->getItems('STRUCT', 2, 3);
-                $this->data['STRUCT']=$this->array['structs'];
+                //$this->data['STRUCT']=$this->array['structs'];
+                $this->data['STRUCT'] = array_merge($this->data['STRUCT'], $this->array['structs']);
                 // concat $this->data['TYPEDEF'] + $this->array['typedefs']
                 unset($this->array);
             }
+
+            /*if ($enable) {
+                $this->getItems('USER_FUNCTION', 2, 1);
+                //$this->data['TYPEDEF'] += $this->array['typedefs'];
+                $this->data['TYPEDEF'] = array_merge($this->data['TYPEDEF'], $this->array['typedefs']);
+                unset($this->array);
+            }*/
+
         }
 
         // TODO parse the file and create FunctionGenerator
@@ -290,6 +344,10 @@ class SourceCode {
             echo "\tTotal: 84/84\n";
         echo $this->reporting['MACRO']['passed'].PHP_EOL;
         echo $this->reporting['USER_FUNCTION']['passed'].PHP_EOL;
+
+        print_r($this->reporting['ENUM']['remaining']);
+        print_r($this->reporting['USER_FUNCTION']['remaining']);
+        print_r($this->reporting['STRUCT']['remaining']);
         //print_r($this->reporting['USER_FUNCTION']['remaining']);
         //echo count($this->reporting['STRUCT']['processed']).PHP_EOL;
         //print_r($this->reporting['STRUCT']);
@@ -384,6 +442,8 @@ class SourceCode {
                 $msg = $exc->getMessage();
                 $this->_item_remaining[$this->_current_item] = $msg;
                 //echo $msg.PHP_EOL;
+            } catch (\Exception $exc) {
+                throw new \Exception($exc->getMessage().' # for '.$this->_current_item);
             }
         }
 

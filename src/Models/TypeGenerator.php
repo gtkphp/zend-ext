@@ -108,8 +108,11 @@ class TypeGenerator extends AbstractGenerator
         'guint32'             => self::PRIMITIVE_UINT32,
         'guint64'             => self::PRIMITIVE_UINT64,
 
-        'gpointer'             => self::PRIMITIVE_POINTER,
+        'gpointer'            => self::PRIMITIVE_POINTER,
 
+        'int'                 => self::PRIMITIVE_INT,
+        'double'              => self::PRIMITIVE_DOUBLE,
+        'char'                => self::PRIMITIVE_CHAR,
     ];
 
     /**

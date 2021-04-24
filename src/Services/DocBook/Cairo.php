@@ -11,7 +11,7 @@ use Zend\Ext\Models\TypeGenerator;
 use Zend\Ext\Services\DocBook;
 
 
-class Glib extends DocBook
+class Cairo extends DocBook
 {
     /**
      * @var Zend\Ext\Models\PackageGenerator $package
@@ -37,8 +37,8 @@ class Glib extends DocBook
      */
     function load():PackageGenerator {
         $this->package = new PackageGenerator(array(
-            'name'=>'G',
-            'shortDescription'=>'Glib 2.64.22'
+            'name'=>'Cairo',
+            'shortDescription'=>'Cairo 1.16'
         ));
 
         //foreach xi:include
@@ -51,12 +51,19 @@ class Glib extends DocBook
         //print_r($cmp);
         //$this->getSourceCode('Glib')->getStruct('GList');
 
-        $filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/hash_tables.xml';
-        $filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/linked_lists_double.xml';
-        //$filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/arrays.xml';
-        $filename = '/home/dev/Projects/glib-build-doc/docs/reference/glib/xml/error_reporting.xml';
+        $filename = '/home/dev/Projects/cairo/doc/public/xml/cairo-matrix.xml';
+        $filename = '/home/dev/Projects/cairo/doc/public/xml/cairo-surface.xml';
+        $filename = '/home/dev/Projects/cairo/doc/public/xml/cairo-image.xml';
+        $filename = '/home/dev/Projects/cairo/doc/public/xml/cairo.xml';
         $xml = simplexml_load_file($filename);
         $class = $this->loadClass($xml);
+
+        $filename = '/home/dev/Projects/cairo/doc/public/xml/cairo-paths.xml';
+        $filename = '/home/dev/Projects/gtkphp/doc.xml';
+        //$filename = '/home/dev/Projects/cairo/doc/public/xml/cairo-png.xml';
+        $xml = simplexml_load_file($filename);
+        $class = $this->loadClass($xml);
+
         // $package->addClass($class);
         // $package->addBoxed($class);
         // $package->addEnum($class);
@@ -66,12 +73,11 @@ class Glib extends DocBook
 
     protected function loadClass(SimpleXMLElement $xml): ClassGenerator {
         $map=array(
-            'Hash Tables'=>'GHashTable',
-            'Doubly-Linked Lists'=>'GList',
-            'Error Reporting'=>'GError',
-            'Arrays'=>'GArray',
+            'Image Surfaces'=>'cairo_image_surface_t',
+            'Paths'=>'cairo_path_t',
+            'PNG Support'=>'cairo_png_t',
         );// <------------------------------------------------------------------------
-        $id = trim((string) $xml['id']);//glib-Hash-Tables
+        $id = trim((string) $xml['id']);//cairo-cairo-matrix-t
 
         $className = (string) $xml->refmeta->refentrytitle;
         $className = $map[$className]?? $className;
@@ -111,17 +117,17 @@ class Glib extends DocBook
 
         // load all class before render
         //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
-        $struct = $this->sourceCode['Glib']->getStruct($className);
+        $struct = $this->sourceCode['Gtk']->getStruct($className);
         if(empty($struct))
-        echo '"', $className, '" not found in source', PHP_EOL;
+            echo '"', $className, '" not found in source', PHP_EOL;
         else
-        foreach($struct['members'] as $member) {
-            $property = new PropertyGenerator($member['name']);
-            $type = new TypeGenerator($member['type']);
-            $property->setType($type);
-            //$property->setPass($member['pass']);
-            $class->addPropertyFromGenerator($property);
-        }
+            foreach($struct['members'] as $member) {
+                $property = new PropertyGenerator($member['name']);
+                $type = new TypeGenerator($member['type']);
+                $property->setType($type);
+                //$property->setPass($member['pass']);
+                $class->addPropertyFromGenerator($property);
+            }
         //var_dump($struct);
 
 
@@ -140,10 +146,10 @@ class Glib extends DocBook
         }
         // <-- setType -->
         $data = Null;
-        if (isset($this->sourceCode['Glib']->data['TYPEDEF'][$methodName])) {
+        if (isset($this->sourceCode['Gtk']->data['TYPEDEF'][$methodName])) {
             $data = array(
                 'functions'=>array(
-                    $this->sourceCode['Glib']->data['TYPEDEF'][$methodName]
+                    $this->sourceCode['Gtk']->data['TYPEDEF'][$methodName]
                 )
             );
             //print_r($data);
@@ -157,7 +163,7 @@ class Glib extends DocBook
             $str = str_replace(' ', ' ', $str);
             file_put_contents(__DIR__.'/../../../tmp/declaration.h', $str);
             try {
-                $data = $this->sourceCode['Glib']->parse($str);
+                $data = $this->sourceCode['Gtk']->parse($str);
             } catch(\Zend\C\Engine\Error $exc) {
                 echo $methodName, PHP_EOL;
                 echo $str, PHP_EOL;
@@ -177,7 +183,7 @@ class Glib extends DocBook
 
         if (False) {
             /*
-            $typedefs = $this->sourceCode['Glib']->data['TYPEDEF'];
+            $typedefs = $this->sourceCode['Gtk']->data['TYPEDEF'];
             $type_pass='';
             if (isset($typedefs[$typeName])) {
                 $type = $this->package->createType($typedefs[$typeName]['type']);
@@ -207,7 +213,7 @@ class Glib extends DocBook
             }
         }
 
-        $typedefs = $this->sourceCode['Glib']->data['TYPEDEF'];
+        $typedefs = $this->sourceCode['Gtk']->data['TYPEDEF'];
 
         // <-- setParameter -->
         $parametersData = $func['signature']['parameters'];
@@ -268,20 +274,20 @@ class Glib extends DocBook
 
                 $parameterAnnotations = $row->entry[2]->emphasis->acronym;
                 if(isset($parameterAnnotations))
-                foreach($parameterAnnotations as $annotation) {
-                    $acronym =(string)$annotation;
-                    switch ($acronym) {
-                        case 'optional':
-                            $parameter->setIsOptional(True);
-                            break;
-                        case 'out':// Php as pass reference
-                        case 'nullable':
-                        case 'not nullable':
-                        default:
-                            //echo "Unimplemented annotation: '$acronym'\n";
-                            break;
+                    foreach($parameterAnnotations as $annotation) {
+                        $acronym =(string)$annotation;
+                        switch ($acronym) {
+                            case 'optional':
+                                $parameter->setIsOptional(True);
+                                break;
+                            case 'out':// Php as pass reference
+                            case 'nullable':
+                            case 'not nullable':
+                            default:
+                                //echo "Unimplemented annotation: '$acronym'\n";
+                                break;
+                        }
                     }
-                }
             }
         }
 
