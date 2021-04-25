@@ -348,6 +348,24 @@ class SourceCode {
         print_r($this->reporting['ENUM']['remaining']);
         print_r($this->reporting['USER_FUNCTION']['remaining']);
         print_r($this->reporting['STRUCT']['remaining']);
+
+        // Syntax error, unexpected IDENTIFIER(AtkObject)
+        /*foreach($this->reporting['STRUCT']['remaining'] as $struct) {
+            if (strstr($struct, 'Syntax error, unexpected IDENTIFIER')) {
+                $name = substr($struct, 36);
+                $pos = strpos($name, ')');
+                $name = substr($name, 0, $pos);
+                echo 'typedef struct _',$name,' ',$name,';', PHP_EOL;
+            }
+        }*/
+        /*foreach($this->reporting['STRUCT']['remaining'] as $name => $struct) {
+            if (strstr($name, 'Class')) {
+                $pos = strpos($name, 'Class');
+                $name = substr($name, 0, $pos);
+                echo 'typedef struct _',$name,' ',$name,';', PHP_EOL;
+            }
+        }*/
+
         //print_r($this->reporting['USER_FUNCTION']['remaining']);
         //echo count($this->reporting['STRUCT']['processed']).PHP_EOL;
         //print_r($this->reporting['STRUCT']);

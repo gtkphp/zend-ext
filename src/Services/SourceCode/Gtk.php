@@ -11,7 +11,7 @@ class Gtk extends SourceCode
 
     function __construct($source_dir=NULL, $build_dir=NULL){
         $this->doc_dir = 'docs/reference/gtk';
-        $this->name = 'Gtk';
+        $this->name = 'Glib';
         parent::__construct($source_dir, $build_dir);
     }
 

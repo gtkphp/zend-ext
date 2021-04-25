@@ -22,6 +22,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\DocBook\Cairo as CairoDocBook;
+use Zend\Ext\Services\DocBook\Gtk as GtkDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
 use Zend\Ext\Services\SourceCode\Gtk as GtkSourceCode;
 
@@ -80,10 +81,11 @@ $sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/gobject
 
 $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// depend on glib-decl.txt
 
-//gdk3-decl.txt fixed by $sourceCode->loadTypes('/home/dev/Documents/gtk-test.txt');
+//gdk3-decl.txt fixed by
+$sourceCode->loadTypes('/home/dev/Documents/gtk-test.txt');
 ///$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gdk/gdk3-decl.txt');// depend on cairo-decl.txt
+$sourceCode->loadTypes('/home/dev/Projects/gtkphp/zend-ext/data/gtk3-decl.txt');
 //$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gtk/gtk3-decl.txt');
-
 
 //var_dump($sourceCode->data);
 //print_r($sourceCode->getStruct('GList'));
@@ -91,6 +93,8 @@ $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// 
 //print_r(array_keys($sourceCode->data['TYPEDEF']));
 //print_r($sourceCode->getProto('GTypePluginCompleteInterfaceInfo'));
 //print_r($sourceCode->getStruct('GInterfaceInfo'));
+//print_r($sourceCode->getStruct('GtkWidgetClass'));
+
 
 //print_r($sourceCode->data['TYPEDEF']['GType']);
 //print_r($sourceCode->getStruct('GType'));
@@ -99,52 +103,25 @@ $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// 
 //print_r($sourceCode->getStruct('GtkBin'));
 //print_r($sourceCode->getStruct('GtkWindow'));
 
-$docBook = new CairoDocBook();
-$docBook->addSourceCode($sourceCode);
+if (False) {
+    $docBook = new CairoDocBook();
+    $docBook->addSourceCode($sourceCode);
 
-//$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
-$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
-$generator->setDocBook($docBook);
-$generator->save($output_dir);
+    //$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+    $generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+    $generator->setDocBook($docBook);
+    $generator->save($output_dir);
+} else {
+    $docBook = new GtkDocBook();
+    $docBook->addSourceCode($sourceCode);
 
+    $generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+    //$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+    $generator->setDocBook($docBook);
+    $generator->save($output_dir);
 
+}
 
-/*
-$src_dir = '/home/dev/Projects/glib';
-$build_dir = '/home/dev/Projects/glib-build-doc';
-$service = new GlibSourceCode($src_dir, $build_dir);
-$service->addBlackList(array('STRUCT'=>array('utimbuf', 'GMarkupParser')));
-$service->loadTypes();
-
-$servicePhp = new Php8CodeGenerator();
-*/
-
-
-
-/*
-$docBook = new GlibDocBook();
-$docBook->addSourceCode($service);
-$docBook->addCodeGenerator($servicePhp);
-$docBook->load();
-*/
-
-/*
-$servicePhp->setCode(CodeGenerator::PHP_CODE);
-$servicePhp->setStyle(CodeGenerator::PP_STYLE);
-$code = $docBook->save('/home/dev/Projects/gtkphp/output');
-file_put_contents("$output_dir/API/GHashTable.php", $code);
-*/
-/*
-$servicePhp->setCode(CodeGenerator::C_CODE);
-$servicePhp->setStyle(CodeGenerator::C_HEADER_STYLE);
-$code = $docBook->save('php_g');
-file_put_contents("$output_dir/g-list.h", $code);
-
-$servicePhp->setCode(CodeGenerator::C_CODE);
-$servicePhp->setStyle(CodeGenerator::C_SOURCE_STYLE);
-$code = $docBook->save('php_g');
-file_put_contents("$output_dir/g-list.c", $code);
-*/
 
 
 // Output php-doc

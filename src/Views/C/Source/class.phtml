@@ -41,6 +41,25 @@ static const zend_function_entry php_<?php echo $this->nameFunction ?>_methods[]
 }*/
 ?>
 
+static GtkWidgetClass php_gtk_widget_klass = {G_TYPE_INVALID};
+
+static void php_gtk_widget_override_get_preferred_width(GtkWidget *widget) { }
+
+static void
+php_gtk_widget_class_init_override() {
+    GtkWidgetClass *widget_klass = g_type_class_peek(GTK_TYPE_WIDGET);
+
+    if (NULL==G_TYPE_FROM_CLASS(&php_gtk_widget_klass)) {
+        memcpy(&php_gtk_widget_klass, widget_klass, sizeof(GtkWidgetClass));
+        G_TYPE_FROM_CLASS(&php_gtk_widget_klass) = GTK_TYPE_WIDGET;
+
+        // TODO: browse PHP class method...
+        widget_klass->get_preferred_width = php_gtk_widget_override_get_preferred_width;
+        //...
+    }
+}
+
+
 <?php if(True): ?>
 
 /* {{{ php_<?php echo $this->nameFunction ?>_create_object */
@@ -320,7 +339,7 @@ static zend_object_handlers*
 php_<?php echo $this->nameFunction ?>_get_handlers()
 {
     memcpy(&php_<?php echo $this->nameFunction ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    php_<?php echo $this->nameFunction ?>_handlers.offset = PHP_SAMPLE_NODE_OFFSET;
+    php_<?php echo $this->nameFunction ?>_handlers.offset = PHP_<?php echo $this->nameMacro ?>_OFFSET;
     //php_<?php echo $this->nameFunction ?>_handlers.clone_obj;
     //php_<?php echo $this->nameFunction ?>_handlers.compare;
     //php_<?php echo $this->nameFunction ?>_handlers.compare_objects;
@@ -355,11 +374,11 @@ php_<?php echo $this->nameFunction ?>_get_handlers()
 
 /*{{{ php_<?php echo $this->nameFunction ?>_class_init */
 zend_class_entry*
-php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *ce) {
+php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
     php_<?php echo $this->nameFunction ?>_get_handlers();
     //INIT_NS_CLASS_ENTRY((*ce), "Gnome\\G", "List", php_<?php echo $this->nameFunction ?>_methods);
-    INIT_CLASS_ENTRY((*ce), "<?php echo $this->nameType ?>", php_<?php echo $this->nameFunction ?>_methods);
-    php_<?php echo $this->nameFunction ?>_class_entry = zend_register_internal_class_ex(ce, NULL);
+    INIT_CLASS_ENTRY((*container_ce), "<?php echo $this->nameType ?>", php_<?php echo $this->nameFunction ?>_methods);
+    php_<?php echo $this->nameFunction ?>_class_entry = zend_register_internal_class_ex(container_ce, parent_ce);
     php_<?php echo $this->nameFunction ?>_class_entry->create_object = php_<?php echo $this->nameFunction ?>_create_object;
     //ce->serialize;
     /*

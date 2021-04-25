@@ -30,7 +30,7 @@ class ArgHelper extends AbstractHelper
                     $output .= '    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', IS_STRING, 0)'. PHP_EOL;// 0 = allow_null
                     break;
                 default:
-                    $output .= '    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', php_'.$parameter->getType()->getName().', 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getType()->getName().', 0)'. PHP_EOL;// 0 = allow_null
                     break;
             }
         }

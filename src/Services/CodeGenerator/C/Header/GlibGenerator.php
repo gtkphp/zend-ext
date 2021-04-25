@@ -7,6 +7,7 @@ use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
 use Zend\Ext\Views\HelperPluginManager;
 use Zend\Ext\Views\C\Header\Helpers\TypeHelper;
 use Zend\Ext\Views\C\ClassDto;
+use Zend\Ext\Views\C\VTableDto;
 use Zend\Ext\Views\C\MethodDto;
 use Zend\Ext\Views\C\ParameterDto;
 use Zend\Filter\FilterChain;
@@ -72,6 +73,11 @@ class GlibGenerator extends CodeGenerator
         $licenseModel->setVariable('date', '31/12/1999');
         $licenseModel->setTemplate('license.phtml');
 
+        $fileModel = parent::getViewModel((array)$dto);
+        $fileModel->addChild($licenseModel, 'license');
+        $fileModel->addChild($classModel, 'class');
+        $fileModel->setTemplate('file.phtml');
+
         $model = parent::getViewModel((array)$dto);
         $model->addChild($licenseModel, 'license');
         $model->setTemplate('class.phtml');
@@ -125,13 +131,16 @@ class GlibGenerator extends CodeGenerator
 
         $name = $generator->getName();
 
+
         $dto = new ClassDto();
+        $dto->name = $name;
         $dto->fileName = $filter->filter($name) . '.h';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
         $dto->properties = array();
         $properties = $generator->getProperties();
         foreach($properties as $property) {
+            //echo $property->getName(), PHP_EOL;
             $dto->properties[$property->getName()] = $helper($property->getType(), '');
         }
         $dto->methods = array();
@@ -159,7 +168,48 @@ class GlibGenerator extends CodeGenerator
             $method->pad = str_repeat(' ', $max_length-strlen($method->name));
         }
 
+        //$dto->vtable
+        /*
+        $related_class = $related[0];
+        $related_class_src = $this->getDocBook()->getSourceCode('Glib')->getStruct($related_class);
+        $vTableDto = $this->getVTableDto($related_class_src);
+        */
+        //TODO: classDto->vTable = getVTableDto(VTableGenerator $generator)
+        //TODO: getEnumDto(EnumGenerator $generator)
+
+        $dto->relationships = array();
+        foreach ($generator->getRelatedObjects() as $related) {
+            $dto->relationships[$related->getName()] = $this->getClassDto($related);
+        }
+
+
         return $dto;
+    }
+    function getVTableDto(array $struct)
+    {
+        $vTableDto = new VtableDto();
+        /*
+        if ('struct'!=$struct['type']) {
+            return null;
+        }
+
+        //var_dump($struct);
+        $methods = array();
+        foreach($struct['members'] as $name => $member) {
+            //var_dump($name, $member['name']);//['size_allocate']
+            if ('function'==$member['type']) {
+                $methodDto = new MethodDto;
+                $methodDto->name = $name;
+                $methodDto->type = $member['signature']['return']['type'];
+                print_r($member['signature']);
+
+                $methods[] = $methodDto;
+            }
+        }
+        $vTableDto->methods = $methods;
+        */
+
+        return $vTableDto;
     }
 
     // Controller::Action

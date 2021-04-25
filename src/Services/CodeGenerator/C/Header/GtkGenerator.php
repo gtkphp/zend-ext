@@ -31,6 +31,7 @@ use Zend\Ext\Models\ClassGenerator;
 use Zend\Ext\Services\CodeGenerator;
 use function Webmozart\Assert\Tests\StaticAnalysis\maxLength;
 
+// TODO: remove this file( not used
 class GtkGenerator extends CodeGenerator
 {
 

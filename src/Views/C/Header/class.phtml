@@ -34,8 +34,8 @@
     PHP_FE(<?php echo $name ?>,<?php echo $method->pad ?> arginfo_<?php echo $name ?>) \
 <?php endforeach; ?>
 
-#define PHP_<?php echo $this->nameMacro ?>_MINIT_FUNCTION(parent_ce) \
-    php_<?php echo $this->nameFunction ?>_class_init(parent_ce)
+#define PHP_<?php echo $this->nameMacro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_<?php echo $this->nameFunction ?>_class_init(container_ce, parent_ce)
 
 #define PHP_<?php echo $this->nameMacro ?>_MSHUTDOWN_FUNCTION() { \
 }
@@ -63,7 +63,7 @@ struct _php_<?php echo $this->nameFunction ?> {
 ?>);
 <?php endforeach; ?>
 
-zend_class_entry *php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *ce);
+zend_class_entry *php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
 
 
 <?php foreach($this->methods as $name=>$method): ?>
@@ -79,6 +79,14 @@ PHP_FUNCTION(<?php echo $name ?>);
 
 <?php endforeach; ?>
 
+<?php foreach($this->relationships as $relationship): ?>
+typedef struct _php_<?php echo $relationship->nameFunction ?> php_<?php echo $relationship->nameFunction ?>;
+struct _php_<?php echo $relationship->nameFunction ?> {
+    <?php echo $relationship->name, ' *ptr;', PHP_EOL ?>
+
+    zend_object std;
+};
+<?php endforeach; ?>
 
 #endif	/* PHP_<?php echo $this->nameMacro ?>_H */
 

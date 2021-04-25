@@ -820,7 +820,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
      */
     public function getRelatedObjects(): array
     {
-        return $this->relatedObjects;
+        return empty($this->relatedObjects) ? array() : $this->relatedObjects;
     }
 
     /**
