@@ -21,17 +21,51 @@ class PackageGenerator extends AbstractGenerator
      * @var array $list_type_object array('GtkWidget', 'GtkBin', ...)
      */
     protected $list_type_object = array();
+
     /**
      * @var array $list_type_enum array('GtkWindowType', ...)
      */
     protected $list_type_enum = array();
 
+    /**
+     * @var array $list_type_vtable array('GtkWindowType', ...)
+     */
+    protected $list_type_vtable = array();
+
+    /**
+     * @var array $symbols array('GtkWidget', 'GtkWidgetClass', 'GObjectClass', ...)
+     */
+    protected $symbols = array();
+    
     public function createClass(string $name): ClassGenerator {
         $class = new ClassGenerator($name);
         $class->setParentGenerator($this);
         $class->setOwnPackage($this);//CHECK me is Package has parent package
 
         $this->list_type_object[$name] = $class;
+        $this->symbols[$name] = $class;
+
+        return $class;
+    }
+
+    public function createEnum(string $name): EnumGenerator {
+        $enum = new EnumGenerator($name);
+        $enum->setParentGenerator($this);
+        $enum->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $this->list_type_enum[$name] = $enum;
+        $this->symbols[$name] = $enum;
+
+        return $enum;
+    }
+
+    public function createVTable(string $name): ClassGenerator {
+        $class = new ClassGenerator($name);
+        $class->setParentGenerator($this);
+        $class->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $this->list_type_vtable[$name] = $class;
+        $this->symbols[$name] = $class;
 
         return $class;
     }
@@ -108,4 +142,21 @@ class PackageGenerator extends AbstractGenerator
         return $this;
     }
 
+    /**
+     * @return array of AbstractGenerator
+     */
+    public function getSymbols(): array
+    {
+        return $this->symbols;
+    }
+
+    /**
+     * @param string $name
+     * @return AbstractGenerator
+     */
+    public function getSymbol($name)
+    {
+        return isset($this->symbols[$name]) ? $this->symbols[$name] : null;
+    }
+    
 }

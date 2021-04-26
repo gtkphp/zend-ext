@@ -1,12 +1,3 @@
-<?php echo $this->license; ?>
-
-#ifndef PHP_<?php echo $this->nameMacro ?>_H
-#define PHP_<?php echo $this->nameMacro ?>_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 
 #define PHP_<?php echo $this->nameMacro ?>(ptr)           ((php_<?php echo $this->nameFunction ?>*)(ptr))
 #define PHP_<?php echo $this->nameMacro ?>_CLASS          php_<?php echo $this->nameFunction ?>_class_entry
@@ -45,9 +36,12 @@
 
 typedef struct _php_<?php echo $this->nameFunction ?> php_<?php echo $this->nameFunction ?>;
 struct _php_<?php echo $this->nameFunction ?> {
+    /*
 <?php foreach($this->properties as $name=>$property): ?>
-    <?php echo $property, $name, ';', PHP_EOL ?>
-<?php endforeach; ?>
+     * <?php echo $property, $name, ';', PHP_EOL ?>
+<?php endforeach;  ?>
+     */
+    <?php echo $this->name ?> *ptr;
 
     zend_object std;
 };
@@ -78,23 +72,3 @@ ZEND_END_ARG_INFO()
 PHP_FUNCTION(<?php echo $name ?>);
 
 <?php endforeach; ?>
-
-<?php foreach($this->relationships as $relationship): ?>
-typedef struct _php_<?php echo $relationship->nameFunction ?> php_<?php echo $relationship->nameFunction ?>;
-struct _php_<?php echo $relationship->nameFunction ?> {
-    <?php echo $relationship->name, ' *ptr;', PHP_EOL ?>
-
-    zend_object std;
-};
-<?php endforeach; ?>
-
-#endif	/* PHP_<?php echo $this->nameMacro ?>_H */
-
-/*
- * Local variables:
- * tab-width: 4
- * c-basic-offset: 4
- * End:
- * vim600: noet sw=4 ts=4 fdm=marker
- * vim<600: noet sw=4 ts=4
- */

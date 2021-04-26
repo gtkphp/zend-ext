@@ -3,6 +3,7 @@
 namespace Zend\Ext\Services\CodeGenerator\C\Source;
 
 use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
@@ -115,7 +116,11 @@ class GlibGenerator extends CodeGenerator
 
         $name = $generator->getName();
 
+
         $dto = new ClassDto();
+        $dto->name = $generator->getName();
+        $dto->abbr = $generator->getAbbr();
+        $dto->extend = $generator->getExtendedClass();
         $dto->fileName = $filter->filter($name) . '.c';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
@@ -153,8 +158,81 @@ class GlibGenerator extends CodeGenerator
             $method->pad = str_repeat(' ', $max_length-strlen($method->name));
         }
 
+        $dto->vtable = $this->getVtableDto($generator);
+        $dto->parent = $this->getParentClassDto($generator);
+
         return $dto;
     }
+
+    function getVtableDto(ClassGenerator $generator)
+    {
+        $vtableDto = null;
+
+        $methods = [];
+        $vtable = $generator->getVTable();
+        if ($vtable) {
+            $vtableDto = new ClassDto();
+            $vtableDto->name = $vtable->getName();
+            $vtableDto->abbr = $vtable->getAbbr();
+            $vtableDto->extend = $vtable->getExtendedClass();
+            //$vtableDto->parent = $this->getParentClassDto($generator);
+
+            $methods = $vtable->getMethods();
+        }
+        foreach($methods as $method) {
+            $methodDto = $this->getMethodDto($method);
+            $vtableDto->methods[$method->getName()] = $methodDto;
+        }
+
+        return $vtableDto;
+    }
+    // getParentVtableDto(ClassGenerator $generator)
+    function getParentClassDto(ClassGenerator $generator)
+    {
+        //TODO rebuild eachtime the chain of parent :'(
+
+        $extend = $generator->getExtendedClass();
+        if ('GInitiallyUnowned'==$extend) {
+            $extend = 'GObject';
+        }
+        if(empty($extend))
+            return null;
+
+        $parentGenerator = $generator->getOwnPackage()->getSymbol($extend);
+        if(empty($parentGenerator))
+            return null;
+
+        $dto = $this->getClassDto($parentGenerator);
+
+        return $dto;
+    }
+
+    function getMethodDto(MethodGenerator $method)
+    {
+        $helper = new TypeHelper();
+        $helper->setView($this->getRenderer());
+        $protoHelper = new DocBlockHelper();
+        $protoHelper->setView($this->getRenderer());
+
+        $methodDto = new MethodDto();
+        $methodDto->generator = $method;
+        $methodDto->name = $method->getName();
+        $methodDto->type = $method->getType()->getName().$method->getPass();//$helper($method->getType(), '*');
+        $methodDto->max_parameters = count($method->getParameters());
+        $methodDto->min_parameters = count($method->getParameters());//TODO
+        $methodDto->parameters = array();
+        foreach($method->getParameters() as $parameter) {
+            $parameterDto = new ParameterDto();
+            $parameterDto->name = $parameter->getName();
+            $parameterDto->type = $parameter->getType()->getName().$parameter->getPass();//$helper($parameter->getType(), '*');
+
+            $methodDto->parameters[] = $parameterDto;
+        }
+        $methodDto->docblock = $protoHelper($method);
+
+        return $methodDto;
+    }
+
     // Controller::Action
     function render($model)
     {

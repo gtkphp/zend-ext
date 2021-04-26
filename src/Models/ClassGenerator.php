@@ -80,6 +80,12 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     protected $methods = [];
 
     /**
+     * The vtable
+     * @var ClassGenerator virtual table
+     */
+    protected $virtual;
+
+    /**
      * @var TraitUsageGenerator Object to encapsulate trait usage logic
      */
     protected $traitUsageGenerator;
@@ -130,6 +136,10 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         if ($docBlock !== null) {
             $this->setDocBlock($docBlock);
         }
+    }
+    public function getAbbr() {
+        $abbr = str_replace(['Gtk', 'G'], '', $this->name);
+        return strtolower($abbr);
     }
 
     /**
@@ -729,6 +739,23 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     }
 
     /**
+     * @return ClassGenerator|null
+     */
+    public function getVTable()
+    {
+        return $this->virtual;
+    }
+
+    /**
+     * @param ClassGenerator $vtable
+     */
+    public function setVTable($vtable)
+    {
+        $this->virtual = $vtable;
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function addTrait($trait)
@@ -829,9 +856,36 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
      */
     public function setRelatedObjects(array $relatedObjects): ClassGenerator
     {
-        $this->relatedObjects = $relatedObjects;
+        echo 'Error, deprecate method', PHP_EOL;
+        //$this->relatedObjects = $relatedObjects;
         return $this;
     }
+
+    /**
+     * @param string $name
+     * @return ClassGenerator
+     */
+    public function createRelatedClass(string $name): ClassGenerator {
+        $class = $this->getOwnPackage()->createClass($name);
+        $class->setParentGenerator($this);
+
+        $this->relatedObjects[$name] = $class;
+
+        return $class;
+    }
+    /**
+     * @param string $name
+     * @return ClassGenerator
+     */
+    /*public function createVTableClass(string $name): ClassGenerator {
+        $class = $this->getOwnPackage()->createClass($name);
+        $class->setParentGenerator($this);
+
+        $this->objectClasses[$name] = $class;
+
+        return $class;
+    }*/
+    
 
     /**
      * @param mixed $value

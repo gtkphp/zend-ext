@@ -30656,9 +30656,7 @@ GtkBuilder    *builder,
 <STRUCT>
 <NAME>GtkTooltip</NAME>
 </STRUCT>
-<STRUCT>
-<NAME>GtkWidget</NAME>
-</STRUCT>
+
 <STRUCT>
 <NAME>GtkWidgetPath</NAME>
 </STRUCT>

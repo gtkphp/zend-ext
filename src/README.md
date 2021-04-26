@@ -3,6 +3,11 @@ C & Php code generator from ModelGenerator
 
 TODO: GList( type of GLib Gio)
 
+FIXME: Filter\CommentHelper
+ + Comment strip tag.
+ + Replace reference in the document.
+ -> (attendre de faire une doc php avant)
+
 
 FIXME rename Models\ClassGenerator by Models\ClassModel
 FIXME refactors
@@ -69,11 +74,4 @@ FIXME refactors
         |       +--SourceCode/
         |       |   +-- GlibSourceCode
         |       |   \-- ...
-
-
-
-FIXME: Filter\CommentHelper
- + Comment strip tag.
- + Replace reference in the document.
- -> (attendre de faire une doc php avant)
 

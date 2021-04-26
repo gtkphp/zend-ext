@@ -84,7 +84,8 @@ $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// 
 //gdk3-decl.txt fixed by
 $sourceCode->loadTypes('/home/dev/Documents/gtk-test.txt');
 ///$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gdk/gdk3-decl.txt');// depend on cairo-decl.txt
-$sourceCode->loadTypes('/home/dev/Projects/gtkphp/zend-ext/data/gtk3-decl.txt');
+//$sourceCode->loadTypes('/home/dev/Projects/gtkphp/zend-ext/data/gtk3-decl.txt');
+$sourceCode->loadTypes('/home/dev/Projets/zend-ext/data/gtk3-decl.txt');
 //$sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gtk/gtk3-decl.txt');
 
 //var_dump($sourceCode->data);
@@ -115,8 +116,8 @@ if (False) {
     $docBook = new GtkDocBook();
     $docBook->addSourceCode($sourceCode);
 
-    $generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
-    //$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+    //$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+    $generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
     $generator->setDocBook($docBook);
     $generator->save($output_dir);
 

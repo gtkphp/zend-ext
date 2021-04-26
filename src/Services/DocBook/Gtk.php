@@ -55,10 +55,22 @@ class Gtk extends DocBook
         //$cmp = $this->sourceCode['Glib']->getProto('GCompareFunc');
         //print_r($cmp);
         //$this->getSourceCode('Glib')->getStruct('GList');
+        
+        $files = [
+            '/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
+            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
+            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
+        ];
+        foreach($files as $filename) {
+            $xml = simplexml_load_file($filename);
+            $class = $this->loadClass($xml);
+        }
 
+/*
         $filename = '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml';
         $xml = simplexml_load_file($filename);
         $class = $this->loadClass($xml);
+*/
         // $package->addClass($class);
         // $package->addBoxed($class);
         // $package->addEnum($class);
@@ -109,32 +121,37 @@ class Gtk extends DocBook
         $relatedClasses = array();
         foreach($relatedObjects as $linked=>$relatedObject) {
             //echo "$linked=>$relatedObject\n";
-            if ($linked=='GtkRequisition-struct') {
+            //if ($linked=='GtkRequisition-struct') {
                 $nodes = $xml->xpath("refsect1/refsect2[@id='$linked']");
                 if (!empty($nodes)) {
                     $related = $this->getRelatedObject($nodes[0], $className);
                     $relatedClasses[$relatedObject] = $related;
                 }
-            }
-            //echo $relatedObject, PHP_EOL;
-            //$relatedObjects = $this->getRelatedObject($nodes, $className);
+            //}
         }
-        $class->setRelatedObjects($relatedClasses);
-        //$class->setRelatedObjects($relatedObjects);
+        //$class->setRelatedObjects($relatedClasses);
+        
 
         // load all class before render
         //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
         $struct = $this->sourceCode['Glib']->getStruct($className);
+        
         if (empty($struct))
             echo '"', $className, '" not found in source', PHP_EOL;
-        else if (!empty($struct['members']))
+        else if (!empty($struct['members'])) {
+            $count = 0;
             foreach ($struct['members'] as $member) {
                 $property = new PropertyGenerator($member['name']);
                 $type = new TypeGenerator($member['type']);
                 $property->setType($type);
                 //$property->setPass($member['pass']);
                 $class->addPropertyFromGenerator($property);
+                if($count==0){
+                    $class->setExtendedClass($member['type']);
+                }
+                $count++;
             }
+        }
         //var_dump($struct);
 
 
@@ -236,6 +253,10 @@ class Gtk extends DocBook
                 // GList *g_list_alloc (void);
                 continue;
             }
+            if (empty($options['type'])) {
+                echo 'TODO: array parameter[]' . PHP_EOL;
+                continue;
+            }
             $parameter = $this->package->createParameter($options['name']);
             $parameterType = $this->package->createType($options['type']);
             $parameter->setType($parameterType);
@@ -258,12 +279,16 @@ class Gtk extends DocBook
          * &false;. Both are case-insensitive.
          */
         $paragraphs = $xml->para;
-        $method->setShortDescription($paragraphs[0]->asXml());
-        $description = '';
-        foreach ($paragraphs as $paragraph) {
-            $description .= $paragraph->asXml();
+        if(empty($paragraphs)) {
+            echo 'Notice : No documention found for function : '.$methodName , PHP_EOL;
+        } else {
+            $method->setShortDescription($paragraphs[0]->asXml());
+            $description = '';
+            foreach ($paragraphs as $paragraph) {
+                $description .= $paragraph->asXml();
+            }
+            $method->setDescription($description);
         }
-        $method->setDescription($description);
 
         // <-- parameter::setDescription -->
         $refsect3 = $xml->xpath("refsect3[@id='$id.parameters']");
@@ -346,10 +371,39 @@ class Gtk extends DocBook
 
     protected function getRelatedObject($node, $className)
     {
-        $struct_name = (string)$node->title;//'GtkRequisition'
-        $str = (string)$node->programlisting;
-        $struct = $this->sourceCode['Glib']->getStruct($struct_name);
-        $class = $this->package->createClass($struct_name);
+        $struct_name = (string)$node->indexterm->primary;//'GtkRequisition'
+        $role = (string)$node['role'];//'enum'|'struct'
+        $map = array(
+        );// <------------------------------------------------------------------------
+        $id = trim($struct_name);//glib-Hash-Tables
+
+        //$str = (string)$node->programlisting;
+        switch($role) {
+            case 'typedef':
+            case 'enum':
+                //$struct = $this->sourceCode['Glib']->getEnum($struct_name);
+                //var_dump($struct);
+                //$class = $this->current_generator->createRelatedEnum($struct_name);
+                echo '====>', $role, ' / ', $struct_name, PHP_EOL;
+                return null;
+                break;
+            case 'struct':
+                $struct = $this->sourceCode['Glib']->getStruct($struct_name);
+                if ($struct_name==$className.'Class') {
+                    //$class = $this->current_generator->createVTableClass($struct_name);
+                    $class = $this->getVTable($node, $struct);
+                    $this->current_generator->setVTable($class);
+                } else {
+                    $class = $this->current_generator->createRelatedClass($struct_name);
+                }
+                break;
+            case 'macro':
+                return null;
+                break;
+            default:
+                echo 'role: ', $role, PHP_EOL;
+                break;
+        }
 
         $description = $node->para->asXml();
         //var_dump($description);
@@ -369,5 +423,87 @@ class Gtk extends DocBook
             echo 'Member not found in '.$struct_name.PHP_EOL;
 
         return $class;
+    }
+    protected function getVTable($node, array $struct)
+    {
+        // TODO parse DocBook
+        $name = trim ($struct['name'], "_" );
+
+        $vtable = $this->package->createVTable($name);
+        $vtable->setParentGenerator($this->current_generator);
+
+        $i=0;
+        foreach($struct['members'] as $member) {
+            if ('parent_class'==$member['name']) {
+                $vtable->setExtendedClass($member['type']);
+            } else if ('function'==$member['type']) {
+                $funcGenerator = $this->getFunction($member);
+                //$this->current_generator->addVirtualFromGenerator($funcGenerator);
+                $vtable->addMethodFromGenerator($funcGenerator);
+                //$vtable->addPropertyFromGenerator($funcGenerator);
+                if($i++>2)
+                break;
+            } else {
+                //$vtable->addProperty($funcGenerator);// static memeber of $class
+            }
+        }
+
+        return $vtable;
+    }
+
+    protected function getFunction($data)
+    {
+        $function = new MethodGenerator($data['name']); //VirtualGenerator();
+
+        
+        $this->setType($function, $data['signature']['return']);
+
+
+        // TODO variadic parameter( PHP Warning:  Illegal string offset 'name')
+        foreach ($data['signature']['parameters'] as $parameterData) {
+            ///echo $parameterData['name'] , PHP_EOL;
+            if (empty($parameterData['name']) && empty($parameterData['type'])) {
+                echo 'TODO: Assume variadic parameter' . PHP_EOL;
+                continue;
+            }
+            if (is_null($parameterData['name']) && 'void' == $parameterData['type']) {
+                // GList *g_list_alloc (void);
+                continue;
+            }
+            $parameter = $this->package->createParameter($parameterData['name']);
+            $parameterType = $this->package->createType($parameterData['type']);
+            //echo $parameterData['type'].', '.$parameterType->getName().PHP_EOL;
+            $parameter->setType($parameterType);
+            if (isset($parameterData['pass'])) {
+                $parameter->setPass($parameterData['pass']);
+            }
+            $function->setParameter($parameter);
+
+            if (isset($typedefs[$parameterData['type']])) {
+                if ('function' == $typedefs[$parameterData['type']]['type']) {
+                    $parameter->setIsCallback();
+                    $parameterType->setIsPrototype(True);
+                    $parameterType->setPrototype($typedefs[$parameterData['type']]['signature']);
+                }
+            }
+        }
+
+        return $function;
+    }
+
+    /**
+     * @param ParameterGenerator|MethodGenerator $generator
+     * @param array $data
+     */
+    protected function setType($generator, $data) {
+        $typeName = $data['type'];
+        
+        $type = $this->package->createType($typeName);
+        $generator->setType($type);
+        if (isset($data['pass'])) {
+            $pass = $data['pass'];
+            $generator->setPass($pass);
+        }
+
     }
 }

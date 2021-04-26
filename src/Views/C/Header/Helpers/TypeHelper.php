@@ -74,7 +74,7 @@ class TypeHelper extends AbstractHelper
                 $type_ns = $this->getView()->namespaceHelper($name);
                 $name = $this->getView()->nameclassHelper($name);
                 if ($ns!=$type_ns) {
-                    $name = 'php_'.$name .' *';// green
+                    $name = 'php_'.strtolower($name) .' *';// green
                     //$name = $type_ns . '\\' . $name;// green
                     //$name = $type_ns . '\\' . "\e[2;32m".$name."\e[m";// green
                 } else {

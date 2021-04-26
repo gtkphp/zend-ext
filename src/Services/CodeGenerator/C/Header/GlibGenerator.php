@@ -65,6 +65,7 @@ class GlibGenerator extends CodeGenerator
         */
         //$docBook->load(/*doc.sgml*/);
         //echo $docBook->save('/home/dev/Projects/gtkphp/output');
+
     }
 
     function getViewModel($dto):ViewModel
@@ -73,14 +74,13 @@ class GlibGenerator extends CodeGenerator
         $licenseModel->setVariable('date', '31/12/1999');
         $licenseModel->setTemplate('license.phtml');
 
-        $fileModel = parent::getViewModel((array)$dto);
-        $fileModel->addChild($licenseModel, 'license');
-        $fileModel->addChild($classModel, 'class');
-        $fileModel->setTemplate('file.phtml');
+        $classModel = new ViewModel((array)$dto);
+        $classModel->setTemplate('class.phtml');
 
         $model = parent::getViewModel((array)$dto);
         $model->addChild($licenseModel, 'license');
-        $model->setTemplate('class.phtml');
+        $model->addChild($classModel, 'class');
+        $model->setTemplate('file.phtml');
 
         return $model;
     }

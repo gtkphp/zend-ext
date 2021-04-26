@@ -19,6 +19,7 @@ class Glib extends SourceCode {
     // 2) make ZendCode
     // 3) make documentation
     function loadTypes() {
+        die("Use Services/SourceCode/Gtk.php");
         // whitelist / blacklist
         // Order deni all, Allow item1 item 2 ...
         //$enums = $this->getEnums();

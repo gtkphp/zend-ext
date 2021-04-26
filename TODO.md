@@ -1,4 +1,15 @@
 
+
+TODO: Views/C/Source/class.phtml
+      near line //echo $this->vtable->parent_class;
+      do : klass = $this->vtable; while(klass) klass=klass->->parent_class
+      override all virtual function
+      step1) CodeSource( decl.txt)
+      step2) AbstractGenerator( DocBook)
+      step3) View(ObjectOdt)
+TODO: Parameter deref
+FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
+
 Where generate Php
 - in docBlock type is displayed white '*' pass ref
 - in docBlock description need to be display in 2 lines

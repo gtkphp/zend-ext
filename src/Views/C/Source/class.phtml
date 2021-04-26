@@ -22,8 +22,8 @@ zend_object_handlers  php_<?php echo $this->nameFunction ?>_handlers;
 #define TRACE(format, string, option)
 
 /*----------------------------------------------------------------------+
-| Internal                                                             |
-+----------------------------------------------------------------------*/
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
 
 static const zend_function_entry php_<?php echo $this->nameFunction ?>_methods[] = {
     PHP_ME(<?php echo $this->nameFunction ?>, __construct, arginfo_<?php echo $this->nameFunction ?>___construct, ZEND_ACC_PUBLIC)
@@ -41,24 +41,92 @@ static const zend_function_entry php_<?php echo $this->nameFunction ?>_methods[]
 }*/
 ?>
 
-static GtkWidgetClass php_gtk_widget_klass = {G_TYPE_INVALID};
+<?php if(isset($this->vtable)): ?>
 
-static void php_gtk_widget_override_get_preferred_width(GtkWidget *widget) { }
+
+// for each parent...
+static GtkWidgetClass php_<?php echo $this->nameFunction ?>_klass = {G_TYPE_INVALID};
+
+<?php
+    $this_ns = $this->namespaceHelper($this->name, 1);
+    $this_no = str_replace($this_ns.'_', '', $this->nameclassHelper($this->name, 1));
+
+    $nameFunction = strtolower($this_ns.'_'.$this_no);
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
+
+        echo '// override '.$parent->name.' methods'.PHP_EOL;
+        echo '// -----------------------------------------------------------------------'.PHP_EOL;
+        foreach($vtable->methods as $virtual) {
+
+            echo 'static '.$virtual->type.PHP_EOL;
+            echo 'php_'.$nameFunction.'_override_'.$no.'_'.$virtual->name.'(';
+            $glue = '';
+            foreach($virtual->parameters as $parameter) {
+                echo $glue.$parameter->type.' '.$parameter->name;
+                $glue = ', ';
+            }
+            echo '){'.PHP_EOL;
+            echo '    //TODO: DECL_MACRO();'. PHP_EOL;
+            echo '    //TODO: Implement'. PHP_EOL;
+            echo '}'. PHP_EOL;
+        }
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
+    }
+
+
+?>
 
 static void
-php_gtk_widget_class_init_override() {
-    GtkWidgetClass *widget_klass = g_type_class_peek(GTK_TYPE_WIDGET);
+php_<?php echo $this->nameFunction ?>_class_init_override() {
+<?php
+        echo '    ';
+        echo $this->name.'Class *'. $this->abbr .'_klass = g_type_class_peek('.$this_ns.'_TYPE_'. $this_no.');'.PHP_EOL;
 
-    if (NULL==G_TYPE_FROM_CLASS(&php_gtk_widget_klass)) {
-        memcpy(&php_gtk_widget_klass, widget_klass, sizeof(GtkWidgetClass));
-        G_TYPE_FROM_CLASS(&php_gtk_widget_klass) = GTK_TYPE_WIDGET;
+        $parent = $this->parent;
+        while($parent) {
+            echo '    ';
+            echo $parent->name.'Class *'. $parent->abbr.'_klass = ';
+            $ns = $this->namespaceHelper($parent->name, 1);
+            $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, 1));
+            echo $ns.'_TYPE_'.$no.'('.$this->abbr.'_klass);'.PHP_EOL;
 
-        // TODO: browse PHP class method...
-        widget_klass->get_preferred_width = php_gtk_widget_override_get_preferred_width;
-        //...
+            $parent= $parent->parent;
+        }
+?>
+
+
+    if (NULL==G_TYPE_FROM_CLASS(&php_<?php echo $this->nameFunction ?>_klass)) {
+        memcpy(&php_<?php echo $this->nameFunction ?>_klass, <?php echo $this->abbr ?>_klass, sizeof(<?php echo $this->vtable->name ?>));
+        G_TYPE_FROM_CLASS(&php_<?php echo $this->nameFunction ?>_klass) = <?php echo $this_ns . '_TYPE_' . $this_no; ?>;
+
+<?php
+
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
+
+        foreach($vtable->methods as $virtual) {
+            echo '        ';
+            echo $no.'_klass->'.$virtual->name.' = php_'.$this->nameFunction.'_override_'.$no.'_'.$virtual->name.';'. PHP_EOL;
+        }
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
+    }
+
+?>
     }
 }
 
+<?php endif; ?>
 
 <?php if(True): ?>
 
