@@ -11,6 +11,7 @@ namespace Zend\Ext\Models;
 
 use Zend\Ext\Models\AbstractGenerator;
 use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\EnumGenerator;
 use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\ParameterGenerator;
 use Zend\Ext\Models\TypeGenerator;
@@ -56,6 +57,15 @@ class PackageGenerator extends AbstractGenerator
         $this->list_type_object[$name] = $class;
         $this->symbols[$name] = $class;
 
+        return $class;
+    }
+
+    public function createRelatedEnum(string $name, ClassGenerator $parent): EnumGenerator {
+        $class = $this->createEnum($name);
+        $class->setParentGenerator($parent);
+        
+        //$this->list_type_object[$name] = $class;// for PHP 8 enum {}
+        
         return $class;
     }
 

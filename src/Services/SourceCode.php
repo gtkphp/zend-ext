@@ -217,10 +217,10 @@ class SourceCode {
         }
         return Null;
     }
-/*
-    function getProto($name) {
+
+    function getEnum($name) {
         //print_r($this->sourceCode['Glib']->data['STRUCT']['_GList']);
-        $structs = $this->data['STRUCT'];
+        $structs = $this->data['ENUM'];
         $struct = Null;
         if (isset($structs[$name])) {
             return $structs[$name];
@@ -229,7 +229,6 @@ class SourceCode {
         }
         return Null;
     }
-*/
 
     function getDeclarations(string $filepath, array $search=array(), array $replace=array())
     {

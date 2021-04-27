@@ -383,21 +383,17 @@ class Gtk extends DocBook
                 $struct = $this->sourceCode['Glib']->getProto($struct_name);
                 $struct = $this->sourceCode['Glib']->getStruct($struct['type']);
                 if (empty($struct)) {
-                    echo '===================>', $role, ' / ', $struct_name, PHP_EOL;
+                    var_dump('Error: '. $role. ' / '. $struct_name);
                     return null;
                 }
-                var_dump($struct);
                 $struct_name = str_replace('_', '', $struct['name']);
-                var_dump($struct_name);
                 $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
-                var_dump($class);
                 break;
             case 'enum':
-                //$struct = $this->sourceCode['Glib']->getEnum($struct_name);
-                //var_dump($struct);
-                //$class = $this->current_generator->createRelatedEnum($struct_name);
-                echo '====>', $role, ' / ', $struct_name, PHP_EOL;
-                return null;
+                $struct = $this->sourceCode['Glib']->getEnum($struct_name);
+                $struct['name']=$struct_name;
+                $class = $this->package->createRelatedEnum($struct_name, $this->current_generator);
+                $class->setConstants($struct['constants']);
                 break;
             case 'struct':
                 $struct = $this->sourceCode['Glib']->getStruct($struct_name);

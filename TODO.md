@@ -2,9 +2,7 @@ Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 
-TODO: enum/typedef relatedObjects/Relationships
-      one file by zend_class_entry( more than 10'000 by file else)
-      related 
+TODO: GtkWidget::property, signal, style
 TODO: Parameter deref
 FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
 

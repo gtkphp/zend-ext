@@ -446,6 +446,18 @@ php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce,
     php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "next", sizeof("next")-1, php_<?php echo $this->nameFunction ?>_read_next, php_<?php echo $this->nameFunction ?>_write_next);
     zend_hash_add_ptr(&classes, ce->name, &php_<?php echo $this->nameFunction ?>_prop_handlers);
     */
+<?php foreach($this->relationships as $relationship):
+
+if ($relationship instanceof Zend\Ext\Views\C\EnumDto) {
+    foreach($relationship->constants as $constant) {
+        echo '    ';
+        echo 'zend_register_long_constant("'.$constant['name'].'", sizeof("'.$constant['name'].'")-1,'.PHP_EOL;
+        echo '        '.$constant['name'].', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);'.PHP_EOL;
+    }
+    echo PHP_EOL;
+}
+
+endforeach; ?>
 
     return php_<?php echo $this->nameFunction ?>_class_entry;
 }/*}}} */

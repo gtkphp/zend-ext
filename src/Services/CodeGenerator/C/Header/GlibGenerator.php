@@ -10,6 +10,7 @@ use Zend\Ext\Views\C\ClassDto;
 use Zend\Ext\Views\C\VTableDto;
 use Zend\Ext\Views\C\MethodDto;
 use Zend\Ext\Views\C\ParameterDto;
+use Zend\Ext\Views\C\EnumDto;
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
 use Zend\Filter\StringToLower;
@@ -37,6 +38,7 @@ use Zend\Ext\Helpers\Php\Poo\TypeHelper;
 
 use Zend\Ext\Models\PackageGenerator;
 use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\EnumGenerator;
 
 use Zend\Ext\Services\CodeGenerator;
 use function Webmozart\Assert\Tests\StaticAnalysis\maxLength;
@@ -110,6 +112,14 @@ class GlibGenerator extends CodeGenerator
         $this->renderer = $renderer;
         return $this->renderer;
     }
+    
+    function getEnumDto(EnumGenerator $generator)
+    {
+        $dto = new EnumDto();
+        $dto->constants = $generator->getConstants();
+
+        return $dto;
+    }
 
     function getClassDto(ClassGenerator $generator)
     {
@@ -182,7 +192,11 @@ class GlibGenerator extends CodeGenerator
             if(empty($related)) {
                 echo 'Related enum/typedef Not implemented'.PHP_EOL;
             } else {
-                $dto->relationships[$related->getName()] = $this->getClassDto($related);
+                if ($related instanceof EnumGenerator) {
+                    $dto->relationships[$related->getName()] = $this->getEnumDto($related);
+                } else if ($related instanceof ClassGenerator) {
+                    $dto->relationships[$related->getName()] = $this->getClassDto($related);
+                }
             }
         }
 

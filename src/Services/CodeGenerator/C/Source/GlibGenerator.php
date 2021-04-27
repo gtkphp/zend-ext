@@ -4,6 +4,7 @@ namespace Zend\Ext\Services\CodeGenerator\C\Source;
 
 use Zend\Ext\Models\ClassGenerator;
 use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\EnumGenerator;
 use Zend\Ext\Services\CodeGenerator;
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
@@ -11,6 +12,7 @@ use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
 use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
 use Zend\Ext\Views\C\Source\ClassDto;
 use Zend\Ext\Views\C\Source\MethodDto;
+use Zend\Ext\Views\C\EnumDto;
 use Zend\Ext\Views\C\ParameterDto;
 use Zend\Ext\Views\HelperPluginManager;
 use Zend\Filter\FilterChain;
@@ -93,6 +95,14 @@ class GlibGenerator extends CodeGenerator
         $this->renderer = $renderer;
 
         return $this->renderer;
+    }
+    
+    function getEnumDto(EnumGenerator $generator)
+    {
+        $dto = new EnumDto();
+        $dto->constants = $generator->getConstants();
+
+        return $dto;
     }
 
     function getClassDto(ClassGenerator $generator)
@@ -211,7 +221,11 @@ class GlibGenerator extends CodeGenerator
                     echo '    - ', $name, PHP_EOL;
                 } else {
                     echo '    + ', $name, PHP_EOL;
-                    $elationships[$name] = $this->getClassDto($object);
+                    if ($object instanceof EnumGenerator) {
+                        $elationships[$name] = $this->getEnumDto($object);
+                    } else if ($object instanceof ClassGenerator) {
+                        $elationships[$name] = $this->getClassDto($object);
+                    }
                 }
             } else {
                 echo '    - TODO enum/typedef', PHP_EOL;
