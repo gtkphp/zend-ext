@@ -14,6 +14,7 @@ class ClassDto {
     public $properties=[];// array(name=>declaration)
     public $methods=[];// array(name=>MethodDto)
 
+    public $getter_setter;
     public $vtable;// ClassDto
     public $relationships=[];// array(name=>ClassDto)
 }

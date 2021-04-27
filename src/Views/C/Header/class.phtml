@@ -59,6 +59,9 @@ struct _php_<?php echo $this->nameFunction ?> {
 
 zend_class_entry *php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $this->nameFunction ?>___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(<?php echo $this->nameFunction ?>, __construct);
 
 <?php foreach($this->methods as $name=>$method): ?>
 <?php echo $this->argHelper($method->generator); ?>

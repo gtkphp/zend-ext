@@ -91,6 +91,7 @@ class GlibGenerator extends CodeGenerator
         $renderer->setHelperPluginManager($pluginManager);
 
         $this->renderer = $renderer;
+
         return $this->renderer;
     }
 
@@ -131,10 +132,12 @@ class GlibGenerator extends CodeGenerator
         foreach($properties as $property) {
             $dto->properties[$property->getName()] = $helper($property->getType(), '');
         }
+
         $dto->methods = array();
         $max_length=0;
         $methods = $generator->getMethods();
         foreach($methods as $method) {
+            // Fix if we can use $this->getMethodDto()
             $methodDto = new MethodDto();
             $methodDto->generator = $method;
             $methodDto->name = $method->getName();
@@ -161,7 +164,61 @@ class GlibGenerator extends CodeGenerator
         $dto->vtable = $this->getVtableDto($generator);
         $dto->parent = $this->getParentClassDto($generator);
 
+        $dto->relationships = $this->getRelationshipsDto($generator);
+
+        // gperf -CGD -N php_cairo_matrix_lookup -W php_cairo_matrix_properties -H php_cairo_matrix_properties_hash -K name --language=ANSI-C -t data.gperf > perfecthash.h
+        // min is 5
+        $dto->getter_setter = $this->make_lookup($dto);
+
         return $dto;
+    }
+
+    function make_lookup(ClassDto $dto) {
+        $num = count($dto->properties);
+        if (False && $num>5) {
+            $gperfModel = new ViewModel((array)$dto);
+            $gperfModel->setTemplate('gperf.phtml');
+        
+            $output = $this->render($gperfModel);
+        } else {
+            $binaryModel = new ViewModel((array)$dto);
+            $binaryModel->setTemplate('binarysearch.phtml');
+        
+            $output = $this->render($binaryModel);
+        }
+
+        //file_put_contents(__DIR__.'/../../../../tmp/properties.gperf', $output);
+        return $output;
+    }
+
+    function getSimpleClassDto(ClassGenerator $generator)
+    {
+        //TODO:  without Relationships
+    }
+
+    function getRelationshipsDto(ClassGenerator $class)
+    {
+        $elationships = [];
+
+        $class_name = $class->getName();
+
+        echo 'Relation => ', $class_name, PHP_EOL;
+        $objects = $class->getRelatedObjects();
+        foreach($objects as $object) {
+            if ($object) {
+                $name = $object->getName();
+                if ($class_name.'Class'==$name) {
+                    echo '    - ', $name, PHP_EOL;
+                } else {
+                    echo '    + ', $name, PHP_EOL;
+                    $elationships[$name] = $this->getClassDto($object);
+                }
+            } else {
+                echo '    - TODO enum/typedef', PHP_EOL;
+            }
+
+        }
+        return $elationships;
     }
 
     function getVtableDto(ClassGenerator $generator)

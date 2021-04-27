@@ -47,6 +47,17 @@ class PackageGenerator extends AbstractGenerator
 
         return $class;
     }
+    
+    public function createRelatedClass(string $name, ClassGenerator $parent): ClassGenerator {
+        $class = new ClassGenerator($name);
+        $class->setParentGenerator($parent);
+        $class->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $this->list_type_object[$name] = $class;
+        $this->symbols[$name] = $class;
+
+        return $class;
+    }
 
     public function createEnum(string $name): EnumGenerator {
         $enum = new EnumGenerator($name);

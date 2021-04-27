@@ -1,0 +1,22 @@
+%{
+enum PhpCairoMatrixProperties {
+  WIDTH
+  HEIGHT
+  NOCO
+  NOLOG
+  BIT
+};
+
+%}
+struct PhpCairoMatrixProperty
+  {
+  const char *Option;
+  int OptionCode;
+  };
+%%
+width, WIDTH
+height, HEIGHT
+nocopyright, NOCO
+nolog, NOLOG
+_64bit, BIT
+<?php echo 'lookup=> '.$this->name ?>

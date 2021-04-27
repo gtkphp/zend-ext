@@ -129,7 +129,7 @@ class Gtk extends DocBook
                 }
             //}
         }
-        //$class->setRelatedObjects($relatedClasses);
+        $class->setRelatedObjects($relatedClasses);
         
 
         // load all class before render
@@ -380,6 +380,18 @@ class Gtk extends DocBook
         //$str = (string)$node->programlisting;
         switch($role) {
             case 'typedef':
+                $struct = $this->sourceCode['Glib']->getProto($struct_name);
+                $struct = $this->sourceCode['Glib']->getStruct($struct['type']);
+                if (empty($struct)) {
+                    echo '===================>', $role, ' / ', $struct_name, PHP_EOL;
+                    return null;
+                }
+                var_dump($struct);
+                $struct_name = str_replace('_', '', $struct['name']);
+                var_dump($struct_name);
+                $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
+                var_dump($class);
+                break;
             case 'enum':
                 //$struct = $this->sourceCode['Glib']->getEnum($struct_name);
                 //var_dump($struct);
@@ -394,7 +406,7 @@ class Gtk extends DocBook
                     $class = $this->getVTable($node, $struct);
                     $this->current_generator->setVTable($class);
                 } else {
-                    $class = $this->current_generator->createRelatedClass($struct_name);
+                    $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
                 }
                 break;
             case 'macro':

@@ -1,0 +1,118 @@
+<?php
+    $this_ns = $this->namespaceHelper($this->name, 1);
+    $this_no = str_replace($this_ns.'_', '', $this->nameclassHelper($this->name, 1));
+
+    echo $this->lookup;
+?>
+
+<?php echo $this->getter_setter; ?>
+
+/* {{{ gtk_read_property */
+static zval*
+php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
+{
+    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
+    zend_string *member_str = member->value.str;
+
+    struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        cmd->getter(intern, rv);
+    } else {
+        // property not found
+    }
+
+    return rv;
+}
+/* }}} */
+
+/* {{{ php_<?php echo $this->nameFunction ?>_write_property */
+static void
+php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
+{
+    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
+    zend_string *member_str = member->value.str;
+
+    struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        cmd->setter(intern, value);
+    } else {
+        // property not found
+    }
+}
+/* }}} */
+
+static HashTable*
+php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp) /* {{{ */
+{
+    php_<?php echo $this->nameFunction ?>  *obj =  ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    HashTable   *debug_info,
+    *std_props;
+    zend_string *string_key = NULL;
+    zval *value;
+
+    *is_temp = 1;
+    std_props = zend_std_get_properties(object);
+    debug_info = zend_array_dup(std_props);
+
+<?php
+    foreach($this->properties as $name=>$type) {
+        echo '    ';
+        echo 'zval z'.$name.'; ';
+        $type = trim($type);
+        switch ($type) {
+            case 'zend_long':
+                echo 'ZVAL_LONG(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                break;
+            case 'zend_double':
+                echo 'ZVAL_DOUBLE(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                break;
+            case 'zval':
+                echo 'if (obj->ptr->'.$name.'==NULL) ZVAL_NULL(&z'.$name.'); else ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.')';
+                //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                break;
+            default:
+                echo '???'.$type.PHP_EOL;
+                break;
+        }
+        echo '    ';
+        echo 'zend_hash_str_update(debug_info, "'.$name.'", sizeof("'.$name.'")-1, &z'.$name.');'.PHP_EOL.PHP_EOL;
+    
+    }
+?>
+
+    return debug_info;
+}
+/* }}} */
+
+<?php if(false): ?>
+
+static zend_object_handlers*
+php_<?php echo $this->nameFunction ?>_get_handlers()
+{
+    memcpy(&php_<?php echo $this->nameFunction ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    php_<?php echo $this->nameFunction ?>_handlers.offset = PHP_<?php echo $this->nameMacro ?>_OFFSET;
+    php_<?php echo $this->nameFunction ?>_handlers.dtor_obj = php_<?php echo $this->nameFunction ?>_dtor_object;
+    php_<?php echo $this->nameFunction ?>_handlers.free_obj = php_<?php echo $this->nameFunction ?>_free_object;
+    php_<?php echo $this->nameFunction ?>_handlers.read_property = php_<?php echo $this->nameFunction ?>_read_property;
+    php_<?php echo $this->nameFunction ?>_handlers.write_property = php_<?php echo $this->nameFunction ?>_write_property;
+    //php_<?php echo $this->nameFunction ?>_handlers.get_property_ptr_ptr = php_<?php echo $this->nameFunction ?>_get_property_ptr_ptr;
+
+    php_<?php echo $this->nameFunction ?>_handlers.get_debug_info = php_<?php echo $this->nameFunction ?>_get_debug_info;
+    php_<?php echo $this->nameFunction ?>_handlers.get_properties = php_<?php echo $this->nameFunction ?>_get_properties;//get_properties_for TODO php 8.0
+
+    return &php_<?php echo $this->nameFunction ?>_handlers;
+}
+
+/*{{{ php_<?php echo $this->nameFunction ?>_class_init */
+zend_class_entry*
+php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+    php_<?php echo $this->nameFunction ?>_get_handlers();
+    //INIT_NS_CLASS_ENTRY((*ce), "Gnome\\G", "List", php_<?php echo $this->nameFunction ?>_methods);
+    INIT_CLASS_ENTRY((*container_ce), "<?php echo $this->nameType ?>", php_<?php echo $this->nameFunction ?>_methods);
+    php_<?php echo $this->nameFunction ?>_class_entry = zend_register_internal_class_ex(container_ce, parent_ce);
+    php_<?php echo $this->nameFunction ?>_class_entry->create_object = php_<?php echo $this->nameFunction ?>_create_object;
+
+    return php_<?php echo $this->nameFunction ?>_class_entry;
+}/*}}} */
+
+<?php endif; ?>

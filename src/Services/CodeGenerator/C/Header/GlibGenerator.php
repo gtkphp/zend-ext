@@ -179,7 +179,11 @@ class GlibGenerator extends CodeGenerator
 
         $dto->relationships = array();
         foreach ($generator->getRelatedObjects() as $related) {
-            $dto->relationships[$related->getName()] = $this->getClassDto($related);
+            if(empty($related)) {
+                echo 'Related enum/typedef Not implemented'.PHP_EOL;
+            } else {
+                $dto->relationships[$related->getName()] = $this->getClassDto($related);
+            }
         }
 
 

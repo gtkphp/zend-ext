@@ -856,23 +856,10 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
      */
     public function setRelatedObjects(array $relatedObjects): ClassGenerator
     {
-        echo 'Error, deprecate method', PHP_EOL;
-        //$this->relatedObjects = $relatedObjects;
+        $this->relatedObjects = $relatedObjects;
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return ClassGenerator
-     */
-    public function createRelatedClass(string $name): ClassGenerator {
-        $class = $this->getOwnPackage()->createClass($name);
-        $class->setParentGenerator($this);
-
-        $this->relatedObjects[$name] = $class;
-
-        return $class;
-    }
     /**
      * @param string $name
      * @return ClassGenerator

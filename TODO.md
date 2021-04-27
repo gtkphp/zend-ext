@@ -1,12 +1,10 @@
+Est-ce que GTK+PHP vous plait ?
+Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 
-TODO: Views/C/Source/class.phtml
-      near line //echo $this->vtable->parent_class;
-      do : klass = $this->vtable; while(klass) klass=klass->->parent_class
-      override all virtual function
-      step1) CodeSource( decl.txt)
-      step2) AbstractGenerator( DocBook)
-      step3) View(ObjectOdt)
+TODO: enum/typedef relatedObjects/Relationships
+      one file by zend_class_entry( more than 10'000 by file else)
+      related 
 TODO: Parameter deref
 FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
 

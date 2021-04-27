@@ -128,7 +128,6 @@ php_<?php echo $this->nameFunction ?>_class_init_override() {
 
 <?php endif; ?>
 
-<?php if(True): ?>
 
 /* {{{ php_<?php echo $this->nameFunction ?>_create_object */
 static zend_object*
@@ -151,45 +150,39 @@ php_<?php echo $this->nameFunction ?>_create_object(zend_class_entry *class_type
 
 static void
 php_<?php echo $this->nameFunction ?>_dtor_object(zend_object *obj) {
-    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_SAMPLE_NODE(obj);
-    TRACE("php_<?php echo $this->nameFunction ?>_dtor_object(\e[1;31m\"%s\"\e[0;m) / %d\n", intern->data.value.str->val, obj->gc.refcount);
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(obj);
 
-    if (intern->child) {
-        zend_object_release(&intern->child->std);
-        intern->child=NULL;
-    }
-
-    if (intern->parent!=NULL) {
-        zend_object_release(&intern->parent->std);
-        intern->parent=NULL;
-    }
 }
 
 /* {{{ php_<?php echo $this->nameFunction ?>_free_object */
 static void
 php_<?php echo $this->nameFunction ?>_free_object(zend_object *object)
 {
-    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(object);
     TRACE("php_<?php echo $this->nameFunction ?>_free_object(\e[1;31m\"%s\"\e[0;m) / %d\n", intern->data.value.str->val, object->gc.refcount);
 
-    free(intern->ptr);
+    if (intern->ptr!=NULL) {
+        efree(intern->ptr);
+    }
+    /* Used for print_r((array)my_class); get_properties
     if (intern->properties!=NULL) {
         zend_hash_destroy(intern->properties);
         efree(intern->properties);
         intern->properties=NULL;
     }
+    */
 
     zend_object_std_dtor(&intern->std);
     //efree(intern);
 }
 /* }}} php_<?php echo $this->nameFunction ?>_free_object */
 
-
+<?php if (false) : ?>
 /* {{{ gtk_read_property */
 static zval*
 php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
 {
-    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
     zend_string *member_str = zval_get_string(member);
     zval *retval;
     php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
@@ -206,7 +199,7 @@ php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, 
 static void
 php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
 {
-    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
     zend_string *member_str = zval_get_string(member);
     php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
 
@@ -215,7 +208,7 @@ php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member,
 #if 1
         zend_error(E_USER_WARNING, "Readonly property Node::$%s", member->value.str->val);
 #else
-        if (ZVAL_IS_PHP_SAMPLE_NODE(value)) {
+        if (ZVAL_IS_PHP_<?php echo $this->nameMacro ?>(value)) {
             // do unset(object->child) and php_<?php echo $this->nameFunction ?>_insert(object, value, 0);
         } else {
             zend_string *type = zend_zval_get_type(value);
@@ -231,37 +224,32 @@ php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member,
 }
 /* }}} */
 
+<?php else: ?>
+
+<?php include ('handler.phtml'); ?>
+
+<?php endif; ?>
+
+
+
 static void
 php_<?php echo $this->nameFunction ?>_unset_property(zval *object, zval *member, void **cache_slot) {
-    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
     zend_string *member_str = zval_get_string(member);
     php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
 
-    if (zend_string_equals_literal(member->value.str, "child")
-     || zend_string_equals_literal(member->value.str, "parent")
-     || zend_string_equals_literal(member->value.str, "data") ) {
-#if 0
-        zend_error(E_USER_WARNING, "Readonly property Node::$%s", member->value.str->val);
-#else
-        if (ZVAL_IS_PHP_SAMPLE_NODE(value)) {
-            // do unset(object->child) and php_<?php echo $this->nameFunction ?>_insert(object, value, 0);
-        } else {
-            zend_string *type = zend_zval_get_type(value);
-            zend_error(E_USER_WARNING, "Cannot assign %s to property Node::$child of type Node", type->val);
-        }
-#endif
-        return;
-    }
     zend_object_handlers *std_hnd = zend_get_std_object_handlers();
     std_hnd->unset_property(object, member, cache_slot);
 
     zend_string_release(member_str);
 }
 
+<?php if (false): ?>
+
 static HashTable*
 php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp) /* {{{ */
 {
-    php_<?php echo $this->nameFunction ?>  *obj =  ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?>  *obj =  ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
     HashTable   *debug_info,
     *std_props;
     zend_string *string_key = NULL;
@@ -280,20 +268,22 @@ php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp)
     zval data; ZVAL_COPY(&data, &obj->data);
     zend_hash_str_update(debug_info, "data", 4, &data);
 
-    zval child; ZVAL_SET_PHP_SAMPLE_NODE(&child, obj->child);
+    zval child; ZVAL_SET_PHP_<?php echo $this->nameMacro ?>(&child, obj->child);
     zend_hash_str_update(debug_info, "child", 5, &child);
 
-    zval parent; ZVAL_SET_PHP_SAMPLE_NODE(&parent, obj->parent);
+    zval parent; ZVAL_SET_PHP_<?php echo $this->nameMacro ?>(&parent, obj->parent);
     zend_hash_str_update(debug_info, "parent", 6, &parent);
 
     return debug_info;
 }
 /* }}} */
-
+<?php endif; ?>
 
 static HashTable*
 php_<?php echo $this->nameFunction ?>_get_properties(zval *object){
-    php_<?php echo $this->nameFunction ?>  *self =  ZVAL_GET_PHP_SAMPLE_NODE(object);
+    php_<?php echo $this->nameFunction ?>  *self =  ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    HashTable *props = NULL;
+#if 0
     HashTable *props = self->properties;
     if (props==NULL) {
         ALLOC_HASHTABLE(self->properties);
@@ -314,7 +304,7 @@ php_<?php echo $this->nameFunction ?>_get_properties(zval *object){
         ZVAL_COPY(&data, &it->data);
         zend_hash_next_index_insert(props, &data);
     }
-
+#endif
     return props;
 }
 
@@ -333,7 +323,7 @@ php_<?php echo $this->nameFunction ?>_cast_object(zval *readobj, zval *retval, i
 static int
 php_<?php echo $this->nameFunction ?>_count_elements(zval *object, zend_long *count) {
 
-    *count = php_<?php echo $this->nameFunction ?>_length(ZVAL_GET_PHP_SAMPLE_NODE(object));
+    *count = 0;//php_<?php echo $this->nameFunction ?>_length(ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object));
 
     return SUCCESS;
 }
@@ -350,8 +340,8 @@ php_<?php echo $this->nameFunction ?>_read_dimension(zval *object, zval *offset,
     if (!offset) {
     return NULL;
     }
-
-    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_SAMPLE_NODE(object);
+#if 0
+    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
     php_<?php echo $this->nameFunction ?> *list;
     void *cache=NULL;
 
@@ -369,7 +359,7 @@ php_<?php echo $this->nameFunction ?>_read_dimension(zval *object, zval *offset,
     } else {
         // error
     }
-
+#endif
     return rv;
 } /* }}} end php_g_hash_table_read_dimension */
 
@@ -401,7 +391,7 @@ php_<?php echo $this->nameFunction ?>_unset_dimension(zval *object, zval *offset
     break;
     }
 }
-<?php endif; ?>
+
 
 static zend_object_handlers*
 php_<?php echo $this->nameFunction ?>_get_handlers()
@@ -437,8 +427,8 @@ php_<?php echo $this->nameFunction ?>_get_handlers()
 
 
 /*----------------------------------------------------------------------+
-| PHP_MINIT                                                            |
-+----------------------------------------------------------------------*/
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
 
 /*{{{ php_<?php echo $this->nameFunction ?>_class_init */
 zend_class_entry*
@@ -501,8 +491,8 @@ php_<?php echo $method->name ?>(<?php
 
 
 /*----------------------------------------------------------------------+
-| PHP_METHOD                                                           |
-+----------------------------------------------------------------------*/
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
 
 /* {{{ <?php echo $this->nameType ?>::__construct() */
 PHP_METHOD(<?php echo $this->nameFunction ?>, __construct)
@@ -517,15 +507,14 @@ PHP_METHOD(<?php echo $this->nameFunction ?>, __construct)
     zend_object *zobj = Z_OBJ_P(getThis());
     php_<?php echo $this->nameFunction ?> *self = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(zobj);
 
-    if (data!=NULL) {
-        ZVAL_COPY(&self->data, data);
-    }
+    self->ptr = emalloc(sizeof(<?php echo $this->nameType ?>));
+
 }
 /* }}} */
 
 /*----------------------------------------------------------------------+
-| PHP_FUNCTION                                                         |
-+----------------------------------------------------------------------*/
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
 
 <?php foreach($this->methods as $name=>$method): ?>
 /* {{{ <?php echo $method->docblock ?> */
@@ -556,3 +545,16 @@ foreach($method->parameters as $parameter): ?>
 }/* }}} */
 
 <?php endforeach; ?>
+
+ <?php
+ /*----------------------------------------------------------------------+
+ | RELATED                                                              |
+ +----------------------------------------------------------------------*/
+
+ /* foreach($this->relationships as $relationship):
+
+$model = new \Zend\View\Model\ViewModel((array)$relationship);
+$model->setTemplate('handler.phtml');
+echo $this->render($model);
+
+endforeach; */ ?>
