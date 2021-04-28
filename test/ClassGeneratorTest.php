@@ -15,6 +15,155 @@ use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
 class ClassGeneratorTest extends TestCase
 {
 
+    // Group by nth letter
+    public function groupByMotif(array $properties, $index)
+    {
+        $tab = '        ';
+        $group = [];
+        foreach ($properties as $property) {
+            if (empty($property)) {
+                var_dump($property);
+                echo 'property is null'.PHP_EOL;
+                continue;
+            }
+            $c = $property[$index];
+            if (isset($group[$c])) {
+                $group[$c][] = $property;
+            } else {
+                $group[$c] = array($property);
+            }
+        }
+
+        foreach ($group as $key=>$items) {
+            if (count($items)>1) {
+                $subgroup = $this->groupByMotif($items, $index+1);
+                //$group[$key] = $subgroup;
+                if (count($subgroup)>1) {
+                    $group[$key] = $subgroup;
+                } else {
+                    $keys = array_keys($subgroup);
+                    $group[$key.$keys[0]] = $subgroup[$keys[0]];
+                    unset($group[$key]);
+                }
+            } else {
+                $group[$key] = $items[0];
+            }
+        }
+
+        return $group;
+    }
+    public function testBinarySearch()
+    {
+        $properties = array(
+            'aaaa',
+            'baaa',
+            'baab',
+            'bbaa',
+            'bbca',
+            'bbda',
+            'bcaa',
+            'bbaz',
+            'caaa',
+        );
+
+        $actual = $this->groupByMotif($properties, 0);
+
+        $expect = array(
+            'a' => 'aaaa',
+            'b' => Array(
+                'b' => Array(
+                    'a' => Array(
+                        'a' => 'bbaa',
+                        'z' => 'bbaz'
+                    ),
+                    'c' => 'bbca',
+                    'd' => 'bbda'
+                ),
+                'c' => 'bcaa',
+                'aa' => Array(
+                    'a' => 'baaa',
+                    'b' => 'baab'
+                ),
+            ),
+            'c' => 'caaa'
+        );
+
+        echo PHP_EOL;
+        echo $this->printGroup($actual, 0, 1);
+
+        $this->assertTrue($actual===$expect);
+    }
+
+    public function printCondition($motif, $start)
+    {
+        $output = '';
+        $glue = '';
+        $max = 4;
+        $n = 1;
+        $ln = strlen($motif);
+        for($i=0; $i<$ln; $i++, $n++) {
+            $output .= $glue . 'str['.($start+$i).'] == \''. $motif[$i] .'\'';
+            if ($n!=0 && $n%$max == 0 && $i<($ln-1)) {
+                $output .= PHP_EOL.'        ';
+            }
+            $glue = ' && ';
+        }
+        return $output;
+    }
+
+    public function printCheck(string $item, $index, $indent)
+    {
+        $tab = '    ';
+        $ws = str_repeat($tab, $indent);
+        $output = '';
+        $glue = '';
+        $max = 4;
+        $n = 1;
+        $ln = strlen($item);
+        for($i=$index; $i<$ln; $i++, $n++) {
+            $output .= $glue . 'str['.$i.'] == \''. $item[$i] .'\'';
+            if ($n!=0 && $n%$max == 0 && $i<($ln-1)) {
+                $output .= PHP_EOL.$ws;
+            }
+            $glue = ' && ';
+        }
+
+        return $output;
+    }
+
+    public function printGroup($group, $index = 0, $indent=0)
+    {
+        $output = '';
+        $tab = '    ';
+        $ws = str_repeat($tab, $indent);
+        $glue = $ws;
+        foreach($group as $motif=>$items) {
+            $ln = 0;
+            $ln = strlen($motif);
+
+            if (is_array($items)) {
+                    $output .= $glue . 'if ('.$this->printCondition($motif, $index).') {'.PHP_EOL;
+                    $output .= $this->printGroup($items, $index + $ln, $indent+1);
+            } else {
+                $output .= $glue.'if ('.$this->printCheck($items, $index, 2).') {'.PHP_EOL;
+                //$output .= $ws.'    //'.$items.PHP_EOL;
+                $output .= '#'.$items.PHP_EOL;
+            }
+
+            $output .= $ws.'}';
+            $glue = ' else ';
+        }
+        $output .= PHP_EOL;
+        /*
+        $output .= ' else {'.PHP_EOL;
+        $output .= $ws.'    // NOTFOUND'.PHP_EOL;
+        $output .= $ws.'}'.PHP_EOL;
+        */
+
+        return $output;
+    }
+
+
     public function testRefactory()
     {
         //$generator = CodeGenerator::Factory('Xml/Glib', 'Glib');

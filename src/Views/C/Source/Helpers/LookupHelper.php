@@ -13,13 +13,7 @@ class LookupHelper extends AbstractHelper
     {
         $properties = $renderer->properties;
         // step one, groupe by length, group by first pattern, etc
-        array(
-            'aaaa',
-            'baaa',
-            'bbaa',
-            'bbaaaaa',
-            'caaaaaaaa',
-        );
+
         $this->nameFunction = $renderer->nameFunction;
         $this->index = $this->makeIndex($properties);
 
@@ -34,21 +28,18 @@ class LookupHelper extends AbstractHelper
         $glue = '    ';
         foreach($group as $ln=>$items) {
             $output .= $glue . 'if (len == '. $ln .') {'.PHP_EOL;
-
-$output .= '        //case: "'.join('", "', $items).'"'.PHP_EOL;
-$output .= $this->printGroupByChar($this->groupByChar($items, 0));
-
+            
+            $output .= $this->printGroup($items, 0, 2);
+            
             $output .= '    }';
             $glue = ' else ';
         }
-        $output .= ' else {'.PHP_EOL;
-        $output .= '        // NOTFOUND'.PHP_EOL;
-        $output .= '    }'.PHP_EOL;
 
-
+        $output .= PHP_EOL;
         $output .= '    return 0;'.PHP_EOL;
         $output .= '}'.PHP_EOL;
-        return $output;//'//TODO'.count($renderer->nameFunction).PHP_EOL;
+
+        return $output;
     }
     public function makeIndex(array $properties)
     {
@@ -74,6 +65,9 @@ $output .= $this->printGroupByChar($this->groupByChar($items, 0));
         
         return $group;
     }
+
+
+/*
     // Group by nth letter
     public function groupByChar(array $properties, $index)
     {
@@ -92,10 +86,10 @@ $output .= $this->printGroupByChar($this->groupByChar($items, 0));
                 $group[$c] = array($property);
             }
         }
-        
+
         return $group;
     }
-    public function printGroupByChar(array $group/*, $tab*/)
+    public function printGroupByChar(array $group, $tab='')
     {
         $output = '';
         $tab = '        ';
@@ -138,4 +132,75 @@ $output .= $this->printGroupByChar($this->groupByChar($items, 0));
         }
         return $output;
     }
+    */
+
+    public function printCondition($motif, $start)
+    {
+        $output = '';
+        $glue = '';
+        $max = 4;
+        $n = 1;
+        $ln = strlen($motif);
+        for($i=0; $i<$ln; $i++, $n++) {
+            $output .= $glue . 'str['.($start+$i).'] == \''. $motif[$i] .'\'';
+            if ($n!=0 && $n%$max == 0 && $i<($ln-1)) {
+                $output .= PHP_EOL.'        ';
+            }
+            $glue = ' && ';
+        }
+        return $output;
+    }
+
+    public function printCheck(string $item, $index, $indent)
+    {
+        $tab = '    ';
+        $ws = str_repeat($tab, $indent);
+        $output = '';
+        $glue = '';
+        $max = 4;
+        $n = 1;
+        $ln = strlen($item);
+        for($i=$index; $i<$ln; $i++, $n++) {
+            $output .= $glue . 'str['.$i.'] == \''. $item[$i] .'\'';
+            if ($n!=0 && $n%$max == 0 && $i<($ln-1)) {
+                $output .= PHP_EOL.$ws;
+            }
+            $glue = ' && ';
+        }
+
+        return $output;
+    }
+
+    public function printGroup($group, $index = 0, $indent=0)
+    {
+        $output = '';
+        $tab = '    ';
+        $ws = str_repeat($tab, $indent);
+        $glue = $ws;
+        foreach($group as $motif=>$items) {
+            $ln = 0;
+            $ln = strlen($motif);
+
+            if (is_array($items)) {
+                    $output .= $glue . 'if ('.$this->printCondition($motif, $index).') {'.PHP_EOL;
+                    $output .= $this->printGroup($items, $index + $ln, $indent+1);
+            } else {
+                $output .= $glue.'if ('.$this->printCheck($items, $index, 2).') {'.PHP_EOL;
+                //$output .= $ws.'    //'.$items.PHP_EOL;
+                $output .= $ws.'    return &php_'.$this->nameFunction.'_properties['.$this->index[$items].'];'.PHP_EOL;
+            }
+
+            $output .= $ws.'}';
+            $glue = ' else ';
+        }
+        $output .= PHP_EOL;
+        /*
+        $output .= ' else {'.PHP_EOL;
+        $output .= $ws.'    // NOTFOUND'.PHP_EOL;
+        $output .= $ws.'}'.PHP_EOL;
+        */
+
+        return $output;
+    }
+
 }

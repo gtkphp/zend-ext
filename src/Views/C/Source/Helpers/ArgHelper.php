@@ -15,6 +15,7 @@ class ArgHelper extends AbstractHelper
     {
         $parameters = $method->getParameters();
 
+
         $output = '';
         if ($declaration) {
             foreach($parameters as $parameter) {
@@ -50,7 +51,8 @@ class ArgHelper extends AbstractHelper
                         $output .= '        Z_PARAM_STRING(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getName().'_len)'. PHP_EOL;
                         break;
                     default:
-                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$parameter->getType()->getName().'_class_entry, 1, 0)'. PHP_EOL;//check_null, separate
+                        $nameFunction = $this->getView()->nameclassHelper($parameter->getType()->getName(), -1);
+                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;//check_null, separate
                         break;
                 }
             }

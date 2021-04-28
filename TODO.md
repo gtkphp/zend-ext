@@ -2,8 +2,14 @@ Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 
+TODO: Generate Enum
+TODO: do not generate memeber of struct GtkWidget
 TODO: GtkWidget::property, signal, style
+TODO: howto enable/disable : dimension, properti, cast, converte to array, debug ?
 TODO: Parameter deref
+TODO: Parameter variadic
+TODO: parser la doc des memebre de la struct Class
+TODO: struct class to php static memeber class
 FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
 
 Where generate Php
