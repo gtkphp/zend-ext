@@ -22,7 +22,7 @@
 
 #define PHP_<?php echo $this->nameMacro ?>_FE() \
 <?php foreach($this->methods as $name=>$method): ?>
-    PHP_FE(<?php echo $name ?>,<?php echo $method->pad ?> arginfo_<?php echo $name ?>) \
+    PHP_GTK_FE(<?php echo $name ?>,<?php echo $method->pad ?> arginfo_<?php echo $name ?>) \
 <?php endforeach; ?>
 
 #define PHP_<?php echo $this->nameMacro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
