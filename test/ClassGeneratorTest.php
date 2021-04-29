@@ -15,6 +15,60 @@ use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;// rename by GlibParser
 class ClassGeneratorTest extends TestCase
 {
 
+    function getNamespace($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+        }
+
+        return $namespace;
+    }
+    function getFilename($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+            $filename = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+            $filename = substr($filename, $pos+1);
+        }
+
+        return $filename;
+    }
+
+    function testGetFilename() {
+        $filenames = [
+            'g_hash_table',
+            'gtk_widget',
+            'cairo_path_t',
+            'cairo_path_data_t',
+            'cairo_t',
+        ];
+        echo PHP_EOL;
+        foreach($filenames as $filename) {
+            $name = $this->getFilename($filename);
+            $ns = $this->getNamespace($filename);
+            echo $ns, '::', $name, PHP_EOL;
+        }
+
+    }
+
     // Group by nth letter
     public function groupByMotif(array $properties, $index)
     {

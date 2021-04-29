@@ -126,17 +126,20 @@ class GlibGenerator extends CodeGenerator
         $filter3->attach(new StringToUpper());
 
         $name = $generator->getName();
-        $filename = $filter->filter($name);
-        $filename = str_replace('_', '-', $filename);
-        $pos = strpos($filename, '-');
-        $namespace = substr($filename, 0, $pos);
-        $filename = substr($filename, $pos+1);
+        $cc_name = $filter->filter($name);
 
+        $filename = $this->filenameHelper($cc_name);
+        $namespace = $this->namespaceHelper($cc_name);
+        //echo '                         ', $name, '=>', $filename, '::', $namespace, PHP_EOL;
+
+        $dir = '';
         $includes = [];
         if ('g'==$namespace) {
             $includes[] = "<glib.h>";
+            $dir = 'php_glib';
         } else {
             $includes[] = "<".$namespace."/".$namespace.".h>";
+            $dir = 'php_'.$namespace;
         }
         $includes[] = '"php_gtk.h"';
 
@@ -145,6 +148,7 @@ class GlibGenerator extends CodeGenerator
         $dto->name = $generator->getName();
         $dto->abbr = $generator->getAbbr();
         $dto->extend = $generator->getExtendedClass();
+        $dto->dir = $dir;
         $dto->fileName = $filename . '.c';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
@@ -338,7 +342,8 @@ class GlibGenerator extends CodeGenerator
             $viewModel = $this->getViewModel($dto);
             $output = $this->render($viewModel);
             //echo $output.PHP_EOL;
-            file_put_contents($dir.'/'.$dto->fileName, $output);
+            `mkdir -p $dir/$dto->dir`;
+            file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
         }
         return True;
     }

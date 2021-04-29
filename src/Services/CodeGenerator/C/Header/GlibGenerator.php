@@ -141,15 +141,21 @@ class GlibGenerator extends CodeGenerator
 
         $name = $generator->getName();
 
-        $name = $generator->getName();
-        $filename = $filter->filter($name);
-        $pos = strpos('-', $filename);
-        $filename = substr($filename, $pos+1);
+        $cc_name = $filter->filter($name);
+        $filename = $this->filenameHelper($cc_name);
+        $namespace = $this->namespaceHelper($cc_name);
 
+        $dir = '';
+        if ('g'==$namespace) {
+            $dir = 'php_glib';
+        } else {
+            $dir = 'php_'.$namespace;
+        }
 
         $dto = new ClassDto();
-        $dto->namespace = '\\';
+        $dto->namespace = '';//never used( use GTK_NS insteadof)
         $dto->name = $name;
+        $dto->dir = $dir;
         $dto->fileName = $filename . '.h';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
@@ -247,7 +253,8 @@ class GlibGenerator extends CodeGenerator
             $viewModel = $this->getViewModel($dto);
             $output = $this->render($viewModel);
             //echo $output.PHP_EOL;
-            file_put_contents($dir.'/'.$dto->fileName, $output);
+            `mkdir -p $dir/$dto->dir`;
+            file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
         }
         return True;
     }

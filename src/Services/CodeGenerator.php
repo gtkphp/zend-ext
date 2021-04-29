@@ -216,6 +216,44 @@ class CodeGenerator
         return $model;
     }
 
+    function namespaceHelper($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+        }
+
+        return $namespace;
+    }
+    
+    function filenameHelper($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+            $filename = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+            $filename = substr($filename, $pos+1);
+        }
+
+        return $filename;
+    }
+
     /**
      * @param string $dir
      */

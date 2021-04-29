@@ -14,7 +14,7 @@ php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, 
     php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
     zend_string *member_str = member->value.str;
 
-    struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
+    struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
         switch(cmd->code) {
 <?php
@@ -31,7 +31,7 @@ foreach($this->properties as $property=>$type) {
     switch ($type) {
         case 'zend_long':
             echo '            ';
-            echo 'ZVAL_DOUBLE(rv, intern->ptr->'.$name.');'.PHP_EOL;
+            echo 'ZVAL_LONG(rv, intern->ptr->'.$name.');'.PHP_EOL;
             break;
         case 'double':
             echo '            ';
@@ -67,7 +67,7 @@ php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member,
     php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
     zend_string *member_str = member->value.str;
 
-    struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
+    struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
         switch(cmd->code) {
 <?php

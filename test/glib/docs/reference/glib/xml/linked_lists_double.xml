@@ -1,0 +1,1339 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC '-//OASIS//DTD DocBook XML V4.5//EN'
+                      'http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd' [
+<!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+<!ENTITY version SYSTEM "version.xml">
+]>
+<refentry id="glib-Doubly-Linked-Lists">
+<refmeta>
+<refentrytitle role="top_of_page" id="glib-Doubly-Linked-Lists.top_of_page">Doubly-Linked Lists</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GLIB Library</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>Doubly-Linked Lists</refname>
+<refpurpose>linked lists that can be iterated over in both directions</refpurpose>
+</refnamediv>
+
+<refsect1 id="glib-Doubly-Linked-Lists.functions" role="functions_proto">
+<title role="functions_proto.title">Functions</title>
+<informaltable pgwide="1" frame="none">
+<tgroup cols="2">
+<colspec colname="functions_return" colwidth="150px"/>
+<colspec colname="functions_name"/>
+<tbody>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-append">g_list_append</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-prepend">g_list_prepend</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-insert">g_list_insert</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-insert-before">g_list_insert_before</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-insert-sorted">g_list_insert_sorted</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-remove">g_list_remove</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-remove-link">g_list_remove_link</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-delete-link">g_list_delete_link</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-remove-all">g_list_remove_all</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="void"><returnvalue>void</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-free">g_list_free</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="void"><returnvalue>void</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-free-full">g_list_free_full</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-alloc">g_list_alloc</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="void"><returnvalue>void</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-free-1">g_list_free_1</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+
+<row><entry role="function_type"><link linkend="guint"><returnvalue>guint</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-length">g_list_length</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-copy">g_list_copy</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-copy-deep">g_list_copy_deep</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-reverse">g_list_reverse</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-sort">g_list_sort</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+</entry><entry role="function_name"><phrase role="c_punctuation">(</phrase><link linkend="GCompareFunc">*GCompareFunc</link><phrase role="c_punctuation">)</phrase>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-insert-sorted-with-data">g_list_insert_sorted_with_data</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-sort-with-data">g_list_sort_with_data</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+</entry><entry role="function_name"><phrase role="c_punctuation">(</phrase><link linkend="GCompareDataFunc">*GCompareDataFunc</link><phrase role="c_punctuation">)</phrase>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-concat">g_list_concat</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="void"><returnvalue>void</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-foreach">g_list_foreach</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="void"><returnvalue>void</returnvalue></link>
+</entry><entry role="function_name"><phrase role="c_punctuation">(</phrase><link linkend="GFunc">*GFunc</link><phrase role="c_punctuation">)</phrase>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-first">g_list_first</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-last">g_list_last</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="define_keyword">#define</entry><entry role="function_name"><link linkend="g-list-previous">g_list_previous</link><phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="define_keyword">#define</entry><entry role="function_name"><link linkend="g-list-next">g_list_next</link><phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-nth">g_list_nth</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="gpointer"><returnvalue>gpointer</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-nth-data">g_list_nth_data</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-nth-prev">g_list_nth_prev</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-find">g_list_find</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+</entry><entry role="function_name"><link linkend="g-list-find-custom">g_list_find_custom</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-position">g_list_position</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+<row><entry role="function_type"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+</entry><entry role="function_name"><link linkend="g-list-index">g_list_index</link>&#160;<phrase role="c_punctuation">()</phrase></entry></row>
+
+</tbody>
+</tgroup>
+</informaltable>
+</refsect1>
+<refsect1 id="glib-Doubly-Linked-Lists.other" role="other_proto">
+<title role="other_proto.title">Types and Values</title>
+<informaltable role="enum_members_table" pgwide="1" frame="none">
+<tgroup cols="2">
+<colspec colname="name" colwidth="150px"/>
+<colspec colname="description"/>
+<tbody>
+<row><entry role="datatype_keyword">struct</entry><entry role="function_name"><link linkend="GList">GList</link></entry></row>
+
+
+<row><entry role="define_keyword">#define</entry><entry role="function_name"><link linkend="g-list-free1">g_list_free1</link></entry></row>
+
+</tbody>
+</tgroup>
+</informaltable>
+</refsect1>
+
+<refsect1 id="glib-Doubly-Linked-Lists.includes"><title>Includes</title><synopsis>#include &lt;gmodule.h&gt;
+</synopsis></refsect1>
+
+<refsect1 id="glib-Doubly-Linked-Lists.description" role="desc">
+<title role="desc.title">Description</title>
+<para>The <link linkend="GList"><type>GList</type></link> structure and its associated functions provide a standard
+doubly-linked list data structure.</para>
+<para>Each element in the list contains a piece of data, together with
+pointers which link to the previous and next elements in the list.
+Using these pointers it is possible to move through the list in both
+directions (unlike the singly-linked <link linkend="glib-Singly-Linked-Lists">GSList</link>,
+which only allows movement through the list in the forward direction).</para>
+<para>The double linked list does not keep track of the number of items 
+and does not keep track of both the start and end of the list. If
+you want fast access to both the start and the end of the list, 
+and/or the number of items in the list, use a
+<link linkend="glib-Double-ended-Queues">GQueue</link> instead.</para>
+<para>The data contained in each element can be either integer values, by
+using one of the <link linkend="glib-Type-Conversion-Macros">Type Conversion Macros</link>,
+or simply pointers to any type of data.</para>
+<para>List elements are allocated from the <link linkend="glib-Memory-Slices">slice allocator</link>,
+which is more efficient than allocating elements individually.</para>
+<para>Note that most of the <link linkend="GList"><type>GList</type></link> functions expect to be passed a pointer
+to the first element in the list. The functions which insert
+elements return the new start of the list, which may have changed.</para>
+<para>There is no function to create a <link linkend="GList"><type>GList</type></link>. <link linkend="NULL:CAPS"><literal>NULL</literal></link> is considered to be
+a valid, empty list so you simply set a <link linkend="GList"><type>GList</type></link>* to <link linkend="NULL:CAPS"><literal>NULL</literal></link> to initialize
+it.</para>
+<para>To add elements, use <link linkend="g-list-append"><function>g_list_append()</function></link>, <link linkend="g-list-prepend"><function>g_list_prepend()</function></link>,
+<link linkend="g-list-insert"><function>g_list_insert()</function></link> and <link linkend="g-list-insert-sorted"><function>g_list_insert_sorted()</function></link>.</para>
+<para>To visit all elements in the list, use a loop over the list:</para>
+<informalexample><programlisting><![CDATA[
+GList *l;
+for (l = list; l != NULL; l = l->next)
+  {
+    // do something with l->data
+  }
+]]></programlisting></informalexample>
+<para></para>
+<para>To call a function for each element in the list, use <link linkend="g-list-foreach"><function>g_list_foreach()</function></link>.</para>
+<para>To loop over the list and modify it (e.g. remove a certain element)
+a while loop is more appropriate, for example:</para>
+<informalexample><programlisting><![CDATA[
+GList *l = list;
+while (l != NULL)
+  {
+    GList *next = l->next;
+    if (should_be_removed (l))
+      {
+        // possibly free l->data
+        list = g_list_delete_link (list, l);
+      }
+    l = next;
+  }
+]]></programlisting></informalexample>
+<para></para>
+<para>To remove elements, use <link linkend="g-list-remove"><function>g_list_remove()</function></link>.</para>
+<para>To navigate in a list, use <link linkend="g-list-first"><function>g_list_first()</function></link>, <link linkend="g-list-last"><function>g_list_last()</function></link>,
+<link linkend="g-list-next"><function>g_list_next()</function></link>, <link linkend="g-list-previous"><function>g_list_previous()</function></link>.</para>
+<para>To find elements in the list use <link linkend="g-list-nth"><function>g_list_nth()</function></link>, <link linkend="g-list-nth-data"><function>g_list_nth_data()</function></link>,
+<link linkend="g-list-find"><function>g_list_find()</function></link> and <link linkend="g-list-find-custom"><function>g_list_find_custom()</function></link>.</para>
+<para>To find the index of an element use <link linkend="g-list-position"><function>g_list_position()</function></link> and
+<link linkend="g-list-index"><function>g_list_index()</function></link>.</para>
+<para>To free the entire list, use <link linkend="g-list-free"><function>g_list_free()</function></link> or <link linkend="g-list-free-full"><function>g_list_free_full()</function></link>.</para>
+
+</refsect1>
+<refsect1 id="glib-Doubly-Linked-Lists.functions_details" role="details">
+<title role="details.title">Functions</title>
+<refsect2 id="g-list-append" role="function">
+<title>g_list_append&#160;()</title>
+<indexterm zone="g-list-append"><primary sortas="list_append">g_list_append</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_append (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+               <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>);</programlisting>
+<para>Adds a new element on to the end of the list.</para>
+<para>Note that the return value is the new start of the list,
+if <parameter>list</parameter>
+ was empty; make sure you store the new value.</para>
+<para>g_list_append() has to traverse the entire list to find the end,
+which is inefficient when adding multiple elements. A common idiom
+to avoid the inefficiency is to use <link linkend="g-list-prepend"><function>g_list_prepend()</function></link> and reverse
+the list with <link linkend="g-list-reverse"><function>g_list_reverse()</function></link> when all elements have been added.</para>
+<informalexample><programlisting><![CDATA[
+// Notice that these are initialized to the empty list.
+GList *string_list = NULL, *number_list = NULL;
+
+// This is a list of strings.
+string_list = g_list_append (string_list, "first");
+string_list = g_list_append (string_list, "second");
+
+// This is a list of integers.
+number_list = g_list_append (number_list, GINT_TO_POINTER (27));
+number_list = g_list_append (number_list, GINT_TO_POINTER (14));
+]]></programlisting></informalexample>
+<para></para>
+<refsect3 id="g-list-append.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-append.returns" role="returns">
+<title>Returns</title>
+<para> either <parameter>list</parameter>
+or the new start of the <link linkend="GList"><type>GList</type></link> if <parameter>list</parameter>
+was <link linkend="NULL:CAPS"><literal>NULL</literal></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-prepend" role="function">
+<title>g_list_prepend&#160;()</title>
+<indexterm zone="g-list-prepend"><primary sortas="list_prepend">g_list_prepend</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_prepend (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>);</programlisting>
+<para>Prepends a new element on to the start of the list.</para>
+<para>Note that the return value is the new start of the list,
+which will have changed, so make sure you store the new value. </para>
+<informalexample><programlisting><![CDATA[
+// Notice that it is initialized to the empty list.
+GList *list = NULL;
+
+list = g_list_prepend (list, "last");
+list = g_list_prepend (list, "first");
+]]></programlisting></informalexample>
+<para></para>
+<para>Do not use this function to prepend a new element to a different
+element than the start of the list. Use <link linkend="g-list-insert-before"><function>g_list_insert_before()</function></link> instead.</para>
+<refsect3 id="g-list-prepend.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-prepend.returns" role="returns">
+<title>Returns</title>
+<para> a pointer to the newly prepended element, which is the new
+start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-insert" role="function">
+<title>g_list_insert&#160;()</title>
+<indexterm zone="g-list-insert"><primary sortas="list_insert">g_list_insert</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_insert (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+               <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>,
+               <parameter><link linkend="gint"><type>gint</type></link> position</parameter>);</programlisting>
+<para>Inserts a new element into the list at the given position.</para>
+<refsect3 id="g-list-insert.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>position</para></entry>
+<entry role="parameter_description"><para>the position to insert the element. If this is
+negative, or is larger than the number of elements in the
+list, the new element is added on to the end of the list.</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-insert.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-insert-before" role="function">
+<title>g_list_insert_before&#160;()</title>
+<indexterm zone="g-list-insert-before"><primary sortas="list_insert_before">g_list_insert_before</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_insert_before (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                      <parameter><link linkend="GList"><type>GList</type></link> *sibling</parameter>,
+                      <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>);</programlisting>
+<para>Inserts a new element into the list before the given position.</para>
+<refsect3 id="g-list-insert-before.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>sibling</para></entry>
+<entry role="parameter_description"><para>the list element before which the new element
+is inserted or <link linkend="NULL:CAPS"><literal>NULL</literal></link> to insert at the end of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-insert-before.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-insert-sorted" role="function">
+<title>g_list_insert_sorted&#160;()</title>
+<indexterm zone="g-list-insert-sorted"><primary sortas="list_insert_sorted">g_list_insert_sorted</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_insert_sorted (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                      <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>,
+                      <parameter><link linkend="GCompareFunc"><type>GCompareFunc</type></link> func</parameter>);</programlisting>
+<para>Inserts a new element into the list, using the given comparison 
+function to determine its position.</para>
+<para>If you are adding many new elements to a list, and the number of
+new elements is much larger than the length of the list, use
+<link linkend="g-list-prepend"><function>g_list_prepend()</function></link> to add the new items and sort the list afterwards
+with <link linkend="g-list-sort"><function>g_list_sort()</function></link>.</para>
+<refsect3 id="g-list-insert-sorted.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link>, this must point to the top of the
+already sorted list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>func</para></entry>
+<entry role="parameter_description"><para>the function to compare elements in the list. It should
+return a number &gt; 0 if the first parameter comes after the
+second parameter in the sort order.</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-insert-sorted.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-remove" role="function">
+<title>g_list_remove&#160;()</title>
+<indexterm zone="g-list-remove"><primary sortas="list_remove">g_list_remove</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_remove (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+               <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> data</parameter>);</programlisting>
+<para>Removes an element from a <link linkend="GList"><type>GList</type></link>.
+If two elements contain the same data, only the first is removed.
+If none of the elements contain the data, the <link linkend="GList"><type>GList</type></link> is unchanged.</para>
+<refsect3 id="g-list-remove.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data of the element to remove</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-remove.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-remove-link" role="function">
+<title>g_list_remove_link&#160;()</title>
+<indexterm zone="g-list-remove-link"><primary sortas="list_remove_link">g_list_remove_link</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_remove_link (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                    <parameter><link linkend="GList"><type>GList</type></link> *llink</parameter>);</programlisting>
+<para>Removes an element from a <link linkend="GList"><type>GList</type></link>, without freeing the element.
+The removed element's prev and next links are set to <link linkend="NULL:CAPS"><literal>NULL</literal></link>, so 
+that it becomes a self-contained list with one element.</para>
+<para>This function is for example used to move an element in the list
+(see the example for <link linkend="g-list-concat"><function>g_list_concat()</function></link>) or to remove an element in
+the list before freeing its data:</para>
+<informalexample><programlisting><![CDATA[
+list = g_list_remove_link (list, llink);
+free_some_data_that_may_access_the_list_again (llink->data);
+g_list_free (llink);
+]]></programlisting></informalexample>
+<para></para>
+<refsect3 id="g-list-remove-link.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>llink</para></entry>
+<entry role="parameter_description"><para>an element in the <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-remove-link.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-delete-link" role="function">
+<title>g_list_delete_link&#160;()</title>
+<indexterm zone="g-list-delete-link"><primary sortas="list_delete_link">g_list_delete_link</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_delete_link (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                    <parameter><link linkend="GList"><type>GList</type></link> *link_</parameter>);</programlisting>
+<para>Removes the node link_ from the list and frees it. 
+Compare this to <link linkend="g-list-remove-link"><function>g_list_remove_link()</function></link> which removes the node 
+without freeing it.</para>
+<refsect3 id="g-list-delete-link.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>link_</para></entry>
+<entry role="parameter_description"><para>node to delete from <parameter>list</parameter>
+</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-delete-link.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-remove-all" role="function">
+<title>g_list_remove_all&#160;()</title>
+<indexterm zone="g-list-remove-all"><primary sortas="list_remove_all">g_list_remove_all</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_remove_all (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                   <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> data</parameter>);</programlisting>
+<para>Removes all list nodes with data equal to <parameter>data</parameter>
+.
+Returns the new head of the list. Contrast with
+<link linkend="g-list-remove"><function>g_list_remove()</function></link> which removes only the first node
+matching the given data.</para>
+<refsect3 id="g-list-remove-all.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>data to remove</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-remove-all.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-free" role="function">
+<title>g_list_free&#160;()</title>
+<indexterm zone="g-list-free"><primary sortas="list_free">g_list_free</primary></indexterm>
+<programlisting language="C"><link linkend="void"><returnvalue>void</returnvalue></link>
+g_list_free (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Frees all of the memory used by a <link linkend="GList"><type>GList</type></link>.
+The freed elements are returned to the slice allocator.</para>
+<para>If list elements contain dynamically-allocated memory, you should
+either use <link linkend="g-list-free-full"><function>g_list_free_full()</function></link> or free them manually first.</para>
+<refsect3 id="g-list-free.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3></refsect2>
+<refsect2 id="g-list-free-full" role="function" condition="since:2.28">
+<title>g_list_free_full&#160;()</title>
+<indexterm zone="g-list-free-full" role="2.28"><primary sortas="list_free_full">g_list_free_full</primary></indexterm>
+<programlisting language="C"><link linkend="void"><returnvalue>void</returnvalue></link>
+g_list_free_full (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                  <parameter><link linkend="GDestroyNotify"><type>GDestroyNotify</type></link> free_func</parameter>);</programlisting>
+<para>Convenience method, which frees all the memory used by a <link linkend="GList"><type>GList</type></link>,
+and calls <parameter>free_func</parameter>
+ on every element's data.</para>
+<para><parameter>free_func</parameter>
+ must not modify the list (eg, by removing the freed
+element from it).</para>
+<refsect3 id="g-list-free-full.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>free_func</para></entry>
+<entry role="parameter_description"><para>the function to be called to free each element's data</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><para role="since">Since: <link linkend="api-index-2.28">2.28</link></para></refsect2>
+<refsect2 id="g-list-alloc" role="function">
+<title>g_list_alloc&#160;()</title>
+<indexterm zone="g-list-alloc"><primary sortas="list_alloc">g_list_alloc</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_alloc (<parameter><type>void</type></parameter>);</programlisting>
+<para>Allocates space for one <link linkend="GList"><type>GList</type></link> element. It is called by
+<link linkend="g-list-append"><function>g_list_append()</function></link>, <link linkend="g-list-prepend"><function>g_list_prepend()</function></link>, <link linkend="g-list-insert"><function>g_list_insert()</function></link> and
+<link linkend="g-list-insert-sorted"><function>g_list_insert_sorted()</function></link> and so is rarely used on its own.</para>
+<refsect3 id="g-list-alloc.returns" role="returns">
+<title>Returns</title>
+<para> a pointer to the newly-allocated <link linkend="GList"><type>GList</type></link> element</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-free-1" role="function">
+<title>g_list_free_1&#160;()</title>
+<indexterm zone="g-list-free-1"><primary sortas="list_free_1">g_list_free_1</primary></indexterm>
+<programlisting language="C"><link linkend="void"><returnvalue>void</returnvalue></link>
+g_list_free_1 (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Frees one <link linkend="GList"><type>GList</type></link> element, but does not update links from the next and
+previous elements in the list, so you should not call this function on an
+element that is currently part of a list.</para>
+<para>It is usually used after <link linkend="g-list-remove-link"><function>g_list_remove_link()</function></link>.</para>
+<refsect3 id="g-list-free-1.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link> element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3></refsect2>
+<refsect2 id="g-list-length" role="function">
+<title>g_list_length&#160;()</title>
+<indexterm zone="g-list-length"><primary sortas="list_length">g_list_length</primary></indexterm>
+<programlisting language="C"><link linkend="guint"><returnvalue>guint</returnvalue></link>
+g_list_length (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Gets the number of elements in a <link linkend="GList"><type>GList</type></link>.</para>
+<para>This function iterates over the whole list to count its elements.
+Use a <link linkend="GQueue"><type>GQueue</type></link> instead of a GList if you regularly need the number
+of items. To check whether the list is non-empty, it is faster to check
+<parameter>list</parameter>
+ against <link linkend="NULL:CAPS"><literal>NULL</literal></link>.</para>
+<refsect3 id="g-list-length.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-length.returns" role="returns">
+<title>Returns</title>
+<para> the number of elements in the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-copy" role="function">
+<title>g_list_copy&#160;()</title>
+<indexterm zone="g-list-copy"><primary sortas="list_copy">g_list_copy</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_copy (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Copies a <link linkend="GList"><type>GList</type></link>.</para>
+<para>Note that this is a "shallow" copy. If the list elements 
+consist of pointers to data, the pointers are copied but 
+the actual data is not. See <link linkend="g-list-copy-deep"><function>g_list_copy_deep()</function></link> if you need
+to copy the data as well.</para>
+<refsect3 id="g-list-copy.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-copy.returns" role="returns">
+<title>Returns</title>
+<para> the start of the new list that holds the same data as <parameter>list</parameter>
+</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-copy-deep" role="function" condition="since:2.34">
+<title>g_list_copy_deep&#160;()</title>
+<indexterm zone="g-list-copy-deep" role="2.34"><primary sortas="list_copy_deep">g_list_copy_deep</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_copy_deep (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                  <parameter><link linkend="GCopyFunc"><type>GCopyFunc</type></link> func</parameter>,
+                  <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Makes a full (deep) copy of a <link linkend="GList"><type>GList</type></link>.</para>
+<para>In contrast with <link linkend="g-list-copy"><function>g_list_copy()</function></link>, this function uses <parameter>func</parameter>
+ to make
+a copy of each list element, in addition to copying the list
+container itself.</para>
+<para><parameter>func</parameter>
+, as a <link linkend="GCopyFunc"><type>GCopyFunc</type></link>, takes two arguments, the data to be copied
+and a <parameter>user_data</parameter>
+ pointer. It's safe to pass <link linkend="NULL:CAPS"><literal>NULL</literal></link> as user_data,
+if the copy function takes only one argument.</para>
+<para>For instance, if <parameter>list</parameter>
+ holds a list of GObjects, you can do:</para>
+<informalexample><programlisting><![CDATA[
+another_list = g_list_copy_deep (list, (GCopyFunc) g_object_ref, NULL);
+]]></programlisting></informalexample>
+<para></para>
+<para>And, to entirely free the new list, you could do:</para>
+<informalexample><programlisting><![CDATA[
+g_list_free_full (another_list, g_object_unref);
+]]></programlisting></informalexample>
+<para></para>
+<refsect3 id="g-list-copy-deep.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>func</para></entry>
+<entry role="parameter_description"><para>a copy function used to copy every element in the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data passed to the copy function <parameter>func</parameter>
+, or <link linkend="NULL:CAPS"><literal>NULL</literal></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-copy-deep.returns" role="returns">
+<title>Returns</title>
+<para> the start of the new list that holds a full copy of <parameter>list</parameter>
+,
+use <link linkend="g-list-free-full"><function>g_list_free_full()</function></link> to free it</para>
+</refsect3><para role="since">Since: <link linkend="api-index-2.34">2.34</link></para></refsect2>
+<refsect2 id="g-list-reverse" role="function">
+<title>g_list_reverse&#160;()</title>
+<indexterm zone="g-list-reverse"><primary sortas="list_reverse">g_list_reverse</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_reverse (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Reverses a <link linkend="GList"><type>GList</type></link>.
+It simply switches the next and prev pointers of each element.</para>
+<refsect3 id="g-list-reverse.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-reverse.returns" role="returns">
+<title>Returns</title>
+<para> the start of the reversed <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-sort" role="function">
+<title>g_list_sort&#160;()</title>
+<indexterm zone="g-list-sort"><primary sortas="list_sort">g_list_sort</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_sort (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+             <parameter><link linkend="GCompareFunc"><type>GCompareFunc</type></link> compare_func</parameter>);</programlisting>
+<para>Sorts a <link linkend="GList"><type>GList</type></link> using the given comparison function. The algorithm 
+used is a stable sort.</para>
+<refsect3 id="g-list-sort.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>compare_func</para></entry>
+<entry role="parameter_description"><para>the comparison function used to sort the <link linkend="GList"><type>GList</type></link>.
+This function is passed the data from 2 elements of the <link linkend="GList"><type>GList</type></link>
+and should return 0 if they are equal, a negative value if the
+first element comes before the second, or a positive value if
+the first element comes after the second.</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-sort.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="GCompareFunc" role="function">
+<title>GCompareFunc&#160;()</title>
+<indexterm zone="GCompareFunc"><primary sortas="CompareFunc">GCompareFunc</primary></indexterm>
+<programlisting language="C"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+<phrase role="c_punctuation">(</phrase>*GCompareFunc<phrase role="c_punctuation">)</phrase> (<parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> a</parameter>,
+                 <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> b</parameter>);</programlisting>
+<para>Specifies the type of a comparison function used to compare two
+values.  The function should return a negative integer if the first
+value comes before the second, 0 if they are equal, or a positive
+integer if the first value comes after the second.</para>
+<refsect3 id="GCompareFunc.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>a</para></entry>
+<entry role="parameter_description"><para>a value</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>b</para></entry>
+<entry role="parameter_description"><para>a value to compare with</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="GCompareFunc.returns" role="returns">
+<title>Returns</title>
+<para> negative value if <parameter>a</parameter>
+&lt; <parameter>b</parameter>
+; zero if <parameter>a</parameter>
+= <parameter>b</parameter>
+; positive
+value if <parameter>a</parameter>
+&gt; <parameter>b</parameter>
+</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-insert-sorted-with-data" role="function" condition="since:2.10">
+<title>g_list_insert_sorted_with_data&#160;()</title>
+<indexterm zone="g-list-insert-sorted-with-data" role="2.10"><primary sortas="list_insert_sorted_with_data">g_list_insert_sorted_with_data</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_insert_sorted_with_data (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                                <parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>,
+                                <parameter><link linkend="GCompareDataFunc"><type>GCompareDataFunc</type></link> func</parameter>,
+                                <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Inserts a new element into the list, using the given comparison 
+function to determine its position.</para>
+<para>If you are adding many new elements to a list, and the number of
+new elements is much larger than the length of the list, use
+<link linkend="g-list-prepend"><function>g_list_prepend()</function></link> to add the new items and sort the list afterwards
+with <link linkend="g-list-sort"><function>g_list_sort()</function></link>.</para>
+<refsect3 id="g-list-insert-sorted-with-data.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a pointer to a <link linkend="GList"><type>GList</type></link>, this must point to the top of the
+already sorted list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data for the new element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>func</para></entry>
+<entry role="parameter_description"><para>the function to compare elements in the list. It should
+return a number &gt; 0 if the first parameter  comes after the
+second parameter in the sort order.</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data to pass to comparison function</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-insert-sorted-with-data.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3><para role="since">Since: <link linkend="api-index-2.10">2.10</link></para></refsect2>
+<refsect2 id="g-list-sort-with-data" role="function">
+<title>g_list_sort_with_data&#160;()</title>
+<indexterm zone="g-list-sort-with-data"><primary sortas="list_sort_with_data">g_list_sort_with_data</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_sort_with_data (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                       <parameter><link linkend="GCompareDataFunc"><type>GCompareDataFunc</type></link> compare_func</parameter>,
+                       <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Like <link linkend="g-list-sort"><function>g_list_sort()</function></link>, but the comparison function accepts 
+a user data argument.</para>
+<refsect3 id="g-list-sort-with-data.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>compare_func</para></entry>
+<entry role="parameter_description"><para>comparison function</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data to pass to comparison function</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-sort-with-data.returns" role="returns">
+<title>Returns</title>
+<para> the (possibly changed) start of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="GCompareDataFunc" role="function">
+<title>GCompareDataFunc&#160;()</title>
+<indexterm zone="GCompareDataFunc"><primary sortas="CompareDataFunc">GCompareDataFunc</primary></indexterm>
+<programlisting language="C"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+<phrase role="c_punctuation">(</phrase>*GCompareDataFunc<phrase role="c_punctuation">)</phrase> (<parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> a</parameter>,
+                     <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> b</parameter>,
+                     <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Specifies the type of a comparison function used to compare two
+values.  The function should return a negative integer if the first
+value comes before the second, 0 if they are equal, or a positive
+integer if the first value comes after the second.</para>
+<refsect3 id="GCompareDataFunc.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>a</para></entry>
+<entry role="parameter_description"><para>a value</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>b</para></entry>
+<entry role="parameter_description"><para>a value to compare with</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="GCompareDataFunc.returns" role="returns">
+<title>Returns</title>
+<para> negative value if <parameter>a</parameter>
+&lt; <parameter>b</parameter>
+; zero if <parameter>a</parameter>
+= <parameter>b</parameter>
+; positive
+value if <parameter>a</parameter>
+&gt; <parameter>b</parameter>
+</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-concat" role="function">
+<title>g_list_concat&#160;()</title>
+<indexterm zone="g-list-concat"><primary sortas="list_concat">g_list_concat</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_concat (<parameter><link linkend="GList"><type>GList</type></link> *list1</parameter>,
+               <parameter><link linkend="GList"><type>GList</type></link> *list2</parameter>);</programlisting>
+<para>Adds the second <link linkend="GList"><type>GList</type></link> onto the end of the first <link linkend="GList"><type>GList</type></link>.
+Note that the elements of the second <link linkend="GList"><type>GList</type></link> are not copied.
+They are used directly.</para>
+<para>This function is for example used to move an element in the list.
+The following example moves an element to the top of the list:</para>
+<informalexample><programlisting><![CDATA[
+list = g_list_remove_link (list, llink);
+list = g_list_concat (llink, list);
+]]></programlisting></informalexample>
+<para></para>
+<refsect3 id="g-list-concat.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list1</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>list2</para></entry>
+<entry role="parameter_description"><para>the <link linkend="GList"><type>GList</type></link> to add to the end of the first <link linkend="GList"><type>GList</type></link>,
+this must point  to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-concat.returns" role="returns">
+<title>Returns</title>
+<para> the start of the new <link linkend="GList"><type>GList</type></link>, which equals <parameter>list1</parameter>
+if not <link linkend="NULL:CAPS"><literal>NULL</literal></link> </para>
+</refsect3></refsect2>
+<refsect2 id="g-list-foreach" role="function">
+<title>g_list_foreach&#160;()</title>
+<indexterm zone="g-list-foreach"><primary sortas="list_foreach">g_list_foreach</primary></indexterm>
+<programlisting language="C"><link linkend="void"><returnvalue>void</returnvalue></link>
+g_list_foreach (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                <parameter><link linkend="GFunc"><type>GFunc</type></link> func</parameter>,
+                <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Calls a function for each element of a <link linkend="GList"><type>GList</type></link>.</para>
+<para>It is safe for <parameter>func</parameter>
+ to remove the element from <parameter>list</parameter>
+, but it must
+not modify any part of the list after that element.</para>
+<refsect3 id="g-list-foreach.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>func</para></entry>
+<entry role="parameter_description"><para>the function to call with each element's data</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data to pass to the function</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3></refsect2>
+<refsect2 id="GFunc" role="function">
+<title>GFunc&#160;()</title>
+<indexterm zone="GFunc"><primary sortas="Func">GFunc</primary></indexterm>
+<programlisting language="C"><link linkend="void"><returnvalue>void</returnvalue></link>
+<phrase role="c_punctuation">(</phrase>*GFunc<phrase role="c_punctuation">)</phrase> (<parameter><link linkend="gpointer"><type>gpointer</type></link> data</parameter>,
+          <parameter><link linkend="gpointer"><type>gpointer</type></link> user_data</parameter>);</programlisting>
+<para>Specifies the type of functions passed to <link linkend="g-list-foreach"><function>g_list_foreach()</function></link> and
+<link linkend="g-slist-foreach"><function>g_slist_foreach()</function></link>.</para>
+<refsect3 id="GFunc.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the element's data</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>user_data</para></entry>
+<entry role="parameter_description"><para>user data passed to <link linkend="g-list-foreach"><function>g_list_foreach()</function></link> or <link linkend="g-slist-foreach"><function>g_slist_foreach()</function></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3></refsect2>
+<refsect2 id="g-list-first" role="function">
+<title>g_list_first&#160;()</title>
+<indexterm zone="g-list-first"><primary sortas="list_first">g_list_first</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_first (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Gets the first element in a <link linkend="GList"><type>GList</type></link>.</para>
+<refsect3 id="g-list-first.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>any <link linkend="GList"><type>GList</type></link> element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-first.returns" role="returns">
+<title>Returns</title>
+<para> the first element in the <link linkend="GList"><type>GList</type></link>,
+or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the <link linkend="GList"><type>GList</type></link> has no elements</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-last" role="function">
+<title>g_list_last&#160;()</title>
+<indexterm zone="g-list-last"><primary sortas="list_last">g_list_last</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_last (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>);</programlisting>
+<para>Gets the last element in a <link linkend="GList"><type>GList</type></link>.</para>
+<refsect3 id="g-list-last.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>any <link linkend="GList"><type>GList</type></link> element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-last.returns" role="returns">
+<title>Returns</title>
+<para> the last element in the <link linkend="GList"><type>GList</type></link>,
+or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the <link linkend="GList"><type>GList</type></link> has no elements</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-previous" role="macro">
+<title>g_list_previous()</title>
+<indexterm zone="g-list-previous"><primary sortas="list_previous">g_list_previous</primary></indexterm>
+<programlisting language="C">#define             g_list_previous(list)</programlisting>
+<para>A convenience macro to get the previous element in a <link linkend="GList"><type>GList</type></link>.
+Note that it is considered perfectly acceptable to access
+<parameter>list->prev</parameter>
+ directly.</para>
+<refsect3 id="g-list-previous.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>an element in a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-previous.returns" role="returns">
+<title>Returns</title>
+<para> the previous element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if there are no previous
+elements</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-next" role="macro">
+<title>g_list_next()</title>
+<indexterm zone="g-list-next"><primary sortas="list_next">g_list_next</primary></indexterm>
+<programlisting language="C">#define             g_list_next(list)</programlisting>
+<para>A convenience macro to get the next element in a <link linkend="GList"><type>GList</type></link>.
+Note that it is considered perfectly acceptable to access
+<parameter>list->next</parameter>
+ directly.</para>
+<refsect3 id="g-list-next.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>an element in a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-next.returns" role="returns">
+<title>Returns</title>
+<para> the next element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if there are no more elements</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-nth" role="function">
+<title>g_list_nth&#160;()</title>
+<indexterm zone="g-list-nth"><primary sortas="list_nth">g_list_nth</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_nth (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+            <parameter><link linkend="guint"><type>guint</type></link> n</parameter>);</programlisting>
+<para>Gets the element at the given position in a <link linkend="GList"><type>GList</type></link>.</para>
+<para>This iterates over the list until it reaches the <parameter>n</parameter>
+-th position. If you
+intend to iterate over every element, it is better to use a for-loop as
+described in the <link linkend="GList"><type>GList</type></link> introduction.</para>
+<refsect3 id="g-list-nth.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>n</para></entry>
+<entry role="parameter_description"><para>the position of the element, counting from 0</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-nth.returns" role="returns">
+<title>Returns</title>
+<para> the element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the position is off
+the end of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-nth-data" role="function">
+<title>g_list_nth_data&#160;()</title>
+<indexterm zone="g-list-nth-data"><primary sortas="list_nth_data">g_list_nth_data</primary></indexterm>
+<programlisting language="C"><link linkend="gpointer"><returnvalue>gpointer</returnvalue></link>
+g_list_nth_data (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                 <parameter><link linkend="guint"><type>guint</type></link> n</parameter>);</programlisting>
+<para>Gets the data of the element at the given position.</para>
+<para>This iterates over the list until it reaches the <parameter>n</parameter>
+-th position. If you
+intend to iterate over every element, it is better to use a for-loop as
+described in the <link linkend="GList"><type>GList</type></link> introduction.</para>
+<refsect3 id="g-list-nth-data.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>n</para></entry>
+<entry role="parameter_description"><para>the position of the element</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-nth-data.returns" role="returns">
+<title>Returns</title>
+<para> the element's data, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the position
+is off the end of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-nth-prev" role="function">
+<title>g_list_nth_prev&#160;()</title>
+<indexterm zone="g-list-nth-prev"><primary sortas="list_nth_prev">g_list_nth_prev</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_nth_prev (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                 <parameter><link linkend="guint"><type>guint</type></link> n</parameter>);</programlisting>
+<para>Gets the element <parameter>n</parameter>
+ places before <parameter>list</parameter>
+.</para>
+<refsect3 id="g-list-nth-prev.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>n</para></entry>
+<entry role="parameter_description"><para>the position of the element, counting from 0</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-nth-prev.returns" role="returns">
+<title>Returns</title>
+<para> the element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if the position is
+off the end of the <link linkend="GList"><type>GList</type></link></para>
+</refsect3></refsect2>
+<refsect2 id="g-list-find" role="function">
+<title>g_list_find&#160;()</title>
+<indexterm zone="g-list-find"><primary sortas="list_find">g_list_find</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_find (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+             <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> data</parameter>);</programlisting>
+<para>Finds the element in a <link linkend="GList"><type>GList</type></link> which contains the given data.</para>
+<refsect3 id="g-list-find.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the element data to find</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-find.returns" role="returns">
+<title>Returns</title>
+<para> the found <link linkend="GList"><type>GList</type></link> element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if it is not found</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-find-custom" role="function">
+<title>g_list_find_custom&#160;()</title>
+<indexterm zone="g-list-find-custom"><primary sortas="list_find_custom">g_list_find_custom</primary></indexterm>
+<programlisting language="C"><link linkend="GList"><returnvalue>GList</returnvalue></link>&#160;*
+g_list_find_custom (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                    <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> data</parameter>,
+                    <parameter><link linkend="GCompareFunc"><type>GCompareFunc</type></link> func</parameter>);</programlisting>
+<para>Finds an element in a <link linkend="GList"><type>GList</type></link>, using a supplied function to 
+find the desired element. It iterates over the list, calling 
+the given function which should return 0 when the desired 
+element is found. The function takes two <link linkend="gconstpointer"><type>gconstpointer</type></link> arguments, 
+the <link linkend="GList"><type>GList</type></link> element's data as the first argument and the 
+given user data.</para>
+<refsect3 id="g-list-find-custom.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>user data passed to the function</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>func</para></entry>
+<entry role="parameter_description"><para>the function to call for each element.
+It should return 0 when the desired element is found</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-find-custom.returns" role="returns">
+<title>Returns</title>
+<para> the found <link linkend="GList"><type>GList</type></link> element, or <link linkend="NULL:CAPS"><literal>NULL</literal></link> if it is not found</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-position" role="function">
+<title>g_list_position&#160;()</title>
+<indexterm zone="g-list-position"><primary sortas="list_position">g_list_position</primary></indexterm>
+<programlisting language="C"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+g_list_position (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+                 <parameter><link linkend="GList"><type>GList</type></link> *llink</parameter>);</programlisting>
+<para>Gets the position of the given element 
+in the <link linkend="GList"><type>GList</type></link> (starting from 0).</para>
+<refsect3 id="g-list-position.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>llink</para></entry>
+<entry role="parameter_description"><para>an element in the <link linkend="GList"><type>GList</type></link></para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-position.returns" role="returns">
+<title>Returns</title>
+<para> the position of the element in the <link linkend="GList"><type>GList</type></link>,
+or -1 if the element is not found</para>
+</refsect3></refsect2>
+<refsect2 id="g-list-index" role="function">
+<title>g_list_index&#160;()</title>
+<indexterm zone="g-list-index"><primary sortas="list_index">g_list_index</primary></indexterm>
+<programlisting language="C"><link linkend="gint"><returnvalue>gint</returnvalue></link>
+g_list_index (<parameter><link linkend="GList"><type>GList</type></link> *list</parameter>,
+              <parameter><link linkend="gconstpointer"><type>gconstpointer</type></link> data</parameter>);</programlisting>
+<para>Gets the position of the element containing 
+the given data (starting from 0).</para>
+<refsect3 id="g-list-index.parameters" role="parameters">
+<title>Parameters</title>
+<informaltable role="parameters_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="parameters_name" colwidth="150px"/>
+<colspec colname="parameters_description"/>
+<colspec colname="parameters_annotations" colwidth="200px"/>
+<tbody>
+<row><entry role="parameter_name"><para>list</para></entry>
+<entry role="parameter_description"><para>a <link linkend="GList"><type>GList</type></link>, this must point to the top of the list</para></entry>
+<entry role="parameter_annotations"></entry></row>
+<row><entry role="parameter_name"><para>data</para></entry>
+<entry role="parameter_description"><para>the data to find</para></entry>
+<entry role="parameter_annotations"></entry></row>
+</tbody></tgroup></informaltable>
+</refsect3><refsect3 id="g-list-index.returns" role="returns">
+<title>Returns</title>
+<para> the index of the element containing the data,
+or -1 if the data is not found</para>
+</refsect3></refsect2>
+
+</refsect1>
+<refsect1 id="glib-Doubly-Linked-Lists.other_details" role="details">
+<title role="details.title">Types and Values</title>
+<refsect2 id="GList" role="struct">
+<title>struct GList</title>
+<indexterm zone="GList"><primary sortas="List">GList</primary></indexterm>
+<programlisting language="C">struct GList {
+  gpointer data;
+  GList *next;
+  GList *prev;
+};
+</programlisting>
+<para>The <link linkend="GList"><type>GList</type></link> struct is used for each element in a doubly-linked list.</para>
+<refsect3 id="GList.members" role="struct_members">
+<title>Members</title>
+<informaltable role="struct_members_table" pgwide="1" frame="none">
+<tgroup cols="3">
+<colspec colname="struct_members_name" colwidth="300px"/>
+<colspec colname="struct_members_description"/>
+<colspec colname="struct_members_annotations" colwidth="200px"/>
+<tbody>
+<row role="member"><entry role="struct_member_name"><para><link linkend="gpointer"><type>gpointer</type></link>&#160;<structfield id="GList.data">data</structfield>;</para></entry>
+<entry role="struct_member_description"><para>holds the element's data, which can be a pointer to any kind
+of data, or any integer value using the
+<link linkend="glib-Type-Conversion-Macros">Type Conversion Macros</link></para></entry>
+<entry role="struct_member_annotations"></entry>
+</row>
+<row role="member"><entry role="struct_member_name"><para><link linkend="GList"><type>GList</type></link>&#160;*<structfield id="GList.next">next</structfield>;</para></entry>
+<entry role="struct_member_description"><para>contains the link to the next element in the list</para></entry>
+<entry role="struct_member_annotations"></entry>
+</row>
+<row role="member"><entry role="struct_member_name"><para><link linkend="GList"><type>GList</type></link>&#160;*<structfield id="GList.prev">prev</structfield>;</para></entry>
+<entry role="struct_member_description"><para>contains the link to the previous element in the list</para></entry>
+<entry role="struct_member_annotations"></entry>
+</row>
+</tbody></tgroup></informaltable>
+</refsect3>
+</refsect2>
+<refsect2 id="g-list-free1" role="macro">
+<title>g_list_free1</title>
+<indexterm zone="g-list-free1"><primary sortas="list_free1">g_list_free1</primary></indexterm>
+<programlisting language="C">#define             g_list_free1</programlisting>
+<para>Another name for <link linkend="g-list-free-1"><function>g_list_free_1()</function></link>.</para>
+</refsect2>
+
+</refsect1>
+
+</refentry>

@@ -41,8 +41,8 @@ $log = $log_dir.'/log.txt';
 
 
 `touch $log`;
-`touch $output_dir/API/GHashTable.php`;
-`touch $output_dir/g-hash-table.c`;
+//`touch $output_dir/API/GHashTable.php`;
+//`touch $output_dir/g-hash-table.c`;
 
 
 `echo "Starting..." > $log`;
@@ -117,8 +117,8 @@ if (False) {
     $docBook = new GtkDocBook();
     $docBook->addSourceCode($sourceCode);
 
-    //$generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
-    $generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+    $generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
+    //$generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
     $generator->setDocBook($docBook);
     $generator->save($output_dir);
 

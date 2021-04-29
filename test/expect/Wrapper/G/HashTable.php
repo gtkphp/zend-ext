@@ -49,28 +49,28 @@ class HashTable {
     /**
      * Inserts a new key and value into a GHashTable.
      */
-    public function insert (Object $key, Object $value): bool{/*Internal*/}
+    public function insert (Object $key, Object $value): bool{/*Internal*/ return true;}
     /**
      * Inserts a new key and value into a GHashTable similar to g_hash_table...
      */
-    public function replace (Object $key, Object $value): bool{/*Internal*/}
+    public function replace (Object $key, Object $value): bool{/*Internal*/ return true;}
     /**
      * This is a convenience function for using a GHashTable as a set.
      */
-    public function add (Object $key): bool{/*Internal*/}
+    public function add (Object $key): bool{/*Internal*/ return true;}
     /**
      * Checks if key  is in hash_table .
      * string|int|Object
      */
-    public function contains (mixed $key): bool{/*Internal*/}
+    public function contains (mixed $key): bool{/*Internal*/ return true;}
     /**
      * Returns the number of elements contained in the GHashTable.
      */
-    public function size (): int{/*Internal*/}
+    public function size (): int{/*Internal*/ return 0;}
     /**
      * Looks up a key in a GHashTable.
      */
-    public function lookup (gconstpointer $key): Object{/*Internal*/}
+    public function lookup (mixed $key): Object{/*Internal*/ return new StdClass();}
     /**
      * Looks up a key in the GHashTable, returning the original key and the ...
      */

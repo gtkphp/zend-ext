@@ -85,15 +85,24 @@ class Gtk extends DocBook
         );// <------------------------------------------------------------------------
         $id = trim((string)$xml['id']);//glib-Hash-Tables
 
+        /*
+         * Peek the class name : 'GList'
+         */
         $className = (string)$xml->refmeta->refentrytitle;
         $className = $map[$className] ?? $className;
 
         $class = $this->package->createClass($className);
         $this->current_generator = $class;
 
+        /*
+         * Peek the description : The description of <link>class name</link>
+         */
         $description = (string)$xml->refnamediv->refpurpose;
         $class->setDescription($description);
 
+        /*
+         * Peek methodes
+         */
         $result = $xml->xpath("refsect1[@id='$id.functions_details']/refsect2");
         foreach ($result as $node) {
             $method = $this->loadMethod($node);
@@ -117,6 +126,9 @@ class Gtk extends DocBook
             }
         }
 
+        /*
+         * Peek related object
+         */
         $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row/entry/link");
         $relatedObjects = $this->getRelatedObjects($nodes, $className);
         $relatedClasses = array();
@@ -133,7 +145,9 @@ class Gtk extends DocBook
         $class->setRelatedObjects($relatedClasses);
         
 
-        // load all class before render
+        /*
+         * Peek properties
+         */
         //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
         $struct = $this->sourceCode['Glib']->getStruct($className);
         
@@ -155,6 +169,10 @@ class Gtk extends DocBook
         }
         //var_dump($struct);
 
+        // <-- setProperties -->
+        // <-- setSignals -->
+        // <-- setStyles -->
+        // <-- setRelatedObjects -->
 
         return $class;
     }
@@ -336,11 +354,6 @@ class Gtk extends DocBook
             $description .= $paragraph->asXml();
         }
         $type->setDescription($description);
-
-        // <-- setProperties -->
-        // <-- setSignals -->
-        // <-- setStyles -->
-        // <-- setRelatedObjects -->
 
         return $method;
     }

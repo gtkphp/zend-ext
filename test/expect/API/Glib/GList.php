@@ -3,6 +3,9 @@
  * linked lists that can be iterated over in both directions
  */
 class GList {
+    public $data;
+    public $prev;
+    public $next;
 }
 
 /**
@@ -11,14 +14,14 @@ class GList {
  * @param mixed $data the data for the new element
  * @return GList
  */
-function g_list_append (GList $list, $data): GList{ }
+function g_list_append (GList $list, $data): GList{ exit('IDE purpose'); return new GList;}
 /**
  * Prepends a new element on to the start of the list.
  * @param GList $list a pointer to a GList, this must point to the top of the list
  * @param mixed $data the data for the new element
  * @return GList
  */
-function g_list_prepend (GList $list, $data): GList{ }
+function g_list_prepend (GList $list, $data): GList{ exit(-1); return new GList;}
 /**
  * Inserts a new element into the list at the given position.
  * @param GList $list a pointer to a GList, this must point to the top of the list

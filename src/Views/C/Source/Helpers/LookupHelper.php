@@ -11,6 +11,8 @@ class LookupHelper extends AbstractHelper
 {
     public function __invoke(PhpRenderer $renderer)
     {
+        
+
         $properties = $renderer->properties;
         // step one, groupe by length, group by first pattern, etc
 
@@ -21,7 +23,7 @@ class LookupHelper extends AbstractHelper
         $output = '';
         $group = $this->groupByLength($properties);
 
-        $output .= 'const struct Php'.$renderer->nameType.'Property*'.PHP_EOL;
+        $output .= 'const struct Php'.$renderer->camelcaseHelper($renderer->nameType).'Property*'.PHP_EOL;
         $output .= 'php_'.$renderer->nameFunction.'_properties_lookup (const char *str, size_t len)'.PHP_EOL;
         $output .= '{'.PHP_EOL;
         

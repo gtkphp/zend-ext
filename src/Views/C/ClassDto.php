@@ -9,6 +9,7 @@ class ClassDto {
     public $abbr;
     public $extend="";
     public $parent=null;
+    public $dir;
     public $fileName;
     public $nameMacro;
     public $nameFunction;

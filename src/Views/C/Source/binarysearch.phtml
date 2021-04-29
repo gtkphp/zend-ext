@@ -13,7 +13,7 @@ foreach ($properties as $property=>$type):
 
 static void
 php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?php echo $this->nameFunction ?> *intern, zval *value, char *name, <?php echo trim($type) ?> *dest) {
-<?php if (trim($type)=='zend_double'): ?>
+<?php if (trim($type)=='double'): ?>
     if (Z_TYPE_P(value)==IS_DOUBLE)
         *dest = value->value.dval;
     else {
@@ -81,6 +81,8 @@ php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?
     }
 <?php elseif(trim($type)=='zval'): ?>
     ZVAL_COPY(*dest, value);
+<?php else: ?>
+    Not impelemenetede : "<?php echo $type; ?>"
 <?php endif; ?>
 }
 
@@ -102,13 +104,13 @@ foreach ($this->properties as $property=>$type) {
 };
 //typedef enum php_<?php echo $this->nameFunction ?>_properties php_<?php echo $this->nameFunction ?>_properties;
 
-struct Php<?php echo $this->nameType ?>Property {
+struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property {
   const char *name;
   int code;
   void (*setter) (php_<?php echo $this->nameFunction ?> *intern, zval *rvalue, char *name, void *dest);
 };
 
-static const struct Php<?php echo $this->nameType ?>Property php_<?php echo $this->nameFunction ?>_properties[] = {
+static const struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property php_<?php echo $this->nameFunction ?>_properties[] = {
 <?php
 $glue = '    ';
 foreach ($this->properties as $property=>$type) {
