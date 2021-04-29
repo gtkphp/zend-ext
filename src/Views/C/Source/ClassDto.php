@@ -9,6 +9,7 @@ use Zend\Ext\Views\C\Source\Implementations\Blank as BlankImplementation;
 class ClassDto extends Base {
     public $nameType;
     public $headerFile;
+    public $includeFiles=[];
 
     public $implementations;
     function __construct() {

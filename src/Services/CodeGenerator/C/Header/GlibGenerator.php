@@ -141,10 +141,16 @@ class GlibGenerator extends CodeGenerator
 
         $name = $generator->getName();
 
+        $name = $generator->getName();
+        $filename = $filter->filter($name);
+        $pos = strpos('-', $filename);
+        $filename = substr($filename, $pos+1);
+
 
         $dto = new ClassDto();
+        $dto->namespace = '\\';
         $dto->name = $name;
-        $dto->fileName = $filter->filter($name) . '.h';
+        $dto->fileName = $filename . '.h';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
         $dto->properties = array();

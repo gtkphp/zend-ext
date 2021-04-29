@@ -1,18 +1,23 @@
 Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
+# Where generate C
 
-TODO: Generate Enum
-TODO: do not generate memeber of struct GtkWidget
 TODO: GtkWidget::property, signal, style
-TODO: howto enable/disable : dimension, properti, cast, converte to array, debug ?
-TODO: Parameter deref
+TODO: Parameter deref( see in the docbook; but for glib is not set)
 TODO: Parameter variadic
+
+TODO: Improve getter setter( implement all types)
+      php_gtk.h
+      php_gtk.c
+TODO: do not generate memeber of struct GtkWidget
+TODO: howto enable/disable : dimension, properti, cast, converte to array, debug_info ?
+
 TODO: parser la doc des memebre de la struct Class
 TODO: struct class to php static memeber class
 FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
 
-Where generate Php
+# Where generate Php
 - in docBlock type is displayed white '*' pass ref
 - in docBlock description need to be display in 2 lines
 - in function parameters need to specify if the parameter is nullable

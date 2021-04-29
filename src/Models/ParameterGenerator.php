@@ -63,6 +63,12 @@ class ParameterGenerator extends AbstractGenerator
     protected $isCallback = FALSE;
 
 
+    public function __construct($name) {
+        if ('...'==$name) {
+            $this->setVariadic();
+        }
+        parent::__construct($name);
+    }
     public function setType($type)
     {
         if ($type instanceof TypeGenerator) {

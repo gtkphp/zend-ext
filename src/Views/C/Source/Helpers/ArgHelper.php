@@ -31,8 +31,13 @@ class ArgHelper extends AbstractHelper
                         $output .= '    int '.$parameter->getName().'_len;'. PHP_EOL;
                         break;
                     default:
-                        //$output .= '    php_'.$parameter->getType()->getName().' *'.$parameter->getName().';'. PHP_EOL;
-                        $output .= '    zval *z'.$parameter->getName().';'. PHP_EOL;
+                        if ('...'==$parameter->getName()) {
+                            $output .= '    int argc;'. PHP_EOL;
+                            $output .= '    zval *args = NULL;'. PHP_EOL;
+                        } else {
+                            //$output .= '    php_'.$parameter->getType()->getName().' *'.$parameter->getName().';'. PHP_EOL;
+                            $output .= '    zval *z'.$parameter->getName().';'. PHP_EOL;
+                        }
                         break;
                 }
             }
@@ -51,8 +56,12 @@ class ArgHelper extends AbstractHelper
                         $output .= '        Z_PARAM_STRING(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getName().'_len)'. PHP_EOL;
                         break;
                     default:
-                        $nameFunction = $this->getView()->nameclassHelper($parameter->getType()->getName(), -1);
-                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;//check_null, separate
+                        if ('...'==$parameter->getName()) {
+                            $output .= '        Z_PARAM_VARIADIC(\'+\', args, argc);'. PHP_EOL;
+                        } else {
+                            $nameFunction = $this->getView()->nameclassHelper($parameter->getType()->getName(), -1);
+                            $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;//check_null, separate
+                        }
                         break;
                 }
             }

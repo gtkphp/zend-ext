@@ -16,7 +16,42 @@ php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, 
 
     struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
-        cmd->getter(intern, rv);
+        switch(cmd->code) {
+<?php
+foreach($this->properties as $property=>$type) {
+    $name = strtoupper($property);
+    $name = str_replace('-', '_', $name);
+    $const = 'PHP_'. $this->nameMacro .'_'.$name;
+    $name = strtolower($name);
+    
+    echo '        ';
+    echo 'case '.$const.':'.PHP_EOL;
+    $type = str_replace('*', '', $type);
+    $type = trim($type);
+    switch ($type) {
+        case 'zend_long':
+            echo '            ';
+            echo 'ZVAL_DOUBLE(rv, intern->ptr->'.$name.');'.PHP_EOL;
+            break;
+        case 'double':
+            echo '            ';
+            echo 'ZVAL_DOUBLE(rv, intern->ptr->'.$name.');'.PHP_EOL;
+            break;
+        default:
+            //echo 'if (obj->ptr->'.$name.'==NULL) ZVAL_NULL(&z'.$name.'); else ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.')';
+            //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+            //ZVAL_COPY(rvalue, intern->ptr-><?php echo $property_name ? >);
+            echo '???'.$type.PHP_EOL;
+            break;
+    }
+    echo '            ';
+    echo 'break;'.PHP_EOL;
+}
+?>
+        default:
+            zend_internal_type_error(1, "Internal bug,");
+            break;
+        }
     } else {
         // property not found
     }
@@ -34,7 +69,43 @@ php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member,
 
     struct Php<?php echo $this->nameType ?>Property *cmd = php_<?php echo $this->nameFunction ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
-        cmd->setter(intern, value);
+        switch(cmd->code) {
+<?php
+foreach($this->properties as $property=>$type) {
+    $name = strtoupper($property);
+    $name = str_replace('-', '_', $name);
+    $const = 'PHP_'. $this->nameMacro .'_'.$name;
+    $name = strtolower($name);
+    
+    echo '        ';
+    echo 'case '.$const.':'.PHP_EOL;
+    $type = trim($type);
+    switch ($type) {
+        case 'zend_long':
+            echo '            ';
+            echo 'cmd->setter(intern, value, member_str->val, &intern->ptr->'.$name.');'.PHP_EOL;
+            break;
+        case 'double':
+            echo '            ';
+            echo 'cmd->setter(intern, value, member_str->val, &intern->ptr->'.$name.');'.PHP_EOL;
+            break;
+        case 'zval':
+            echo '            ';
+            echo 'if (obj->ptr->'.$name.'==NULL) ZVAL_NULL(&z'.$name.'); else ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.')';
+            //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+            break;
+        default:
+            echo '???'.$type.PHP_EOL;
+            break;
+    }
+    echo '            ';
+    echo 'break;'.PHP_EOL;
+}
+?>
+        default:
+            zend_internal_type_error(1, "Internal bug,");
+            break;
+        }
     } else {
         // property not found
     }
@@ -63,7 +134,7 @@ php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp)
             case 'zend_long':
                 echo 'ZVAL_LONG(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
                 break;
-            case 'zend_double':
+            case 'double':
                 echo 'ZVAL_DOUBLE(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
                 break;
             case 'zval':

@@ -126,17 +126,31 @@ class GlibGenerator extends CodeGenerator
         $filter3->attach(new StringToUpper());
 
         $name = $generator->getName();
+        $filename = $filter->filter($name);
+        $filename = str_replace('_', '-', $filename);
+        $pos = strpos($filename, '-');
+        $namespace = substr($filename, 0, $pos);
+        $filename = substr($filename, $pos+1);
 
+        $includes = [];
+        if ('g'==$namespace) {
+            $includes[] = "<glib.h>";
+        } else {
+            $includes[] = "<".$namespace."/".$namespace.".h>";
+        }
+        $includes[] = '"php_gtk.h"';
 
         $dto = new ClassDto();
+        $dto->namespace = '';//never used( use GTK_NS insteadof)
         $dto->name = $generator->getName();
         $dto->abbr = $generator->getAbbr();
         $dto->extend = $generator->getExtendedClass();
-        $dto->fileName = $filter->filter($name) . '.c';
+        $dto->fileName = $filename . '.c';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
         $dto->nameType = $name;
-        $dto->headerFile = $filter->filter($name) . '.h';
+        $dto->headerFile = $filename . '.h';
+        $dto->includeFiles = $includes;
         $dto->properties = array();
         $properties = $generator->getProperties();
         foreach($properties as $property) {
@@ -212,15 +226,15 @@ class GlibGenerator extends CodeGenerator
 
         $class_name = $class->getName();
 
-        echo 'Relation => ', $class_name, PHP_EOL;
+        //echo 'Relation => ', $class_name, PHP_EOL;
         $objects = $class->getRelatedObjects();
         foreach($objects as $object) {
             if ($object) {
                 $name = $object->getName();
                 if ($class_name.'Class'==$name) {
-                    echo '    - ', $name, PHP_EOL;
+                    //echo '    - ', $name, PHP_EOL;
                 } else {
-                    echo '    + ', $name, PHP_EOL;
+                    //echo '    + ', $name, PHP_EOL;
                     if ($object instanceof EnumGenerator) {
                         $elationships[$name] = $this->getEnumDto($object);
                     } else if ($object instanceof ClassGenerator) {

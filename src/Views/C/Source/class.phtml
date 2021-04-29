@@ -9,8 +9,11 @@
 #include <zend_interfaces.h>
 #include <ext/standard/info.h>
 
-#include <gtk/gtk.h>
-#include "php_gtk.h"
+<?php
+foreach($this->includeFiles as $include) {
+echo '#include '.$include.PHP_EOL;
+}
+?>
 
 #include "<?php echo $this->headerFile ?>"
 
@@ -478,6 +481,7 @@ foreach($this->implementations->require as $func) {
 /*----------------------------------------------------------------------+
  | Zend-User API                                                        |
  +----------------------------------------------------------------------*/
+ <?php if(false): ?>
 <?php foreach($this->methods as $name=>$method): ?>
 <?php echo $method->type ?>
 
@@ -501,6 +505,7 @@ php_<?php echo $method->name ?>(<?php
 }
 
 <?php endforeach; ?>
+<?php endif; ?>
 
 
 

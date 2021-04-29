@@ -58,6 +58,7 @@ class Gtk extends DocBook
         
         $files = [
             '/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
+            '/home/dev/Projects/cairo/doc/public/xml/cairo.xml',
             '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
             '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
         ];
@@ -245,8 +246,11 @@ class Gtk extends DocBook
 
         // TODO variadic parameter( PHP Warning:  Illegal string offset 'name')
         foreach ($parametersData as $options) {
-            if (empty($options['name']) && empty($options['type'])) {
-                echo 'TODO: Assume variadic parameter' . PHP_EOL;
+            if (is_string($options) && '...'==$options) {
+                $parameter = $this->package->createParameter($options);
+                $parameterType = $this->package->createType('');
+                $parameter->setType($parameterType);
+                $method->setParameter($parameter);
                 continue;
             }
             if (is_null($options['name']) && 'void' == $options['type']) {
@@ -298,7 +302,7 @@ class Gtk extends DocBook
                 $parameterName = (string)$row->entry[0]->para[0];
                 if ($parameterName == '...') {
                     echo 'FIX: Assume variadic parameter' . PHP_EOL;
-                    continue;
+                    //continue;
                 }
                 $parameter = $method->getParameter($parameterName);
 
@@ -471,7 +475,7 @@ class Gtk extends DocBook
         foreach ($data['signature']['parameters'] as $parameterData) {
             ///echo $parameterData['name'] , PHP_EOL;
             if (empty($parameterData['name']) && empty($parameterData['type'])) {
-                echo 'TODO: Assume variadic parameter' . PHP_EOL;
+                echo 'TODO: Assume variadic parameter 2' . PHP_EOL;
                 continue;
             }
             if (is_null($parameterData['name']) && 'void' == $parameterData['type']) {

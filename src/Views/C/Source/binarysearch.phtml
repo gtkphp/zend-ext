@@ -1,56 +1,86 @@
 //rename by binarysearch_access_properties.phtml
 
-<?php foreach ($this->properties as $property=>$type):
+<?php
+
+$properties = array_flip($this->properties);
+
+foreach ($properties as $property=>$type):
     $property_name = strtolower($property);
     $property_name = str_replace('-', '_', $property_name);
+    $type=$property;
 ?>
 
 
 static void
-php_<?php echo $this->nameFunction ?>_getter_<?php echo $property_name ?>(php_<?php echo $this->nameFunction ?> *intern, zval *rvalue) {
-<?php if (trim($type)=='zend_double'): ?>
-    ZVAL_DOUBLE(rvalue, intern->ptr-><?php echo $property_name ?>);
-<?php elseif(trim($type)=='zend_long'): ?>
-    ZVAL_LONG(rvalue, intern->ptr-><?php echo $property_name ?>);
-<?php elseif(trim($type)=='zval'): ?>
-    ZVAL_COPY(rvalue, intern->ptr-><?php echo $property_name ?>);
-<?php endif; ?>
-}
-
-static void
-php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?php echo $this->nameFunction ?> *intern, zval *value) {
+php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?php echo $this->nameFunction ?> *intern, zval *value, char *name, <?php echo trim($type) ?> *dest) {
 <?php if (trim($type)=='zend_double'): ?>
     if (Z_TYPE_P(value)==IS_DOUBLE)
-        intern->ptr-><?php echo $property_name ?> = value->value.dval;
+        *dest = value->value.dval;
     else {
         zend_bool strict_types = ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
-        int allow_errors = -1;
-        double dval;
-        if (!strict_types && Z_TYPE_P(value)==IS_STRING
-         && is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), NULL, &dval, allow_errors) ) {
-            intern->ptr-><?php echo $property_name ?> = dval;
-            return;
-        }
         zend_string *type = zend_zval_get_type(value);
-        zend_internal_type_error(1, "Cannot assign %s to property \\<?php echo $this->nameFunction ?>::$<?php echo $property_name ?> of type float,", type->val);
+        if (strict_types) {
+            zend_internal_type_error(1, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->nameType ?>::$%s of type float,", type->val, name);
+        } else {
+            int allow_errors = -1;
+            zend_long lval=0;
+            double dval=0;
+            if (Z_TYPE_P(value)==IS_STRING) {
+                zend_uchar z_type = is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), &lval, &dval, allow_errors);
+                if (z_type==IS_LONG) {
+                    *dest = (double)lval;
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%d) convertion,", type->val, value->value.str->val, *dest);
+                    return;
+                } else if(z_type==IS_DOUBLE) {
+                    *dest = dval;
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%f) convertion,", type->val, value->value.str->val, *dest);
+                    return;
+                }
+            }
+            if (Z_TYPE_P(value)==IS_LONG) {
+                //TODO: convert long to double
+                *dest = (double)value->value.lval;
+                zend_error(E_USER_NOTICE, "Implicite int(%f) to float(%d) convertion,", value->value.lval, *dest);
+                return;
+            }
+            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->nameType ?>::$%s of type float,", type->val, name);
+        }
     }
 <?php elseif(trim($type)=='zend_long'): ?>
     if (Z_TYPE_P(value)==IS_LONG)
-        intern->ptr-><?php echo $property_name ?> = value->value.lval;
+        *dest = value->value.lval;
     else {
         zend_bool strict_types = ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
-        int allow_errors = -1;
-        zend_long lval;
-        if (!strict_types && Z_TYPE_P(value)==IS_STRING
-         && is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), NULL, &lval, allow_errors) ) {
-            intern->ptr-><?php echo $property_name ?> = lval;
-            return;
-        }
         zend_string *type = zend_zval_get_type(value);
-        zend_internal_type_error(1, "Cannot assign %s to property \\<?php echo $this->nameFunction ?>::$<?php echo $property_name ?> of type int,", type->val);
+        if (strict_types) {
+            zend_internal_type_error(1, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->nameType ?>::$%s of type float,", type->val, name);
+        } else {
+            int allow_errors = -1;
+            zend_long lval=0;
+            double dval=0;
+            if (Z_TYPE_P(value)==IS_STRING) {
+                zend_uchar z_type = is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), &lval, &dval, allow_errors);
+                if (z_type==IS_LONG) {
+                    *dest = lval;
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type->val, value->value.str->val, *dest);
+                    return;
+                } else if(z_type==IS_DOUBLE) {
+                    *dest = (int)dval;
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type->val, value->value.str->val, *dest);
+                    return;
+                }
+            }
+            if (Z_TYPE_P(value)==IS_DOUBLE) {
+                //TODO: convert double to long
+                *dest = (int)value->value.dval;
+                zend_error(E_USER_WARNING, "Implicite float(%f) to int(%d) convertion,", value->value.dval, *dest);
+                return;
+            }
+            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->nameType ?>::$%s of type int,", type->val, name);
+        }
     }
 <?php elseif(trim($type)=='zval'): ?>
-    ZVAL_COPY(intern->ptr-><?php echo $property_name ?>, value);
+    ZVAL_COPY(*dest, value);
 <?php endif; ?>
 }
 
@@ -75,8 +105,7 @@ foreach ($this->properties as $property=>$type) {
 struct Php<?php echo $this->nameType ?>Property {
   const char *name;
   int code;
-  void (*getter) (php_<?php echo $this->nameFunction ?> *intern, zval *value);
-  void (*setter) (php_<?php echo $this->nameFunction ?> *intern, zval *rvalue);
+  void (*setter) (php_<?php echo $this->nameFunction ?> *intern, zval *rvalue, char *name, void *dest);
 };
 
 static const struct Php<?php echo $this->nameType ?>Property php_<?php echo $this->nameFunction ?>_properties[] = {
@@ -85,9 +114,8 @@ $glue = '    ';
 foreach ($this->properties as $property=>$type) {
     $name = strtoupper($property);
     $name = str_replace('-', '_', $name);
-    $getter = 'php_'.$this->nameFunction.'_getter_'.strtolower($name);
-    $setter = 'php_'.$this->nameFunction.'_setter_'.strtolower($name);
-    echo $glue . '{"'.$property.'", PHP_'. $this->nameMacro .'_'.$name.', '.$getter.', '.$setter.'}';
+    $setter = 'php_'.$this->nameFunction.'_setter_'.strtolower($type/*$name*/);
+    echo $glue . '{"'.$property.'", PHP_'. $this->nameMacro .'_'.$name.', '.$setter.'}';
     $glue = ','.PHP_EOL.'    ';
 }
 ?>
