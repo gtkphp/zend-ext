@@ -36,11 +36,6 @@
 
 typedef struct _php_<?php echo $this->nameFunction ?> php_<?php echo $this->nameFunction ?>;
 struct _php_<?php echo $this->nameFunction ?> {
-    /*
-<?php foreach($this->properties as $name=>$property): ?>
-     * <?php echo $property, $name, ';', PHP_EOL ?>
-<?php endforeach;  ?>
-     */
     <?php echo $this->name ?> *ptr;
 
     zend_object std;

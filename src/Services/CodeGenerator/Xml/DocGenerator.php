@@ -2,7 +2,7 @@
 
 namespace Zend\Ext\Services\CodeGenerator\Xml;
 
-use Zend\Ext\Services\CodeGenerator\C\Source\GlibGenerator;
+use Zend\Ext\Services\CodeGenerator;
 
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\Response;
@@ -20,7 +20,7 @@ use Zend\Ext\Views\C\EnumDto;
 use Zend\Ext\Views\C\ParameterDto;
 
 
-class DocGenerator extends GlibGenerator
+class DocGenerator extends CodeGenerator
 {
 
     function getViewModel($dto):ViewModel
@@ -59,12 +59,6 @@ class DocGenerator extends GlibGenerator
     
     function getFilenameExtension() {
         return 'xml';
-    }
-
-    // getExtension();
-    // getHeaderExtension();
-    function make_lookup(ClassDto $dto) {
-        return '';
     }
 
 }

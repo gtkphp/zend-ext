@@ -2,7 +2,7 @@
 
 namespace Zend\Ext\Services\CodeGenerator\Php;
 
-use Zend\Ext\Services\CodeGenerator\C\Source\GlibGenerator;
+use Zend\Ext\Services\CodeGenerator;
 
 
 use Zend\ServiceManager\ServiceManager;
@@ -21,7 +21,7 @@ use Zend\Ext\Views\C\EnumDto;
 use Zend\Ext\Views\C\ParameterDto;
 
 
-class PpGenerator extends GlibGenerator
+class PpGenerator extends CodeGenerator
 {
     function getViewModel($dto):ViewModel
     {
@@ -67,12 +67,6 @@ class PpGenerator extends GlibGenerator
 
     function getFilenameExtension() {
         return 'php';
-    }
-
-    // getExtension();
-    // getHeaderExtension();
-    function make_lookup(ClassDto $dto) {
-        return '';
     }
 
 }

@@ -68,13 +68,13 @@ class PackageGeneratorTest extends TestCase
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
         }
-        if (true) {
+        if (false) {
             // generate PHP API
             $generator = CodeGenerator::Factory('Php/Pp', 'Glib');
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
         }
-        if (true) {
+        if (false) {
             // generate PHP Doc
             $generator = CodeGenerator::Factory('Xml/Doc', 'Glib');
             $generator->setDocBook($docBook);

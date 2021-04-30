@@ -3,9 +3,12 @@ Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 # Where generate C
 
-TODO: Generate CodeGenerator file extension
+TODO: View/C/Source/class.phtml remove enum _type_properties if{empty}
+
 TODO: Generate DocBook xml, and refactor <src>/View
 TODO: remove Zend-user API functions( use <src>/Implementations if necessary)
+TODO: _write_properties()
+      if dynamic property allowed add zend_std_write_()
 
 TODO: GtkWidget::property, signal, style
 TODO: howto enable/disable : dimension, properti, cast, converte to array, debug_info ?
@@ -25,6 +28,9 @@ TODO: do not generate member of struct GtkWidget
 TODO: parser la doc des membre de la struct Class( Done pour les relatedObjects)
 TODO: struct class to php static member class
 FIXME: revoir decl.txt, ne pas traiter struct quand empty et mettre une declaration dans data/config-glib.h
+
+TODO: Fix name CodeGenerator : Php/GlibGenerator, C/Header/GlibGenerator, 
+
 
 # Where generate Php
 - in docBlock type is displayed white '*' pass ref
