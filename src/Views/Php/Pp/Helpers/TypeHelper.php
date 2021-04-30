@@ -85,8 +85,7 @@ class TypeHelper extends AbstractHelper
                 return $name;
             }
             $list_enums = $package->getListTypeEnum();
-            if (in_array($name, $list_enums)) {
-                //$name = "\e[2;34m".'int'."\e[m";// yellow
+            if (array_key_exists($name, $list_enums)) {
                 return 'int';
             }
             if ($type->isPrototype() && $doc) {

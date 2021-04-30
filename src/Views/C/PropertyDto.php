@@ -2,12 +2,8 @@
 
 namespace Zend\Ext\Views\C;
 
-class MethodDto {
+class PropertyDto {
     public $name;
     public $type;
-    public $pad;
-    public $parameters;
-    public $generator;
     public $short_description;
-
 }

@@ -50,6 +50,9 @@ class Gtk extends SourceCode
 // mkdir ../gtk-build-doc
 // cd ../gtk-build-doc
 // ../gtk/configure --enable-gtk-doc
+// make
+// make doc (for cairo ?)
+
 
 // Do it For Glib, Gio
 

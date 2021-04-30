@@ -1,12 +1,26 @@
 <?php echo '<?php' ?>
 
 /**
+ * Cairo graphics library
+ * @package <?php echo $this->namespace.PHP_EOL; ?>
+ */
+
+/**
 <?php echo $this->commentHelper($this->description) ?>
  */
 class <?php echo $this->nameclassHelper($this->name) ?> <?php echo isset($this->extends)?'extends '.$this->extends:''; ?>
 {
+<?php foreach($this->properties as $property): ?>
+    /**
+<?php echo $this->commentHelper($property->short_description, '    ') ?>
+<?php echo '     * @var '.$property->type.PHP_EOL; ?>
+     */
+<?php echo '    public $'.$property->name.';'.PHP_EOL; ?>
+<?php endforeach; ?>
 }
 
 <?php foreach($this->methods as $key=>$method): ?>
-<?php echo $this->methodHelper($method); ?>
+<?php
+echo $this->methodHelper($method);
+?>
 <?php endforeach; ?>

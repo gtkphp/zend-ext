@@ -7,6 +7,7 @@ class ClassDto {
     public $namespace;
     public $name;
     public $abbr;
+    public $description;
     public $extend="";
     public $parent=null;
     public $dir;
@@ -15,6 +16,7 @@ class ClassDto {
     public $nameFunction;
     public $properties=[];// array(name=>declaration)
     public $methods=[];// array(name=>MethodDto)
+    public $interfaces=[];
 
     public $getter_setter;
     public $vtable;// ClassDto

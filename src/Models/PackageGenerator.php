@@ -103,6 +103,13 @@ class PackageGenerator extends AbstractGenerator
         return $method;
     }
 
+    public function createProperty($name, $parent):PropertyGenerator {
+        $property = new PropertyGenerator($name);
+        $property->setParentGenerator($parent);
+        $property->setOwnPackage($this);
+        return $property;
+    }
+
     public function createType($name) {
         $type = new TypeGenerator($name);
         $type->setOwnPackage($this);

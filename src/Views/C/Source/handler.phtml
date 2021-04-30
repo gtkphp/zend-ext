@@ -18,21 +18,26 @@ php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, 
     if (cmd) {
         switch(cmd->code) {
 <?php
-foreach($this->properties as $property=>$type) {
-    $name = strtoupper($property);
+
+
+foreach($this->properties as $property) {
+
+    $name = strtoupper($property->name);
     $name = str_replace('-', '_', $name);
     $const = 'PHP_'. $this->nameMacro .'_'.$name;
     $name = strtolower($name);
     
     echo '        ';
     echo 'case '.$const.':'.PHP_EOL;
-    $type = str_replace('*', '', $type);
+    $type = str_replace('*', '', $property->type);
     $type = trim($type);
     switch ($type) {
+        case 'int':
         case 'zend_long':
             echo '            ';
             echo 'ZVAL_LONG(rv, intern->ptr->'.$name.');'.PHP_EOL;
             break;
+        case 'float':
         case 'double':
             echo '            ';
             echo 'ZVAL_DOUBLE(rv, intern->ptr->'.$name.');'.PHP_EOL;
@@ -71,20 +76,23 @@ php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member,
     if (cmd) {
         switch(cmd->code) {
 <?php
-foreach($this->properties as $property=>$type) {
-    $name = strtoupper($property);
+
+foreach($this->properties as $property) {
+    $name = strtoupper($property->name);
     $name = str_replace('-', '_', $name);
     $const = 'PHP_'. $this->nameMacro .'_'.$name;
     $name = strtolower($name);
     
     echo '        ';
     echo 'case '.$const.':'.PHP_EOL;
-    $type = trim($type);
+    $type = trim($property->type);
     switch ($type) {
+        case 'int':
         case 'zend_long':
             echo '            ';
             echo 'cmd->setter(intern, value, member_str->val, &intern->ptr->'.$name.');'.PHP_EOL;
             break;
+        case 'float':
         case 'double':
             echo '            ';
             echo 'cmd->setter(intern, value, member_str->val, &intern->ptr->'.$name.');'.PHP_EOL;
@@ -126,19 +134,22 @@ php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp)
     debug_info = zend_array_dup(std_props);
 
 <?php
-    foreach($this->properties as $name=>$type) {
+
+    foreach($this->properties as $property) {
         echo '    ';
-        echo 'zval z'.$name.'; ';
-        $type = trim($type);
+        echo 'zval z'.$property->name.'; ';
+        $type = trim($property->type);
         switch ($type) {
+            case 'int':
             case 'zend_long':
-                echo 'ZVAL_LONG(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                echo 'ZVAL_LONG(&z'.$property->name.', obj->ptr->'.$property->name.');'.PHP_EOL;
                 break;
+            case 'float':
             case 'double':
-                echo 'ZVAL_DOUBLE(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                echo 'ZVAL_DOUBLE(&z'.$property->name.', obj->ptr->'.$property->name.');'.PHP_EOL;
                 break;
             case 'zval':
-                echo 'if (obj->ptr->'.$name.'==NULL) ZVAL_NULL(&z'.$name.'); else ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.')';
+                echo 'if (obj->ptr->'.$property->name.'==NULL) ZVAL_NULL(&z'.$property->name.'); else ZVAL_COPY(&z'.$property->name.', obj->ptr->'.$property->name.')';
                 //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
                 break;
             default:
@@ -146,7 +157,7 @@ php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp)
                 break;
         }
         echo '    ';
-        echo 'zend_hash_str_update(debug_info, "'.$name.'", sizeof("'.$name.'")-1, &z'.$name.');'.PHP_EOL.PHP_EOL;
+        echo 'zend_hash_str_update(debug_info, "'.$property->name.'", sizeof("'.$property->name.'")-1, &z'.$property->name.');'.PHP_EOL.PHP_EOL;
     
     }
 ?>

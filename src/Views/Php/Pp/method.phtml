@@ -1,25 +1,61 @@
+
 /**
-<?php echo $this->commentHelper($this->short_description);
+<?php
+
+echo $this->commentHelper($this->short_description);
+
 foreach($this->parameters as $parameter) {
-    echo ' * @param '.$this->typeHelper($parameter->getType(), True);
+    echo ' * @param '.$parameter->type;
     echo ' ';
-    echo '$'.$this->namepropertyHelper($parameter->getName());
+    echo '$'.$parameter->name;
     echo ' ';
-    echo $this->commentHelper($parameter->getDescription());
-}
-if ('void'!=$this->method->getType()->getName()) {
-    echo ' * @return '.$this->typeHelper($this->method->getType());
+    echo $parameter->short_description;
     echo PHP_EOL;
+    if ('void'!=$this->type) {
+        echo ' * @return '.$this->type;
+        echo PHP_EOL;
+    }
 }
+
 ?>
  */
-function <?php echo $this->namemethodHelper($this->method) ?> (<?php
+function <?php echo $this->name; ?>(<?php
 $glue = '';
 foreach($this->parameters as $parameter) {
     echo $glue;
-    echo $this->parameterHelper($parameter);
+    //echo $this->parameterHelper($parameter);
+    echo $parameter->type;
+    echo ' $';
+    echo $parameter->name;
     $glue = ', ';
 }
-?>): <?php
-echo $this->typeHelper($this->type)
-?>{ }
+?>)<?php
+if ('void'!=$this->type) {
+    echo ':'.$this->type;
+    echo ' ';
+}
+?>
+
+{<?php
+
+$msg='\'Error: Forbidden include_path "\' . __DIR__ . \'"\'';
+switch ($this->type) {
+    case 'double':
+    case 'float':
+            echo 'die('.$msg.'); return 0.0;';
+        break;
+    case 'int':
+        echo 'die('.$msg.'); return 0;';
+        break;
+    case 'bool':
+        echo 'die('.$msg.'); return true;';
+        break;
+    case 'void':
+        echo 'die('.$msg.');';
+        break;
+    default:
+        echo 'die('.$msg.'); return new '.$this->type.'();';
+        break;
+}
+?>}
+

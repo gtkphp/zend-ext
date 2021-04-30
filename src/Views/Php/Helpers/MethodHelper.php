@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Views\Helpers;
+namespace Zend\Ext\Views\Php\Helpers;
 
 use Zend\View\View;
 use Zend\View\Model\ViewModel;
@@ -15,13 +15,7 @@ class MethodHelper extends AbstractHelper
 {
     public function __invoke($method)
     {
-        $licenseModel = new ViewModel(array('author' => 'No Name'));
-        $licenseModel->setVariable('date', '31/12/1999');
-        $licenseModel->setVariable('name', $method->name);
-        $licenseModel->setVariable('short_description', ''/*$method->getShortDescription()*/);
-        $licenseModel->setVariable('type', ''/*$method->getType()*/);
-        $licenseModel->setVariable('method', $method);
-        $licenseModel->setVariable('parameters', $method->parameters);
+        $licenseModel = new ViewModel((array)$method);
         $licenseModel->setTemplate('method.phtml');
 
         $view = $this->getView();

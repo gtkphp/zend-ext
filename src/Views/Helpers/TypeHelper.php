@@ -58,7 +58,6 @@ class TypeHelper extends AbstractHelper
         $name = $type->getName();
         // check if void,
         // check if internal php type primitive
-
         if ($type->isPrimitive()) {
             //$output = ': ' . "\e[3;34m".self::$internalPhpTypes[$type->getPrimitiveType()]."\e[m";
             $output = self::$internalPhpTypes[$type->getPrimitiveType()];

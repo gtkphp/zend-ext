@@ -57,10 +57,10 @@ class Gtk extends DocBook
         //$this->getSourceCode('Glib')->getStruct('GList');
         
         $files = [
-            '/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
+            //'/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
             '/home/dev/Projects/cairo/doc/public/xml/cairo.xml',
-            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
-            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
+            //'/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
+            //'/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
         ];
         foreach($files as $filename) {
             $xml = simplexml_load_file($filename);
@@ -170,6 +170,8 @@ class Gtk extends DocBook
         //var_dump($struct);
 
         // <-- setProperties -->
+        //$this->loadProperties($nodes);
+
         // <-- setSignals -->
         // <-- setStyles -->
         // <-- setRelatedObjects -->
@@ -358,9 +360,44 @@ class Gtk extends DocBook
         return $method;
     }
 
-    protected function getProperties()
+    protected function loadProperties($xml, ClassGenerator $class)
     {
+        $properies = array();
+        $id = $xml['id'];
+        $rows = $xml->xpath("refsect3[@id='$id.members']/informaltable/tgroup/tbody/row");
+        foreach($rows as $row) {
+            $property = $this->loadProperty($row, $class);
+            $properies[] = $property;
+        }
+        return $properies;
+    }
 
+    protected function loadProperty($xml, ClassGenerator $class)
+    {
+        $property = null;
+        $name='';
+        $type='';
+        $description='';
+        $annotations='';
+        $entries = $xml->xpath("entry");
+        foreach($entries as $entry) {
+            switch($entry['role']) {
+                case 'struct_member_name':
+                    $name = (string) $entry->para->structfield;
+                    $type = (string) $entry->para->link->type;
+                    break;
+                case 'struct_member_description':
+                    $description = $entry->asXml();
+                    break;
+                case 'struct_member_annotations':
+                    break;
+            }
+        }
+        $property = $this->package->createProperty(trim($name), $class);
+        $property->setType($this->package->createType(trim($type)));
+        $property->setShortDescription($description);
+
+        return $property;
     }
 
     protected function getSignals()
@@ -420,6 +457,7 @@ class Gtk extends DocBook
                     $this->current_generator->setVTable($class);
                 } else {
                     $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
+                    $class->addProperties($this->loadProperties($node, $class));
                 }
                 break;
             case 'macro':
@@ -438,11 +476,15 @@ class Gtk extends DocBook
             echo '"', $className, '" not found in source', PHP_EOL;
         else if (!empty($struct['members']))
             foreach ($struct['members'] as $member) {
-                $property = new PropertyGenerator($member['name']);
-                $type = new TypeGenerator($member['type']);
-                $property->setType($type);
-                //$property->setPass($member['pass']);
-                $class->addPropertyFromGenerator($property);
+                $property = $class->getProperty($member['name']);
+                if (empty($property)) {
+                    // No Documentation info => get info from decl.txt
+                    $property = new PropertyGenerator($member['name']);
+                    $type = new TypeGenerator($member['type']);
+                    $property->setType($type);
+                    //$property->setPass($member['pass']);
+                    $class->addPropertyFromGenerator($property);
+                }
             }
         else
             echo 'Member not found in '.$struct_name.PHP_EOL;

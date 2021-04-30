@@ -1,13 +1,13 @@
 <?php echo '<?xml version="1.0" encoding="utf-8"?>' ?>
 <!-- $Revision$ -->
-<phpdoc:classref xmlns:phpdoc="http://php.net/ns/phpdoc" xml:id="class.<?php echo $this->id ?>" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The <?php echo $this->name ?> class</title>
-    <titleabbrev><?php echo $this->class_name ?></titleabbrev>
+<phpdoc:classref xmlns:phpdoc="http://php.net/ns/phpdoc" xml:id="class.<?php echo strtolower($this->name) ?>" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <title>&class.theclass; <classname><?php echo $this->name ?></classname></title>
+    <titleabbrev><?php echo $this->abbr ?></titleabbrev>
 
     <partintro>
 
-        <!-- {{{ <?php echo $this->class_name ?> intro -->
-        <section xml:id="<?php echo $this->id ?>.intro">
+        <!-- {{{ <?php echo $this->abbr ?> intro -->
+        <section xml:id="<?php echo strtolower($this->name) ?>.intro">
             &reftitle.intro;
             <para>
                 <?php echo $this->description ?>
@@ -16,17 +16,17 @@
         </section>
         <!-- }}} -->
 
-        <section xml:id="<?php echo $this->id ?>.synopsis">
+        <section xml:id="<?php echo strtolower($this->name) ?>.synopsis">
             &reftitle.classsynopsis;
 
             <!-- {{{ Synopsis -->
             <classsynopsis>
-                <ooclass><classname><?php echo $this->class_name ?></classname></ooclass>
+                <ooclass><classname><?php echo $this->abbr ?></classname></ooclass>
 
                 <!-- {{{ Class synopsis -->
                 <classsynopsisinfo>
                     <ooclass>
-                        <classname><?php echo $this->class_name ?></classname>
+                        <classname><?php echo $this->abbr ?></classname>
                     </ooclass>
 
                     <oointerface>
@@ -38,8 +38,8 @@
                 <!-- }}} -->
 
                 <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
-                <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.<?php echo $this->id ?>')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[1])" />
-                <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.<?php echo $this->id ?>')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[1])" />
+                <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.<?php echo strtolower($this->name) ?>')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[1])" />
+                <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.<?php echo strtolower($this->name) ?>')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[1])" />
             </classsynopsis>
             <!-- }}} -->
 
@@ -47,7 +47,7 @@
 
     </partintro>
 
-    &reference.<?php echo $this->ns_id ?>.entities.<?php echo $this->id ?>;
+    &reference.<?php echo strtolower($this->namespace) ?>.entities.<?php echo strtolower($this->name) ?>;
 
 </phpdoc:classref>
 

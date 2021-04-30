@@ -1,8 +1,10 @@
 //rename by binarysearch_access_properties.phtml
 
 <?php
-
-$properties = array_flip($this->properties);
+$properties=array();
+foreach ($this->properties as $property) {
+    $properties[$property->type] = $property->name;
+}
 
 foreach ($properties as $property=>$type):
     $property_name = strtolower($property);
@@ -13,7 +15,7 @@ foreach ($properties as $property=>$type):
 
 static void
 php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?php echo $this->nameFunction ?> *intern, zval *value, char *name, <?php echo trim($type) ?> *dest) {
-<?php if (trim($type)=='double'): ?>
+<?php if (trim($type)=='double' || trim($type)=='float'): ?>
     if (Z_TYPE_P(value)==IS_DOUBLE)
         *dest = value->value.dval;
     else {
@@ -46,7 +48,7 @@ php_<?php echo $this->nameFunction ?>_setter_<?php echo $property_name ?>(php_<?
             zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->nameType ?>::$%s of type float,", type->val, name);
         }
     }
-<?php elseif(trim($type)=='zend_long'): ?>
+<?php elseif(trim($type)=='zend_long' || trim($type)=='int'): ?>
     if (Z_TYPE_P(value)==IS_LONG)
         *dest = value->value.lval;
     else {
@@ -93,8 +95,8 @@ enum _php_<?php echo $this->nameFunction ?>_properties {
 <?php
 $i=1;
 $glue = '    ';
-foreach ($this->properties as $property=>$type) {
-    $name = strtoupper($property);
+foreach ($this->properties as $property) {
+    $name = strtoupper($property->name);
     $name = str_replace('-', '_', $name);
     echo $glue . 'PHP_'. $this->nameMacro .'_'.$name.' = '. $i++ ;
     $glue = ','.PHP_EOL.'    ';
@@ -113,11 +115,11 @@ struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property {
 static const struct Php<?php echo $this->camelcaseHelper($this->nameType) ?>Property php_<?php echo $this->nameFunction ?>_properties[] = {
 <?php
 $glue = '    ';
-foreach ($this->properties as $property=>$type) {
-    $name = strtoupper($property);
+foreach ($this->properties as $property) {
+    $name = strtoupper($property->name);
     $name = str_replace('-', '_', $name);
-    $setter = 'php_'.$this->nameFunction.'_setter_'.strtolower($type/*$name*/);
-    echo $glue . '{"'.$property.'", PHP_'. $this->nameMacro .'_'.$name.', '.$setter.'}';
+    $setter = 'php_'.$this->nameFunction.'_setter_'.strtolower($property->type/*$name*/);
+    echo $glue . '{"'.$property->name.'", PHP_'. $this->nameMacro .'_'.$name.', '.$setter.'}';
     $glue = ','.PHP_EOL.'    ';
 }
 ?>

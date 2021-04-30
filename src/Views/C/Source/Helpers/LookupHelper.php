@@ -12,8 +12,11 @@ class LookupHelper extends AbstractHelper
     public function __invoke(PhpRenderer $renderer)
     {
         
-
-        $properties = $renderer->properties;
+        $properties = array();
+        foreach($renderer->properties as $property) {
+            $properties[$property->name] = $property->type;
+        }
+        //var_dump($properties);
         // step one, groupe by length, group by first pattern, etc
 
         $this->nameFunction = $renderer->nameFunction;

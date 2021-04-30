@@ -254,6 +254,10 @@ class CodeGenerator
         return $filename;
     }
 
+    function getFilenameExtension() {
+        return 'c';
+    }
+
     /**
      * @param string $dir
      */

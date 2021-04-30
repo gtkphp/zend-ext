@@ -11,6 +11,7 @@ namespace Zend\Ext\Models;
 
 //use Zend\Code\Reflection\ClassReflection;
 use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Exceptions\InvalidArgumentException;
 
 use function array_diff;
 use function array_map;
@@ -374,7 +375,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
      * Add constant from PropertyGenerator
      *
      * @param  PropertyGenerator           $constant
-     * @throws Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return self
      */
     public function addConstantFromGenerator(PropertyGenerator $constant)
@@ -382,14 +383,14 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         $constantName = $constant->getName();
 
         if (isset($this->constants[$constantName])) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'A constant by name %s already exists in this class.',
                 $constantName
             ));
         }
 
         if (! $constant->isConst()) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'The value %s is not defined as a constant.',
                 $constantName
             ));
@@ -413,7 +414,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     public function addConstant($name, $value)
     {
         if (empty($name) || ! is_string($name)) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 '%s expects string for name',
                 __METHOD__
             ));
@@ -479,7 +480,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     public function addProperty($name, $defaultValue = null, $flags = PropertyGenerator::FLAG_PUBLIC)
     {
         if (! is_string($name)) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 '%s::%s expects string for name',
                 get_class($this),
                 __FUNCTION__
@@ -507,7 +508,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         $propertyName = $property->getName();
 
         if (isset($this->properties[$propertyName])) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'A property by name %s already exists in this class.',
                 $propertyName
             ));
@@ -668,7 +669,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         $docBlock = null
     ) {
         if (! is_string($name)) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 '%s::%s expects string for name',
                 get_class($this),
                 __FUNCTION__
@@ -690,7 +691,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         $methodName = $method->getName();
 
         if ($this->hasMethod($methodName)) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'A method by name %s already exists in this class.',
                 $methodName
             ));
@@ -893,7 +894,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
             return;
         }
 
-        throw new Exception\InvalidArgumentException(sprintf(
+        throw new InvalidArgumentException(sprintf(
             'Expected value for constant, value must be a "scalar" or "null", "%s" found',
             gettype($value)
         ));

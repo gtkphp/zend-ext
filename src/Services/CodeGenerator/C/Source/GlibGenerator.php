@@ -14,6 +14,7 @@ use Zend\Ext\Views\C\Source\ClassDto;
 use Zend\Ext\Views\C\Source\MethodDto;
 use Zend\Ext\Views\C\EnumDto;
 use Zend\Ext\Views\C\ParameterDto;
+use Zend\Ext\Views\C\PropertyDto;
 use Zend\Ext\Views\HelperPluginManager;
 use Zend\Filter\FilterChain;
 use Zend\Filter\StringToLower;
@@ -107,10 +108,15 @@ class GlibGenerator extends CodeGenerator
 
     function getClassDto(ClassGenerator $generator)
     {
+        /*
         $helper = new TypeHelper();
         $helper->setView($this->getRenderer());
         $protoHelper = new DocBlockHelper();
         $protoHelper->setView($this->getRenderer());
+        */
+        
+
+        
 
         // TODO: use Helper
         $filter = new FilterChain();
@@ -144,22 +150,28 @@ class GlibGenerator extends CodeGenerator
         $includes[] = '"php_gtk.h"';
 
         $dto = new ClassDto();
-        $dto->namespace = '';//never used( use GTK_NS insteadof)
+        $dto->namespace = $namespace;// tag @package
         $dto->name = $generator->getName();
         $dto->abbr = $generator->getAbbr();
+        $dto->description = $generator->getDescription();
         $dto->extend = $generator->getExtendedClass();
         $dto->dir = $dir;
-        $dto->fileName = $filename . '.c';
+        $dto->fileName = $filename . '.' . $this->getFilenameExtension();
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
         $dto->nameType = $name;
         $dto->headerFile = $filename . '.h';
         $dto->includeFiles = $includes;
         $dto->properties = array();
-        $properties = $generator->getProperties();
-        foreach($properties as $property) {
-            $dto->properties[$property->getName()] = $helper($property->getType(), '');
+        $properties = array();
+        foreach($generator->getProperties() as $property) {
+            $propertyDto = new PropertyDto();
+            $propertyDto->name = $property->getName();
+            $propertyDto->type = $property->getType()->getName();//$this->getRenderer()->typeHelper($property->getType(), '');
+            $propertyDto->short_description = $property->getShortDescription();
+            $properties[] = $propertyDto;
         }
+        $dto->properties = $properties;
 
         $dto->methods = array();
         $max_length=0;
@@ -169,18 +181,19 @@ class GlibGenerator extends CodeGenerator
             $methodDto = new MethodDto();
             $methodDto->generator = $method;
             $methodDto->name = $method->getName();
-            $methodDto->type = $helper($method->getType(), '*');
+            $methodDto->short_description = $method->getDescription();
+            $methodDto->type = $this->getRenderer()->typeHelper($method->getType(), '*');
             $methodDto->max_parameters = count($method->getParameters());
             $methodDto->min_parameters = count($method->getParameters());//TODO
             $methodDto->parameters = array();
             foreach($method->getParameters() as $parameter) {
                 $parameterDto = new ParameterDto();
                 $parameterDto->name = $parameter->getName();
-                $parameterDto->type = $helper($parameter->getType(), '*');
+                $parameterDto->type = $this->getRenderer()->typeHelper($parameter->getType(), '*');
 
                 $methodDto->parameters[] = $parameterDto;
             }
-            $methodDto->docblock = $protoHelper($method);
+            $methodDto->docblock = $this->getRenderer()->docBlockHelper($method);
 
             $max_length = max($max_length, strlen($methodDto->name));
             $dto->methods[$method->getName()] = $methodDto;
@@ -196,6 +209,7 @@ class GlibGenerator extends CodeGenerator
 
         // gperf -CGD -N php_cairo_matrix_lookup -W php_cairo_matrix_properties -H php_cairo_matrix_properties_hash -K name --language=ANSI-C -t data.gperf > perfecthash.h
         // min is 5
+
         $dto->getter_setter = $this->make_lookup($dto);
 
         return $dto;
