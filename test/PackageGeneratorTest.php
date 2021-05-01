@@ -19,6 +19,18 @@ define('APP_DIR', realpath(__DIR__.'/..'));
 
 class PackageGeneratorTest extends TestCase
 {
+    public function testDump() {
+        $var = new \StdClass();
+        $var->foo = 'sdg';
+        $var->prop = new \StdClass();
+        $var->prop->bar = new \StdClass();
+        $var->prop->bar->var = array('jh', 'oiu', 'kjhkjh');// output : '...'
+        //$widget->prop->bar->properties = array('jh', 'oiu', 'kjhkjh');// output : '...'
+        //$widget->prop->bar->properties['app-paintable'] = ...
+        //
+        var_dump($var);
+    }
+
     public function testCairo() {
         $tag = '2.56.4';
         $log_dir = APP_DIR."/log/glib-$tag";
@@ -48,6 +60,12 @@ class PackageGeneratorTest extends TestCase
         $sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/gobject/gobject-decl.txt');// depend on glib-decl.txt
         $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// depend on glib-decl.txt
         
+        $sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gdk/gdk3-decl.txt');// depend on cairo-decl.txt
+        //var_dump($sourceCode->getStruct('MotifWmInfo'));
+        //var_dump($sourceCode->getStruct('MotifWmHints'));
+        //var_dump($sourceCode->getStruct('MwmHints'));
+        $sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gtk/gtk3-decl.txt');
+
         $docBook = new GtkDocBook();
         $docBook->addSourceCode($sourceCode);
         //$docBook->loadBook('/home/dev/Projects/glib/docs/reference/glib/glib-docs.xml');
@@ -59,11 +77,13 @@ class PackageGeneratorTest extends TestCase
         // ex : '/home/dev/Projects/cairo/doc/public/xml/cairo.xml'
     
         if (true) {
-            // generate PHP Extension
-            $generator = CodeGenerator::Factory('C/Source/Glib', 'Glib');
+            // generate Source PHP Extension
+            $generator = CodeGenerator::Factory('C/Source/Glib', 'GlibNotUsedPut $docBook');
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
-    
+        }
+        if (false) {
+            // generate Header PHP Extension
             $generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
             $generator->setDocBook($docBook);
             $generator->save($output_dir);

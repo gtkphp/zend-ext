@@ -26,13 +26,13 @@ class CommentHelper extends AbstractHelper
 
         $len = strlen($comment);
         if ($len<75) {
-            return $tab.' * ' . $comment . PHP_EOL;
+            return /*$tab.' * ' . */ $comment . PHP_EOL;
         }
         // get the first phrase
         $pos = strpos($comment, '.');
         if (False!=$pos && $pos<72) {
-            return $tab.' * ' . substr($comment, 0, $pos+1) . PHP_EOL;
+            return /*$tab.' * ' . */substr($comment, 0, $pos+1) . PHP_EOL;
         }
-        return $tab.' * ' . substr($comment, 0, 69) . '...' . PHP_EOL;
+        return /*$tab.' * ' . */substr($comment, 0, 69) . '...' . PHP_EOL;
     }
 }

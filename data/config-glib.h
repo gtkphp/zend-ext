@@ -125,7 +125,6 @@ typedef struct _GdkToplevelX11 GdkToplevelX11;
 typedef union _GdkEvent GdkEvent;
 typedef int XEvent;
 typedef struct _GdkRectangle GdkRectangle;
-typedef struct _MotifWmHints MwmHints;// modified
 typedef int GdkSeat;
 
 //Gtk

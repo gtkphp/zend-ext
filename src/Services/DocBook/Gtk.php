@@ -11,6 +11,7 @@ use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\PackageGenerator;
 use Zend\Ext\Models\PropertyGenerator;
 use Zend\Ext\Models\TypeGenerator;
+use Zend\Ext\Models\TagGenerator;
 use Zend\Ext\Services\DocBook;
 
 
@@ -59,7 +60,7 @@ class Gtk extends DocBook
         $files = [
             //'/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
             '/home/dev/Projects/cairo/doc/public/xml/cairo.xml',
-            //'/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
+            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
             //'/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
         ];
         foreach($files as $filename) {
@@ -148,6 +149,12 @@ class Gtk extends DocBook
         /*
          * Peek properties
          */
+        // <-- setProperties -->
+        $this->loadGObjectProperties($xml, $class);
+
+
+        // Source property
+
         //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
         $struct = $this->sourceCode['Glib']->getStruct($className);
         
@@ -169,14 +176,110 @@ class Gtk extends DocBook
         }
         //var_dump($struct);
 
-        // <-- setProperties -->
+
         //$this->loadProperties($nodes);
+        //$class->addProperties($this->loadProperties($node, $class));
 
         // <-- setSignals -->
         // <-- setStyles -->
         // <-- setRelatedObjects -->
 
         return $class;
+    }
+
+    protected function loadGObjectProperties(SimpleXMLElement $xml, ClassGenerator $class): array
+    {
+        $id = trim((string)$xml['id']);//glib-Hash-Tables
+        //<refsect1 id="GtkWidget.properties" role="properties">
+
+        $properties = array();
+        $rows = $xml->xpath("refsect1[@id='$id.properties']/informaltable/tgroup/tbody/row");
+        foreach($rows as $row) {
+            $properties[] = $this->loadGObjectProperty($row, $class);
+        }
+
+        $class->addProperties($properties);
+
+        $details = $xml->xpath("refsect1[@id='".$id.".property-details']/refsect2");
+        foreach($details as $detail) {
+            $this->loadGObjectPropertyDetails($detail, $class);
+        }
+
+        return $properties;
+    }
+
+    protected function loadGObjectProperty(SimpleXMLElement $xml, ClassGenerator $class): ?PropertyGenerator
+    {
+        $type = '';
+        $name = '';
+        $linkend = '';
+        $flags = '';
+        $entries = $xml->xpath("entry");
+        foreach($entries as $entry) {
+            switch($entry['role']) {
+                case 'property_type':
+                    $type = (string)$entry->link->type;
+                    break;
+                case 'property_name':
+                    $name = (string)$entry->link;
+                    $linkend = (string)$entry->link['linkend'];// 'GtkWidget--app-paintable'
+                    break;
+                case 'property_flags':
+                    $flags = (string)$entry->link;// 'Read / Write'
+                    break;
+                default:
+                    echo 'Error: Unexpected reached'.PHP_EOL;
+                    break;
+            }
+        }
+
+        $property = $this->package->createProperty($name, $class);
+        $property->setType($this->package->createType($type));
+        //TODO: $property->setFlags($flags);
+
+        return $property;
+    }
+
+    protected function loadGObjectPropertyDetails(SimpleXMLElement $xml, ClassGenerator $class)
+    {
+
+        $linkend = $xml['id'];// 'GtkWidget--app-paintable'
+        $property_name = substr($linkend, strpos($linkend, '--')+2);// 'app-paintable'
+
+        /**
+         * @var PropertyGenerator
+         */
+        $property = $class->getProperty($property_name);
+
+        
+        $description = '';
+        $tags = array();
+        $default_value = '';
+        foreach( $xml->children() as $child) {
+            switch($child->getName()) {
+                case 'para':
+                    $pos = strpos((string)$child, ':');
+                    if(false===$pos || $pos > 15) {
+                        $description .= (string)$child;
+                    } else {
+                        $tag_name = substr((string)$child, 0, $pos);
+                        $tag = new TagGenerator(trim($tag_name));
+                        $tag_value = trim(substr((string)$child, strpos((string)$child, ':')+1));
+                        $tag->setValue($tag_value);
+                        $tags[] = $tag;
+                    }
+                    break;
+                default:
+                    // indexterm
+                    // programlisting
+                    // warning
+                    break;
+            }
+        }
+        $property->setShortDescription($description);
+        $property->addTags($tags);
+        
+
     }
 
     protected function loadMethod(SimpleXMLElement $xml): ?MethodGenerator
@@ -312,6 +415,7 @@ class Gtk extends DocBook
                 $description .= $paragraph->asXml();
             }
             $method->setDescription($description);
+            //$method->setShortDescription($description);
         }
 
         // <-- parameter::setDescription -->
@@ -327,7 +431,8 @@ class Gtk extends DocBook
                 $parameter = $method->getParameter($parameterName);
 
                 $parameterDescription = $row->entry[1]->para->asXml();
-                $parameter->setDescription($parameterDescription);
+                //$parameter->setDescription($parameterDescription);
+                $parameter->setShortDescription($parameterDescription);
 
                 $parameterAnnotations = $row->entry[2]->emphasis->acronym;
                 if (isset($parameterAnnotations))
@@ -360,6 +465,13 @@ class Gtk extends DocBook
         return $method;
     }
 
+    /*protected function loadParameters($xml, MethodGenerator $method)
+    {
+    }
+    protected function loadParameter($xml, MethodGenerator $method)
+    {
+    }*/
+
     protected function loadProperties($xml, ClassGenerator $class)
     {
         $properies = array();
@@ -390,6 +502,7 @@ class Gtk extends DocBook
                     $description = $entry->asXml();
                     break;
                 case 'struct_member_annotations':
+                    // TODO load annotation
                     break;
             }
         }

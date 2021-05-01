@@ -49,21 +49,6 @@ use Zend\View\View;
 
 class CodeGenerator
 {
-    const NO_CODE = 0x00;
-    const PHP_CODE = 0x01;
-    const C_CODE = 0x02;
-    const XML_CODE = 0x03;
-
-
-    const NO_STYLE = 0x00;
-    // For PHP_CODE
-    const PP_STYLE = 0x01;// Procedural Programming
-    const POO_STYLE = 0x02;// Programming Oriented Object
-
-    // For C_CODE
-    const C_HEADER_STYLE = 0x03;// PHP Ext class header file
-    const C_SOURCE_STYLE = 0x04;// PHP Ext class source file
-
     /**
      * @var string $name
      */
@@ -76,12 +61,6 @@ class CodeGenerator
      * @var  PhpRenderer $renderer
      */
     protected $renderer;
-
-    /**
-     * @var int $style
-     */
-    protected $style = self::PP_STYLE;
-    protected $code = self::PHP_CODE;
 
     function __construct($name)
     {
@@ -122,73 +101,6 @@ class CodeGenerator
     {
         $this->docBook = $docBook;
         return $this;
-    }
-
-    function setStyle($style):CodeGenerator
-    {
-        $this->style = $style;
-        return $this;
-    }
-
-    function getStyle():int
-    {
-        return $this->style;
-    }
-
-    /**
-     * @return int
-     */
-    public function getCode(): int
-    {
-        return $this->code;
-    }
-
-    /**
-     * @param int $code
-     * @return CodeGenerator
-     */
-    public function setCode(int $code): CodeGenerator
-    {
-        $this->code = $code;
-        return $this;
-    }
-
-    public function phpPpStyleManager() {
-        $serviceManager = new ServiceManager();
-        $pluginManager = new HelperPluginManager($serviceManager);
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Pp/Helpers', 'Zend\\Ext\\Views\\Php\\Pp\\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Helpers', 'Zend\\Ext\\Views\\Php\\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
-
-        return $pluginManager;
-    }
-
-    public function phpPooStyleManager() {
-        $serviceManager = new ServiceManager();
-        $pluginManager = new HelperPluginManager($serviceManager);
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Poo/Helpers', 'Zend\\Ext\\Views\\Php\\Poo\\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Php/Helpers', 'Zend\\Ext\\Views\\Php\\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
-
-        return $pluginManager;
-    }
-
-    public function cStyleManager() {
-        $serviceManager = new ServiceManager();
-        $pluginManager = new HelperPluginManager($serviceManager);
-        $pluginManager->addPathHelper(__DIR__.'/../Views/C/Header/Helpers', 'Zend\\Ext\\Views\\C\\Header\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/C/Helpers', 'Zend\\Ext\\Views\\C\\Helpers');
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
-
-        return $pluginManager;
-    }
-
-    public function xmlStyleManager() {
-        $serviceManager = new ServiceManager();
-        $pluginManager = new HelperPluginManager($serviceManager);
-        $pluginManager->addPathHelper(__DIR__.'/../Views/Helpers', 'Zend\\Ext\\Views\\Helpers');
-
-        return $pluginManager;
     }
 
     function render($model)
@@ -306,7 +218,6 @@ class CodeGenerator
 
         $filename = $this->filenameHelper($cc_name);
         $namespace = $this->namespaceHelper($cc_name);
-        //echo '                         ', $name, '=>', $filename, '::', $namespace, PHP_EOL;
 
         $dir = '';
         $includes = [];
@@ -339,6 +250,7 @@ class CodeGenerator
             $propertyDto->name = $property->getName();
             $propertyDto->type = $property->getType()->getName();//$this->getRenderer()->typeHelper($property->getType(), '');
             $propertyDto->short_description = $property->getShortDescription();
+            //$propertyDto->tags = $property->getTags();
             $properties[] = $propertyDto;
         }
         $dto->properties = $properties;
@@ -360,6 +272,7 @@ class CodeGenerator
                 $parameterDto = new ParameterDto();
                 $parameterDto->name = $parameter->getName();
                 $parameterDto->type = $this->getRenderer()->typeHelper($parameter->getType(), '*');
+                $parameterDto->short_description = $this->getRenderer()->commentHelper($parameter->getShortDescription(), '');
 
                 $methodDto->parameters[] = $parameterDto;
             }

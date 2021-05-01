@@ -490,8 +490,9 @@ class SourceCode {
         //$this->_current_item = $name;
         if (! $this->isAllowed())
             return;
-        if(isset($this->_item_processed[$name]))
+        if(isset($this->_item_processed[$name])) {
             return;
+        }
 
         $c_str = str_replace($this->replace, $this->search, $c_str);
         $c_str = trim($c_str);
@@ -549,7 +550,6 @@ class SourceCode {
         if (False/*$name!=$data['name']*/) {
             throw new LogicFileException('ENUM name missmatch');
         }
-
         //echo "$this->_item \e[1;32m $this->_current_item \e[0m Done\n";
         unset($this->_item_remaining[$this->_current_item]);
         $this->_item_processed[$name]=1;

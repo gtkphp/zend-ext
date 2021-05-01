@@ -1,20 +1,21 @@
 
 /**
+ * <?php echo $this->commentHelper($this->short_description); ?>
 <?php
-
-echo $this->commentHelper($this->short_description);
-
 foreach($this->parameters as $parameter) {
     echo ' * @param '.$parameter->type;
-    echo ' ';
-    echo '$'.$parameter->name;
+    if ('...'==$parameter->name) {
+        echo ' ...$args';//$parameter->name;
+    } else {
+        echo ' $'.$parameter->name;
+    }
     echo ' ';
     echo $parameter->short_description;
+    //echo PHP_EOL;
+}
+if ('void'!=$this->type) {
+    echo ' * @return '.$this->type;
     echo PHP_EOL;
-    if ('void'!=$this->type) {
-        echo ' * @return '.$this->type;
-        echo PHP_EOL;
-    }
 }
 
 ?>
@@ -24,9 +25,16 @@ $glue = '';
 foreach($this->parameters as $parameter) {
     echo $glue;
     //echo $this->parameterHelper($parameter);
-    echo $parameter->type;
-    echo ' $';
-    echo $parameter->name;
+    if ('callback('==substr($parameter->type, 0, 9)) {
+        echo 'callback';
+    } else {
+        echo $parameter->type;
+    }
+    if ('...'==$parameter->name) {
+        echo ' ...$args';//$parameter->name;
+    } else {
+        echo ' $'.$parameter->name;
+    }
     $glue = ', ';
 }
 ?>)<?php
@@ -58,4 +66,3 @@ switch ($this->type) {
         break;
 }
 ?>}
-

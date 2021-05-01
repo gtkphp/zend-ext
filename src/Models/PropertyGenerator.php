@@ -54,6 +54,11 @@ class PropertyGenerator extends AbstractGenerator
      */
     protected $isConst=False;
 
+    /**
+     * @var array of TagGenerator
+     */
+    protected $tags=[];
+
 
     public function setType($type)
     {
@@ -102,6 +107,19 @@ class PropertyGenerator extends AbstractGenerator
     public function getPass()
     {
         return $this->pass;
+    }
+
+    /**
+     */
+    public function addTags(array $tags)
+    {
+        $this->tags = $tags;
+        return $this;
+    }
+
+    public function getTags():array
+    {
+        return $this->tags;
     }
 
 }

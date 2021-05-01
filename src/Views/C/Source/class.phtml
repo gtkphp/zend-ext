@@ -132,7 +132,7 @@ php_<?php echo $this->nameFunction ?>_class_init_override() {
     }
 }
 
-<?php endif; ?>
+<?php endif;/*isset($this->vtable)*/ ?>
 
 
 /* {{{ php_<?php echo $this->nameFunction ?>_create_object */
@@ -183,54 +183,7 @@ php_<?php echo $this->nameFunction ?>_free_object(zend_object *object)
 }
 /* }}} php_<?php echo $this->nameFunction ?>_free_object */
 
-<?php if (false) : ?>
-/* {{{ gtk_read_property */
-static zval*
-php_<?php echo $this->nameFunction ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
-{
-    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
-    zend_string *member_str = zval_get_string(member);
-    zval *retval;
-    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
-
-    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
-    retval = std_hnd->read_property(object, member, type, cache_slot, rv);
-
-    zend_string_release(member_str);
-    return retval;
-}
-/* }}} */
-
-/* {{{ php_<?php echo $this->nameFunction ?>_write_property */
-static void
-php_<?php echo $this->nameFunction ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
-{
-    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
-    zend_string *member_str = zval_get_string(member);
-    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
-
-    if (zend_string_equals_literal(member->value.str, "child")
-     || zend_string_equals_literal(member->value.str, "parent") ) {
-#if 1
-        zend_error(E_USER_WARNING, "Readonly property Node::$%s", member->value.str->val);
-#else
-        if (ZVAL_IS_PHP_<?php echo $this->nameMacro ?>(value)) {
-            // do unset(object->child) and php_<?php echo $this->nameFunction ?>_insert(object, value, 0);
-        } else {
-            zend_string *type = zend_zval_get_type(value);
-            zend_error(E_USER_WARNING, "Cannot assign %s to property Node::$child of type Node", type->val);
-        }
-#endif
-        return;
-    }
-    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
-    std_hnd->write_property(object, member, value, cache_slot);
-
-    zend_string_release(member_str);
-}
-/* }}} */
-
-<?php else: ?>
+<?php if (true) : ?>
 
 <?php include ('handler.phtml'); ?>
 
