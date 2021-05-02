@@ -131,9 +131,16 @@ class TypeGenerator extends AbstractGenerator
     public function __construct($options = NULL)
     {
         parent::__construct($options);
-        if (isset(self::$internalCTypes[$this->getName()])) {
+        
+        if (empty($options)) {
+            $this->primitiveType = self::PRIMITIVE_VOID;
+            $this->isPrimitive = True;
+        } else if (isset(self::$internalCTypes[$this->getName()])) {
             $this->primitiveType = self::$internalCTypes[$this->getName()];
             $this->isPrimitive = True;
+        } else {
+            $this->primitiveType = self::PRIMITIVE_POINTER;
+            $this->isPrimitive = False;
         }
     }
     public function setArray($isArray=True)

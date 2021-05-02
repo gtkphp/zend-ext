@@ -11,6 +11,7 @@ use Zend\ServiceManager\ServiceManager;
 use Zend\Ext\Views\HelperPluginManager;
 
 use Zend\Ext\Views\C\Source\ClassDto;
+use Zend\Ext\Views\C\Source\MethodDto;
 
 use Zend\Stdlib\Response;
 use Zend\View\Model\ViewModel;
@@ -69,7 +70,13 @@ class GlibGenerator extends CodeGenerator
 
         return $this->renderer;
     }
-    
+
+    protected function placeholderArgs(MethodDto $methodDto, MethodGenerator $method) {
+        $methodDto->args = $this->getRenderer()->argHelper($method);
+        $methodDto->call = $this->getRenderer()->callHelper($method);
+        $methodDto->return = '';//$this->getRenderer()->returnHelper($method);
+    }
+
     function make_lookup(ClassDto $dto):string {
         $output = '';
         $num = count($dto->properties);

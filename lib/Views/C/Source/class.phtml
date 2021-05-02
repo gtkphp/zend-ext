@@ -492,28 +492,9 @@ PHP_METHOD(<?php echo $this->nameFunction ?>, __construct)
 /* {{{ <?php echo $method->docblock ?> */
 PHP_FUNCTION(<?php echo $name ?>)
 {
-<?php echo $this->argHelper($method->generator, true); ?>
-
-<?php echo $this->argHelper($method->generator); ?>
-
-<?php foreach($method->parameters as $parameter): ?>
-<?php if (strstr($parameter->type, 'php_')): ?>
-    <?php echo $parameter->type; $param_type=str_replace(' *', '', $parameter->type);
-    ?><?php echo $parameter->name ?> = ZVAL_IS_<?php echo strtoupper($param_type) ?>(z<?php echo $parameter->name ?>)? ZVAL_GET_<?php echo strtoupper($param_type) ?>(z<?php echo $parameter->name ?>): NULL;
-<?php endif; ?>
-<?php endforeach; ?>
-
-    <?php echo $name ?>(<?php $glue='';
-foreach($method->parameters as $parameter): ?>
-<?php if (strstr($parameter->type, 'php_')): ?>
-<?php echo $glue, $parameter->name, '->ptr'; ?>
-<?php else: ?>
-<?php echo $glue, $parameter->name; ?>
-<?php endif; ?>
-<?php $glue=', '; ?>
-<?php endforeach; ?>);
-
-
+<?php echo $method->args.PHP_EOL; ?>
+<?php echo $method->call.PHP_EOL; ?>
+<?php echo $method->return.PHP_EOL; ?>
 }/* }}} */
 
 <?php endforeach; ?>

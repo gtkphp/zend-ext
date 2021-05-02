@@ -23,7 +23,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Zend\\Ext\\": "src/",
+            "Zend\\Ext\\": "lib/",
             "Zend\\C\\": "src/",
             "Zend\\View\\": "src/"
         }

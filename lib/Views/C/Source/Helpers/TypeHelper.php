@@ -62,10 +62,10 @@ class TypeHelper extends AbstractHelper
             $package = $type->getOwnPackage();
             $list_objects = $package->getListTypeObject();
             if (isset($list_objects[$name])) {
-                return $name;
+                return 'php_'.$name;
             }
 
-            $output = 'mixed';
+            $output = 'mixed';//'php_'.$type->getName();;
         }
         return $output;
     }

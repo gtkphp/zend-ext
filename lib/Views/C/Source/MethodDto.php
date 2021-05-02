@@ -8,4 +8,7 @@ class MethodDto extends Base {
     public $min_parameters;
     public $max_parameters;
     public $docblock;
+    public $args;
+    public $call;
+    public $return;
 }

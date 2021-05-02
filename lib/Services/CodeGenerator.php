@@ -277,7 +277,8 @@ class CodeGenerator
                 $methodDto->parameters[] = $parameterDto;
             }
             $methodDto->docblock = $this->getRenderer()->docBlockHelper($method);
-
+            $this->placeholderArgs($methodDto, $method);
+        
             $max_length = max($max_length, strlen($methodDto->name));
             $dto->methods[$method->getName()] = $methodDto;
         }
@@ -298,7 +299,10 @@ class CodeGenerator
         return $dto;
     }
 
-    /** refactor : placeholder() */
+    protected function placeholderArgs(MethodDto $methodDto, MethodGenerator $method) {
+    }
+
+    /** refactor : placeholderLookup() */
     function make_lookup(ClassDto $dto):string {
         return '';
     }

@@ -3,13 +3,16 @@ Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 # Where generate C
 
+$ # find special char for cairo documentation
+$ find . -name '*.h' -print0 | xargs -0 grep -axv '.*'
+
 TODO: var_dump(GtkWidget)
       // si on var_dump() un GtkWidget on appel gtk_window_set_interactive_debugging(TRUE)
       // var_dump($widget['app-paintable']); // output: bool(true)
       // g_signal_list_ids(GType)
 
 
-TODO: short
+TODO: short or no
 TODO : GtkWidget['styles::cursor-color']// gtk_widget_style_get_property
 TODO : GtkWidget['signals::button-press-event']// g_signal_lookup()
 TODO : GtkWidget['app-paintable']//g_object_get_property
@@ -28,15 +31,19 @@ struct _MyWidget {
 
 $widget=
 create_object();
-      -> php_gtk_widget_new();
-            zend_object_creat();
+      -> gtk_widget_my_new();
+                  zend_object_creat();
+                        gtkwidget.listen.destroy();
 
 gtk_container_remove_all_children($window);
 var_dump($widget) zval.value.object invalid memory area
 
 $widget = new GtkWidget(); destroy zval.value.object
 
+TODO: Cairo gerer les version(cairo-version.h) et les features( cairo-config.h)
 
+TODO: Gtk::loadEnum like Gtk::loadClass
+TODO: See Also
 TODO : GtkWidget properties
 TODO: GtkWidget::property, signal, style
 TODO: howto enable/disable : dimension, properti, cast, converte to array, debug_info ?
@@ -46,6 +53,7 @@ TODO: remove DocBook/[Cairo,Glib, Php]
 TODO : Assume multiline commentHelper
 TODO : Php API declared dependency : use GdkVisual; etc.
 TODO: Php API generate the related object
+      IDE autocompletion signal property etc...
 
 
 TODO: View/C/Source/class.phtml remove enum _type_properties if{empty}
@@ -54,11 +62,14 @@ TODO: remove Zend-user API functions( use <src>/Implementations if necessary)
 TODO: in _write_properties()
       add zend_std_write_() if dynamic property allowed
 
+//- -------------------------------------------------------------
+
 TODO: generate php API( edit manualy deref for GLib, use annotation for Gtk)
 TODO: Parameter deref( see in the docbook; but for glib is not set)
 TODO: Parameter variadic
 TODO: Parameter is nullable
 TODO: loop doc/public/cairo-docs.xml to find the entities
+TODO: Php API generer le vendendor namespace
 
 TODO: property getter setter( implement all types and put it in :
       php_gtk.h

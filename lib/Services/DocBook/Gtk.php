@@ -7,6 +7,7 @@ namespace Zend\Ext\Services\DocBook;
 
 use SimpleXMLElement;
 use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\EnumGenerator;
 use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\PackageGenerator;
 use Zend\Ext\Models\PropertyGenerator;
@@ -57,6 +58,17 @@ class Gtk extends DocBook
         //print_r($cmp);
         //$this->getSourceCode('Glib')->getStruct('GList');
         
+        /*
+        $files = [
+            '/home/dev/Projects/cairo/doc/public/xml/cairo-status.xml',
+        ];
+        foreach($files as $filename) {
+            $xml = simplexml_load_file($filename);
+            $enum = $this->loadEnum($xml);
+        }
+        */
+
+        /**/
         $files = [
             //'/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
             '/home/dev/Projects/cairo/doc/public/xml/cairo.xml',
@@ -67,17 +79,47 @@ class Gtk extends DocBook
             $xml = simplexml_load_file($filename);
             $class = $this->loadClass($xml);
         }
-
-/*
-        $filename = '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml';
-        $xml = simplexml_load_file($filename);
-        $class = $this->loadClass($xml);
-*/
-        // $package->addClass($class);
+        /**/
+        
         // $package->addBoxed($class);
-        // $package->addEnum($class);
         // $package->addFunction($class);
         return $this->package;
+    }
+    protected function loadEnum(SimpleXMLElement $xml): EnumGenerator
+    {
+        $map = array(
+            'Error handling' => 'cairo_status_t',
+        );// <------------------------------------------------------------------------
+        $id = trim((string)$xml['id']);
+        $enumName = (string)$xml->refmeta->refentrytitle;
+        $enumName = $map[$enumName] ?? $enumName;
+
+        // - ClassGenerator extends PackageGenerator::setRelatedObject
+        // - EmptyClassGenerator extends ClassGenerator
+        $enum = $this->package->createEnum($enumName);// create subPackage('Error Handling')
+        $this->current_generator = $enum;
+
+        /*
+         * Peek related object
+         */
+        /*
+        $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row/entry/link");
+        $relatedObjects = $this->getRelatedObjects($nodes, $enumName);
+        $relatedClasses = array();
+        foreach($relatedObjects as $linked=>$relatedObject) {
+            //echo "$linked=>$relatedObject\n";
+            //if ($linked=='GtkRequisition-struct') {
+                $nodes = $xml->xpath("refsect1/refsect2[@id='$linked']");
+                if (!empty($nodes)) {
+                    $related = $this->getRelatedObject($nodes[0], $enumName);
+                    $relatedClasses[$relatedObject] = $related;
+                }
+            //}
+        }
+        $enum->setRelatedObjects($relatedClasses);
+        */
+
+        return $enum;
     }
 
     protected function loadClass(SimpleXMLElement $xml): ClassGenerator
@@ -150,7 +192,7 @@ class Gtk extends DocBook
          * Peek properties
          */
         // <-- setProperties -->
-        $this->loadGObjectProperties($xml, $class);
+        //$this->loadGObjectProperties($xml, $class);
 
 
         // Source property
