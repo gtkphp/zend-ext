@@ -1,323 +1,613 @@
-<?php echo $this->license; ?>
-
-#ifndef PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H
-#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 <?php
 
-//echo '#ifndef', $this->headerGuard;
-//echo $this->headerFile;// g-list.h
-//echo '#define ', $this->functionMacro, '_CLASS ';// #define PHP_G_LIST_CLASS
-//echo $this->vendorName, $this->extensionName, $this->objectName, $this->functionName;// php, g, list, append
-//echo $this->prefixMacro;// PHP_G_LIST
-//echo $this->prefixName;// php_g_list
-//echo $this->prefixType;// PhpGList =>
-
-#include <gtk/gtk.h>
-
-#include <php.h>
-#include <php_ini.h>
-#include <zend_interfaces.h>
-#include <ext/standard/info.h>
-
-?>
-
-//#include "php_gtk.h"
-#include "<?php echo $this->namespaceHelper($this->name, -1) ?>.h"
-
-<?php /* for each parent $this->class->getExtends();
-#include "widget.h"
- */ ?>
+namespace Zend\Ext\Services;
 
 
-#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(ptr)           ((php_<?php echo $this->nameclassHelper($this->name, -1) ?>*)(ptr))
-#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_CLASS          php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry
-#define PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_OFFSET_STD     (sizeof(php_<?php echo $this->nameclassHelper($this->name, -1) ?>) - sizeof(zend_object))
+use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\EnumGenerator;
 
-#define ZOBJ_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $this->nameclassHelper($this->name, -1) ?>_class_entry)
-#define ZOBJ_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(std)  PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>( ((void*)(std))-PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_OFFSET_STD )
+use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
+use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
+use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
+use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
+use Zend\Ext\Views\C\Source\ClassDto;
+use Zend\Ext\Views\C\Source\EnumDto;
+use Zend\Ext\Views\C\Source\MethodDto;
+//use Zend\Ext\Views\C\EnumDto;
+use Zend\Ext\Views\C\ParameterDto;
+use Zend\Ext\Views\C\PropertyDto;
 
-#define ZVAL_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>((val)->value.obj))
-#define ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>((val)->value.obj))
-
-typedef struct _php_<?php echo $this->nameclassHelper($this->name, -1) ?> php_<?php echo $this->nameclassHelper($this->name, -1) ?>;
-struct _php_<?php echo $this->nameclassHelper($this->name, -1) ?> {
-    // TODO...
-    zend_object std;
-};
-
-PHP_<?php echo $this->namespaceHelper($this->name, 1) ?>_EXPORT zend_class_entry *php_<?php
-    echo $this->nameclassHelper($this->name, -1);
-?>_class_entry;
-HashTable php_<?php
-    echo $this->nameclassHelper($this->name, -1);
-?>_prop_handlers;
-
-<?php /*for each parent $this->class->getExtends();
-extern HashTable php_gtk_widget_prop_handlers;
- */ ?>
-extern HashTable classes;
-
-<?php foreach($this->methods as $key=>$method): ?>
-<?php
-$self_name = Null;
-foreach($method->getParameters() as $key=>$parameter) {
-    if(!$method->isStatic() && $self_name==Null) {
-        $self_name = $parameter->getName();
-    }
-} ?>
-//php_<?php echo $method->getName().'(';
-    $glue = '';
-    foreach($method->getParameters() as $key=>$parameter) {
-        if (!$method->isStatic() && $self_name==$parameter->getName()) {
-            //echo 'php_g_list *list';
-            echo $this->typeHelper($parameter->getType());
-            echo $parameter->getName();
-        } else {
-            echo $glue
-                . $this->typeHelper($parameter->getType())
-                //. ' '
-                . $parameter->getName();
-        }
-        $glue = ', ';
-    }
-    ?>);
-<?php endforeach; ?>
-
-#define PHP_<?php echo $this->nameclassHelper($this->name, 1); ?>_FE() \
-<?php foreach($this->methods as $key=>$method): ?>
-    <?php if(strstr($method->getName(), 'g_hash_table_iter')) continue; ?>
-    PHP_FE(<?php echo $method->getName()
-    ?>, arginfo_<?php echo $method->getName() ?>) \
-<?php endforeach; ?>
-
-
-<?php foreach($this->methods as $key=>$method): ?>
-
-/*----------------------------------------------------------------------+
- | <?php echo sprintf("%-69s", $method->getName())             ?>|
- +----------------------------------------------------------------------*/
-<?php $self_name = Null; ?>
-ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $method->getName() ?>, 0, 0, 0)
-<?php foreach($method->getParameters() as $key=>$parameter): ?>
-<?php if(!$method->isStatic() && $self_name==Null) {
-    $self_name = $parameter->getName();
-} ?>
-    ZEND_ARG_INFO(0, <?php echo $parameter->getName() ?>)
-<?php endforeach; ?>
-ZEND_END_ARG_INFO()
-PHP_FUNCTION(<?php echo $method->getName()?>);
-
-<?php endforeach; ?>
-
-
-<?php
-
-function class_init($ns, $nameClass) {
-    $output = <<<EOT
-zend_class_entry *php_{$nameClass}_class_init(zend_class_entry *ce);
-EOT;
-    return $output;
-}
-
-foreach($this->class->getRelatedObjects() as $object){
-    $ns = $this->vendor.$this->class->getOwnPackage()->getName();
-    $nameClass = $this->nameclassHelper($object, -1);
-    echo class_init($ns, $nameClass);
-}
-
-echo "\n\n";
-
-$ns = $this->vendor.$this->class->getOwnPackage()->getName();
-$nameClass = $this->nameclassHelper($this->name, -1);
-echo class_init($ns, $nameClass/*call hinerited*/);
-
-?>
-
-
-
-#endif	/* PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>_H */
 
 /*
- * Local variables:
- * tab-width: 4
- * c-basic-offset: 4
- * End:
- * vim600: noet sw=4 ts=4 fdm=marker
- * vim<600: noet sw=4 ts=4
- */
+use Zend\Ext\Helpers\Php\Pp\NamemethodHelper as NamemethodHelperPhpPp;
+use Zend\Ext\Helpers\Php\Pp\TypeHelper as TypeHelperPhpPp;
+use Zend\Ext\Helpers\Php\Pp\NameclassHelper as NameclassHelperPhpPp;
 
+use Zend\Ext\Helpers\C\NameclassHelper as NameclassHelperC;
+use Zend\Ext\Helpers\C\ReturntypeHelper as ReturntypeHelperC;
+use Zend\Ext\Helpers\C\MaxargHelper as MaxargHelperC;
+use Zend\Ext\Helpers\C\RequiredargHelper as RequiredargHelperC;
+*/
 
+use Zend\Ext\Services\DocBook;
 
+use Zend\Filter\FilterChain;
+use Zend\Filter\StripTags;
+use Zend\Filter\StringToLower;
+use Zend\Filter\StringToUpper;
+use Zend\Filter\Word\CamelCaseToUnderscore;
+use Zend\Filter\Word\CamelCaseToDash;
 
+use Zend\ServiceManager\ServiceManager;
 
+use Zend\Ext\Views\HelperPluginManager;
+use Zend\Stdlib\Response;
+use Zend\View\Model\ViewModel;
+use Zend\View\Strategy\PhpRendererStrategy;
+use Zend\View\Renderer\RendererInterface;
+use Zend\View\Renderer\PhpRenderer;
+use Zend\View\View;
 
+class CodeGenerator
+{
+    /**
+     * @var string $name
+     */
+    protected $name;
+    /**
+     * @var DocBook $docBook
+     */
+    protected $docBook;
+    /**
+     * @var  PhpRenderer $renderer
+     */
+    protected $renderer;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<?php
-
-    public function generate_me()
+    function __construct($name)
     {
-        $output = '';
-        $methods = $this->getMethods();
-
-        foreach ($methods as $method) {
-            $output .= $method->generate_PHP_METHOD() . self::LINE_FEED;
-        }
-
-        return $output;
+        $this->setName($name);
     }
-    public function generateSource()
-    {
-        // generate docBlockLicence
-        $naming = new Naming\GnomeStrategy();
-
-        $output = '';
-        $tab = str_repeat($this->getIndentation(), 1);
-
-        $function_name = $naming->generateFunctionName($this);
-        $type_name = $naming->generateTypeName($this);
-        $type_macro = $naming->generateMacroType($this);
-
-        // add member struct
-
-        $output .= 'G_DEFINE_TYPE ('.$type_name.', '.$function_name.', /G_TYPE_OBJECT/);'.PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= 'static void' . PHP_EOL;
-        $output .= $function_name.'_init ('.$type_name.' *object)' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= 'static void' . PHP_EOL;
-        $output .= $function_name.'_class_init ('.$type_name.'Class *klass)' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        $output .= $type_name.'*' . PHP_EOL;
-        $output .= $function_name.'_new ()' . PHP_EOL;
-        $output .= '{' . PHP_EOL;
-        $output .= $tab . $type_name . ' *object = g_object_new('.$type_macro.', NULL);' . PHP_EOL;
-        $output .= $tab . 'return object;' . PHP_EOL;
-        $output .= '}' . PHP_EOL;
-        $output .= PHP_EOL;
-
-        // add virtual methods
-        // add override methods
-        // add methods
-        $methods = $this->getMethods();
-
-        foreach ($methods as $method) {
-            $output .= $method->generate('source') . self::LINE_FEED;
-        }
-
-
-
-        return $output;
-    }
-
-    public function generateHeader()
-    {
-        $output  = '';
-
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $camelCaseToDash = new \Zend\Filter\Word\CamelCaseToDash();
-        $stringToLower = new \Zend\Filter\StringToLower();
-        $stringToUpper = new \Zend\Filter\StringToUpper();
-
-
-        $OBJECT_NS = $stringToUpper->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $OBJECT_NAME = $stringToUpper->filter($camelCaseToUnderscore->filter($this->getName()));
-
-        $object_ns = $stringToLower->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-
-        $objectNs = $this->getNamespaceName();
-        $objectName = $this->getName();
-
-        $NS_OBJECT_TYPE = '';
-        if ( !empty($OBJECT_NS) ) {
-            $NS_OBJECT_TYPE = $OBJECT_NS . '_';
-        }
-        $NS_OBJECT_TYPE .= 'TYPE_' . $OBJECT_NAME;
-        // $naming->generateMacroType($this);
-        // $naming->generate($this, 'MacroType');
-        // $this->naming('MacroType');
-
-        $ns_object = '';
-        if ( !empty($object_ns) ) {
-            $ns_object = $object_ns . '_';
-        }
-        $ns_object .= $object_name;
-        //$ns_object = $this->namingClassType();
-
-        $nsObject = '';
-        if ( !empty($objectNs) ) {
-            $nsObject = $objectNs . '_';
-        }
-        $nsObject .= $objectName;
-
-        // Naming(GnomeStrategy())->macroName();
-        // Naming(GnomeStrategy())->className();
-        // Naming(GnomeStrategy())->callName();
-        // Naming(GnomeStrategy())->propertyName();
-        $output .= '#define ' . $NS_OBJECT_TYPE . ' ' . $ns_object . '_get_type ()' . self::LINE_FEED;
-        $output .= 'G_DECLARE_FINAL_TYPE (' . $objectNs.$objectName . ', ' . $ns_object . ', ' . $OBJECT_NS . ', ' . $OBJECT_NAME . ', ' . 'GObject' . ')' . self::LINE_FEED;
-
-        return $output;
-    }
-
 
     /**
-     * @inheritDoc
+     * @return string
      */
-    public function generate_arginfo()
+    public function getName(): string
     {
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-
-        $tab = $this->getIndentation();
-        $output = '';
-
-        $object_ns = $stringToLower->filter($camelCaseToUnderscore->filter($this->getNamespaceName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-        $name = $object_name;
-        if (!empty($object_ns)) {
-            $name = $object_ns.'_'.$object_name;
-        }
-
-        foreach ($this->getMethods() as $method) {
-            $output .= $method->generate_arginfo() . self::LINE_FEED;
-        }
-
-
-        $output .= 'static const zend_function_entry '.$name.'_functions[] = {' . self::LINE_FEED;
-        foreach ($this->getMethods() as $method) {
-            $output .= $tab . $method->generate_me() . self::LINE_FEED;
-        }
-        $output .= $tab . 'PHP_FE_END' . self::LINE_FEED;
-        $output .= '};' . self::LINE_FEED;
-
-        return $output;
+        return $this->name;
     }
+
+    /**
+     * @param string $name
+     * @return CodeGenerator
+     */
+    public function setName(string $name): CodeGenerator
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return DocBook
+     */
+    public function getDocBook(): DocBook
+    {
+        return $this->docBook;
+    }
+
+    /**
+     * @param DocBook $docBook
+     * @return CodeGenerator
+     */
+    public function setDocBook(DocBook $docBook): CodeGenerator
+    {
+        $this->docBook = $docBook;
+        return $this;
+    }
+
+    function render($model)
+    {
+        $view = $this->getView();
+
+        $view->render($model);
+        return $view->getResponse()->getContent();
+    }
+
+    function getView():View
+    {
+        $view = new View();
+        $view->setResponse(new Response());
+
+
+        $rendererStrategy = new PhpRendererStrategy($this->getRenderer());
+        $rendererStrategy->attach($view->getEventManager());
+
+        return $view;
+    }
+
+    function getRenderer():RendererInterface
+    {
+        $this->renderer = new PhpRenderer();
+
+        return $this->renderer;
+    }
+
+    function getViewModel($dto):ViewModel
+    {
+        $model = new ViewModel();
+        $model->setVariables((array)$dto);
+
+        return $model;
+    }
+
+    function getViewModelEnum($dto):ViewModel
+    {
+        $model = new ViewModel();
+        $model->setVariables((array)$dto);
+
+        return $model;
+    }
+
+    function namespaceHelper($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+        }
+
+        return $namespace;
+    }
+    
+    function filenameHelper($filename) {
+        $filename = str_replace('_', '-', $filename);
+        $ln = strlen($filename);
+        $suffix = substr($filename, $ln-2);
+        if ('-t'==$suffix) {
+            $filename = substr($filename, 0, $ln-2);
+        }
+        
+        $pos = strpos($filename, '-');
+        if (false===$pos) {
+            $namespace = $filename;
+            $filename = $filename;
+        } else {
+            $namespace = substr($filename, 0, $pos);
+            $filename = substr($filename, $pos+1);
+        }
+
+        return $filename;
+    }
+
+    function getFilenameExtension() {
+        return 'c';
+    }
+
+    function typeTo(string $name, &$namespace, &$nameclass)
+    {
+        $filter = new FilterChain();
+        $filter->attach(new CamelCaseToDash());
+        $filter->attach(new StringToLower());
+
+        $cc_name = $filter->filter($name);
+
+        $nameclass = $this->filenameHelper($cc_name);
+        $namespace = $this->namespaceHelper($cc_name);
+    }
+
+    function getEnumDto(EnumGenerator $generator)
+    {
+        $filter2 = new FilterChain();
+        $filter2->attach(new CamelCaseToUnderscore());
+        $filter2->attach(new StringToLower());
+
+        $filter3 = new FilterChain();
+        $filter3->attach(new CamelCaseToUnderscore());
+        $filter3->attach(new StringToUpper());
+
+        $name = $generator->getName();
+
+        $this->typeTo($name, $namespace, $classname);
+
+        $dir = '';
+        $includes = [];
+        if ('g'==$namespace) {
+            $includes[] = "<glib.h>";
+            $dir = 'php_glib';
+        } else {
+            $includes[] = "<".$namespace."/".$namespace.".h>";
+            $dir = 'php_'.$namespace;
+        }
+        $includes[] = '"php_gtk.h"';
+
+        $dto = new EnumDto();
+        $dto->dir = $dir;
+        $dto->includeFiles = $includes;
+        $dto->fileName = $classname.'.'.$this->getFilenameExtension();
+        $dto->headerFile = $classname.'.h';
+        $dto->namespace = $namespace;
+
+        $dto->nameMacro = $filter3->filter($name);
+        $dto->nameFunction = $filter2->filter($name);
+        $dto->nameType = $name;
+        $dto->name = $name;
+
+        $dto->constants = $generator->getConstants();
+
+        $dto->relationships = $this->getRelationshipsDto($generator);
+
+        
+        $dto->methods = array();
+        $max_length=0;
+        $methods = $generator->methods;
+        foreach($methods as $method) {
+            // Fix if we can use $this->getMethodDto()
+            $methodDto = new MethodDto();
+            $methodDto->generator = $method;
+            $methodDto->name = $method->getName();
+            $methodDto->short_description = $method->getDescription();
+            $methodDto->type = $this->getRenderer()->typeHelper($method->getType(), '*');
+            $methodDto->max_parameters = count($method->getParameters());
+            $methodDto->min_parameters = count($method->getParameters());//TODO
+            $methodDto->parameters = array();
+            foreach($method->getParameters() as $parameter) {
+                $parameterDto = new ParameterDto();
+                $parameterDto->name = $parameter->getName();
+                $parameterDto->type = $this->getRenderer()->typeHelper($parameter->getType(), '*');
+                $parameterDto->short_description = $this->getRenderer()->commentHelper($parameter->getShortDescription(), '');
+
+                $methodDto->parameters[] = $parameterDto;
+            }
+            $methodDto->docblock = $this->getRenderer()->docBlockHelper($method);
+            $this->placeholderArgs($methodDto, $method);
+        
+            $max_length = max($max_length, strlen($methodDto->name));
+            $dto->methods[$method->getName()] = $methodDto;
+        }
+
+        return $dto;
+    }
+
+    function getClassDto(ClassGenerator $generator)
+    {
+        /*
+        $helper = new TypeHelper();
+        $helper->setView($this->getRenderer());
+        $protoHelper = new DocBlockHelper();
+        $protoHelper->setView($this->getRenderer());
+        */
+        
+
+        
+
+        // TODO: use Helper
+        $filter = new FilterChain();
+        $filter->attach(new CamelCaseToDash());
+        $filter->attach(new StringToLower());
+
+        $filter2 = new FilterChain();
+        $filter2->attach(new CamelCaseToUnderscore());
+        $filter2->attach(new StringToLower());
+
+        $filter3 = new FilterChain();
+        $filter3->attach(new CamelCaseToUnderscore());
+        $filter3->attach(new StringToUpper());
+
+        $name = $generator->getName();
+
+        $this->typeTo($name, $namespace, $filename);
+
+        $dir = '';
+        $includes = [];
+        if ('g'==$namespace) {
+            $includes[] = "<glib.h>";
+            $dir = 'php_glib';
+        } else {
+            $includes[] = "<".$namespace."/".$namespace.".h>";
+            $dir = 'php_'.$namespace;
+        }
+        $includes[] = '"php_gtk.h"';
+
+        $dependencies = [];
+        $tmp = $this->placeholderDependencies($generator);
+        unset($tmp[$generator->getName()]);
+        foreach($tmp as $dependency=>$unused) {
+            $this->typeTo($dependency, $tmp_namespace, $tmp_filename);
+            $dependencies[] = $tmp_filename.'.h';
+        }
+
+        
+        $dto = new ClassDto();
+        $dto->dependencies = $dependencies;
+        $dto->namespace = $namespace;// tag @package
+        $dto->name = $generator->getName();
+        $dto->abbr = $generator->getAbbr();
+        $dto->description = $generator->getDescription();
+        $dto->extend = $generator->getExtendedClass();
+        $dto->dir = $dir;
+        $dto->includeFiles = $includes;
+        $dto->fileName = $filename . '.' . $this->getFilenameExtension();
+        $dto->headerFile = $filename . '.h';
+        $dto->nameMacro = $filter3->filter($name);
+        $dto->nameFunction = $filter2->filter($name);
+        $dto->nameType = $name;
+        $dto->properties = array();
+        $properties = array();
+
+        foreach($generator->getProperties() as $property) {
+            $propertyDto = new PropertyDto();
+            $propertyDto->name = $property->getName();
+            $propertyDto->type = $property->getType()->getName();//$this->getRenderer()->typeHelper($property->getType(), '');
+            $propertyDto->short_description = $property->getShortDescription();
+            //$propertyDto->tags = $property->getTags();
+            $properties[] = $propertyDto;
+        }
+        $dto->properties = $properties;
+
+        $dto->methods = array();
+        $max_length=0;
+        $methods = $generator->getMethods();
+        foreach($methods as $method) {
+            // Fix if we can use $this->getMethodDto()
+            $methodDto = new MethodDto();
+            $methodDto->generator = $method;
+            $methodDto->name = $method->getName();
+            $methodDto->short_description = $method->getDescription();
+            $methodDto->type = $this->getRenderer()->typeHelper($method->getType(), '*');
+            $methodDto->max_parameters = count($method->getParameters());
+            $methodDto->min_parameters = count($method->getParameters());//TODO
+            $methodDto->parameters = array();
+            foreach($method->getParameters() as $parameter) {
+                $parameterDto = new ParameterDto();
+                $parameterDto->name = $parameter->getName();
+                $parameterDto->type = $this->getRenderer()->typeHelper($parameter->getType(), '*');
+                $parameterDto->short_description = $this->getRenderer()->commentHelper($parameter->getShortDescription(), '');
+
+                $methodDto->parameters[] = $parameterDto;
+            }
+            $methodDto->docblock = $this->getRenderer()->docBlockHelper($method);
+            $this->placeholderArgs($methodDto, $method);
+        
+            $max_length = max($max_length, strlen($methodDto->name));
+            $dto->methods[$method->getName()] = $methodDto;
+        }
+        foreach($dto->methods as $method) {
+            $method->pad = str_repeat(' ', $max_length-strlen($method->name));
+        }
+
+        $dto->vtable = $this->getVtableDto($generator);
+        $dto->parent = $this->getParentClassDto($generator);
+
+        $dto->relationships = $this->getRelationshipsDto($generator);
+
+
+        // gperf -CGD -N php_cairo_matrix_lookup -W php_cairo_matrix_properties -H php_cairo_matrix_properties_hash -K name --language=ANSI-C -t data.gperf > perfecthash.h
+        // min is 5
+
+        $dto->getter_setter = $this->make_lookup($dto);
+
+
+        return $dto;
+    }
+
+    protected function isDependency($type, $package) {
+        $name = $type->getName();
+        $objects = $package->getListTypeObject();
+        $enums = $package->getListTypeEnum();
+        if (isset($objects[$name])) {
+            return true;
+        }
+        if (isset($enums[$name])) {
+            return false;
+        }
+        return false;
+    }
+
+    protected function placeholderDependencies(ClassGenerator $class) {
+        $types = [];
+
+        $methodes = $class->getMethods();
+        foreach($methodes as $methode) {
+            if($this->isDependency($methode->getType(), $methode->getOwnPackage())) {
+                $types[$methode->getType()->getName()] = 1;
+            }
+            foreach($methode->getParameters() as $parameter) {
+                if($this->isDependency($parameter->getType(), $methode->getOwnPackage())) {
+                    $types[$parameter->getType()->getName()] = 1;
+                }
+            }
+        }
+
+        $properties = $class->getProperties();
+        foreach($properties as $property) {
+            if($this->isDependency($property->getType(), $class->getOwnPackage())) {
+                $types[$property->getType()->getName()] = 1;
+            }
+        }
+
+        $relateds = $class->getRelatedObjects();
+        foreach($relateds as $related) {
+            if ($related) {
+                $name = $related->getName();
+                if ($class->getName().'Class'==$name) {
+                } else {
+                    if ($related instanceof ClassGenerator) {
+                        $types[$related->getName()] = 1;
+                        $tmp_types = $this->placeholderDependencies($related);
+                        $types += $tmp_types;
+                    }
+                }
+            }
+        }
+
+        return $types;
+    }
+
+    protected function placeholderArgs(MethodDto $methodDto, MethodGenerator $method) {
+    }
+
+    /** refactor : placeholderLookup() */
+    function make_lookup(ClassDto $dto):string {
+        return '';
+    }
+
+    function getSimpleClassDto(ClassGenerator $generator)
+    {
+        //TODO:  without Relationships
+    }
+
+    function getRelationshipsDto(AbstractGenerator $class)//ClassGenerator
+    {
+        $elationships = [];
+
+        $class_name = $class->getName();
+
+        //echo 'Relation => ', $class_name, PHP_EOL;
+        $objects = $class->getRelatedObjects();
+        foreach($objects as $object) {
+            if ($object) {
+                $name = $object->getName();
+                if ($class_name.'Class'==$name) {
+                    //echo '    - ', $name, PHP_EOL;
+                } else {
+                    //echo '    + ', $name, PHP_EOL;
+                    if ($object instanceof EnumGenerator) {
+                        $elationships[$name] = $this->getEnumDto($object);
+                    } else if ($object instanceof ClassGenerator) {
+                        $elationships[$name] = $this->getClassDto($object);
+                    }
+                }
+            } else {
+                echo '    - TODO enum/typedef', PHP_EOL;
+            }
+
+        }
+        return $elationships;
+    }
+
+    function getVtableDto(ClassGenerator $generator)
+    {
+        $vtableDto = null;
+
+        $methods = [];
+        $vtable = $generator->getVTable();
+        if ($vtable) {
+            $vtableDto = new ClassDto();
+            $vtableDto->name = $vtable->getName();
+            $vtableDto->abbr = $vtable->getAbbr();
+            $vtableDto->extend = $vtable->getExtendedClass();
+            //$vtableDto->parent = $this->getParentClassDto($generator);
+
+            $methods = $vtable->getMethods();
+        }
+        foreach($methods as $method) {
+            $methodDto = $this->getMethodDto($method);
+            $vtableDto->methods[$method->getName()] = $methodDto;
+        }
+
+        return $vtableDto;
+    }
+    // getParentVtableDto(ClassGenerator $generator)
+    function getParentClassDto(ClassGenerator $generator)
+    {
+        //TODO rebuild eachtime the chain of parent :'(
+
+        $extend = $generator->getExtendedClass();
+        if ('GInitiallyUnowned'==$extend) {
+            $extend = 'GObject';
+        }
+        if(empty($extend))
+            return null;
+
+        $listObject = $generator->getOwnPackage()->getListObject();
+        $parentGenerator = $generator->getOwnPackage()->getSymbol($extend);
+        if(empty($parentGenerator) || !isset($listObject[$extend]))
+            return null;
+
+        $dto = $this->getClassDto($parentGenerator);
+
+        return $dto;
+    }
+
+    function getMethodDto(MethodGenerator $method)
+    {
+        $helper = new TypeHelper();
+        $helper->setView($this->getRenderer());
+        $protoHelper = new DocBlockHelper();
+        $protoHelper->setView($this->getRenderer());
+
+        $methodDto = new MethodDto();
+        $methodDto->generator = $method;
+        $methodDto->name = $method->getName();
+        $methodDto->type = $method->getType()->getName().$method->getPass();//$helper($method->getType(), '*');
+        $methodDto->max_parameters = count($method->getParameters());
+        $methodDto->min_parameters = count($method->getParameters());//TODO
+        $methodDto->parameters = array();
+        foreach($method->getParameters() as $parameter) {
+            $parameterDto = new ParameterDto();
+            $parameterDto->name = $parameter->getName();
+            $parameterDto->type = $parameter->getType()->getName().$parameter->getPass();//$helper($parameter->getType(), '*');
+
+            $methodDto->parameters[] = $parameterDto;
+        }
+        $methodDto->docblock = $protoHelper($method);
+
+        return $methodDto;
+    }
+
+    /**
+     * @param string $dir
+     */
+    function save($dir):bool
+    {
+        $package = $this->getDocBook()->getPackage();//refactor getPackage
+
+        $objects = $package->getListObject();
+        foreach ($objects as $objectName) {
+            $generatorModel = $package->getObject($objectName);//'GList'
+            $dto = $this->getClassDto($generatorModel);
+            $viewModel = $this->getViewModel($dto);
+            $output = $this->render($viewModel);
+            //echo $output.PHP_EOL;
+            `mkdir -p $dir/$dto->dir`;
+            file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
+        }
+        
+        $objects = $package->getListTypeEnum();
+        foreach ($objects as $n=>$generatorModel) {
+            $dto = $this->getEnumDto($generatorModel);
+            $viewModel = $this->getViewModelEnum($dto);
+            $output = $this->render($viewModel);
+            //echo $output.PHP_EOL;
+            `mkdir -p $dir/$dto->dir`;
+            file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
+        }
+
+        return True;
+    }
+
+    /**
+     * @param string $id 'C/Glib'
+     *                   | 'Php/Api/Glib'
+     *                   | 'Php/Wrapper/Glib'
+     *                   | 'Xml/Glib' 
+     */
+    static public function Factory($id, $options)
+    {
+        $path = __DIR__.'/'.$id.'Generator.php';
+        $class = 'Zend\\Ext\\Services\\CodeGenerator\\' . str_replace('/', '\\', $id) . 'Generator';
+        $generator = new $class($options);
+        return $generator;
+    }
+
+}
+
+

@@ -10,7 +10,8 @@
 namespace Zend\Ext\Models;
 
 //use Zend\Code\Reflection\ClassReflection;
-use Zend\Ext\Models\AbstractGenerator;
+
+use Zend\Ext\Models\ObjectGenerator;
 use Zend\Ext\Exceptions\InvalidArgumentException;
 
 use function array_diff;
@@ -35,7 +36,7 @@ use function strstr;
 use function strtolower;
 use function substr;
 
-class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
+class ClassGenerator extends ObjectGenerator
 {
     const FLAG_ABSTRACT = 0x01;
     const FLAG_FINAL    = 0x02;
@@ -81,8 +82,14 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     protected $methods = [];
 
     /**
-     * The vtable
-     * @var ClassGenerator virtual table
+     * The instance structure
+     * @var StructGenerator
+     */
+    protected $instance;
+
+    /**
+     * The virtual table
+     * @var StructGenerator
      */
     protected $virtual;
 
@@ -94,7 +101,7 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     /**
      * @var array Objects related to this object
      */
-    protected $relatedObjects;
+    protected $relatedObjects=[];
 
     /**
      * @param  string $name
@@ -742,15 +749,32 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
     /**
      * @return ClassGenerator|null
      */
-    public function getVTable()
+    public function getInstance(): ?StructGenerator
+    {
+        return $this->instance;
+    }
+
+    /**
+     * @param StructGenerator $instance
+     */
+    public function setInstance(StructGenerator $instance):ClassGenerator
+    {
+        $this->instance = $instance;
+        return $this;
+    }
+
+    /**
+     * @return StructGenerator|null
+     */
+    public function getVTable(): ?StructGenerator
     {
         return $this->virtual;
     }
 
     /**
-     * @param ClassGenerator $vtable
+     * @param StructGenerator $vtable
      */
-    public function setVTable($vtable)
+    public function setVTable(StructGenerator $vtable):ClassGenerator
     {
         $this->virtual = $vtable;
         return $this;
@@ -861,6 +885,16 @@ class ClassGenerator extends AbstractGenerator //implements TraitUsageInterface
         return $this;
     }
 
+    /**
+     * @param array $relatedObjects
+     * @return ClassGenerator
+     */
+    public function addRelatedObject(ObjectGenerator $relatedObject): ClassGenerator
+    {
+        $this->relatedObjects[$relatedObject->getName()] = $relatedObject;
+        return $this;
+    }
+    
     /**
      * @param string $name
      * @return ClassGenerator

@@ -43,7 +43,28 @@ class DocBook
         $this->codeGenerator[$serviceName] = $service;
     }
 
-    // load
-    // save
+    //public $useWhitelist = true;
+    protected $whitelist = [];
+    public function setWhitelist($whitelist) {
+        $this->whitelist = $whitelist;
+    }
+    public function addWhitelist($primary, $secondary) {
+        if (!isset($this->whitelist[$primary])) {
+            $this->whitelist[$primary] = array();
+        }
+        $this->whitelist[$primary][]=$secondary;
+    }
+    public function isAllowed($primary, $secondary) {
+        //if(!$this->current_package->useWhitelist) return true;
+        if (null==$this->whitelist) {
+            return true;
+        }
+        if (isset($this->whitelist[$primary])) {
+            if (isset($this->whitelist[$primary][$secondary])) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

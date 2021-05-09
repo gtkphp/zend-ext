@@ -33,6 +33,14 @@ class DocGenerator extends CodeGenerator
         return $model;
     }
 
+    function getViewModelEnum($dto):ViewModel
+    {
+        $model = parent::getViewModel((array)$dto);
+        $model->setTemplate('enum.phtml');
+
+        return $model;
+    }
+
     function getRenderer():RendererInterface
     {
         if ($this->renderer) {

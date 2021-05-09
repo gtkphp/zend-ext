@@ -27,7 +27,7 @@ class SourceCode {
 
     protected $doc_dir = '';
 
-    public $data = array('TYPEDEF'=>[], 'MACRO'=>[], 'MACRO'=>[], 'ENUM'=>[], 'STRUCT'=>[]);
+    public $data = array('TYPEDEF'=>[], 'UNION'=>[], 'MACRO'=>[], 'ENUM'=>[], 'STRUCT'=>[], 'FUNCTION'=>[]);
 
     /**
      * @var string $name
@@ -194,6 +194,18 @@ class SourceCode {
         }
         return True;
     }
+    
+    function getFunction($name) {
+        //TYPEDEF, MACRO, ENUM, STRUCT
+        $functions = $this->data['FUNCTION'];
+        $struct = Null;
+        if (isset($functions[$name])) {
+            return $functions[$name];
+        } else if (isset($functions['_'.$name])) {
+            return $functions['_'.$name];
+        }
+        return Null;
+    }
 
     function getStruct($name) {
         //TYPEDEF, MACRO, ENUM, STRUCT
@@ -206,6 +218,7 @@ class SourceCode {
         }
         return Null;
     }
+
     function getProto($name)
     {
         $prototypes = $this->data['TYPEDEF'];
@@ -218,9 +231,33 @@ class SourceCode {
         return Null;
     }
 
+    function getMacro($name)
+    {
+        $prototypes = $this->data['MACRO'];
+        $proto = Null;
+        if (isset($prototypes[$name])) {
+            return $prototypes[$name];
+        } else if (isset($prototypes['_'.$name])) {
+            return $prototypes['_'.$name];
+        }
+        return Null;
+    }
+
     function getEnum($name) {
         //print_r($this->sourceCode['Glib']->data['STRUCT']['_GList']);
         $structs = $this->data['ENUM'];
+        $struct = Null;
+        if (isset($structs[$name])) {
+            return $structs[$name];
+        } else if (isset($structs['_'.$name])) {
+            return $structs['_'.$name];
+        }
+        return Null;
+    }
+
+    function getUnion($name) {
+        //print_r($this->sourceCode['Glib']->data['STRUCT']['_GList']);
+        $structs = $this->data['UNION'];
         $struct = Null;
         if (isset($structs[$name])) {
             return $structs[$name];
@@ -290,6 +327,14 @@ class SourceCode {
                 unset($this->array);
             }
 
+            if ($enable) {
+                $this->getItems('UNION', 3);
+                //$this->data['ENUM']=$this->array['enums'];
+                $this->data['UNION'] = array_merge($this->data['UNION'], $this->array['unions']);
+                unset($this->array);
+            }
+            
+
             /**
              * @see glib-decl.txt for <STRUC>GThread</STRUC> (is duplicated ?)
              */
@@ -317,12 +362,11 @@ class SourceCode {
                 unset($this->array);
             }
 
-            /*if ($enable) {
-                $this->getItems('USER_FUNCTION', 2, 1);
-                //$this->data['TYPEDEF'] += $this->array['typedefs'];
-                $this->data['TYPEDEF'] = array_merge($this->data['TYPEDEF'], $this->array['typedefs']);
+            if ($enable) {
+                $this->getItems('FUNCTION', 2, 1);
+                $this->data['FUNCTION'] = array_merge($this->data['FUNCTION'], $this->array['functions']);
                 unset($this->array);
-            }*/
+            }
 
         }
 
@@ -500,6 +544,9 @@ class SourceCode {
         if ('USER_FUNCTION'==$this->_item) {
             if (empty($c_str)) echo "$name is empty\n";
             $c_str = "typedef $return (*$name) ($c_str);";
+        } elseif ('FUNCTION'==$this->_item) {
+            $c_str = $return.' '.$name.' ('.$c_str.');'."\n";
+            //$this->_item_fixed[$name]="typedef struct";
         } elseif ('STRUCT'==$this->_item && empty($c_str)) {
             $c_str = 'typedef struct _'.$name.' '.$name.';'."\n";
             //$this->_item_fixed[$name]="typedef struct";

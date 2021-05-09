@@ -1,9 +1,30 @@
 <?php echo '<?php' ?>
 
 /**
- * Cairo graphics library
- * @package <?php echo $this->namespace.PHP_EOL; ?>
+ * <?php echo $this->package_description.PHP_EOL; ?>
+ * @package <?php echo $this->package.PHP_EOL; ?>
+ * @subpackage <?php echo $this->subpackage.PHP_EOL; ?>
  */
+
+<?php
+foreach($this->dependencies as $dependency):
+    echo 'use ' . $dependency . ';' . PHP_EOL;
+endforeach;
+?>
+
+<?php foreach($this->relationships as $relationship):
+if ($relationship instanceof \Zend\Ext\Views\C\Source\EnumDto) {
+    //echo '// ' . $relationship->name . PHP_EOL;
+    foreach($relationship->constants as $constant) {
+        echo '/* ' . PHP_EOL;
+        echo ' * ' . $this->commentHelper($constant->getDescription());
+        echo ' */' . PHP_EOL;
+        echo 'const ' . $constant->getName() .' = ' . $constant->getValue() . ';' . PHP_EOL;
+    }
+    echo PHP_EOL;
+}
+endforeach; ?>
+
 
 /**
  * <?php echo $this->commentHelper($this->description) ?>
@@ -23,3 +44,21 @@ class <?php echo $this->nameclassHelper($this->name) ?> <?php echo isset($this->
 echo $this->methodHelper($method);
 ?>
 <?php endforeach; ?>
+
+
+<?php foreach($this->relationships as $relationship):
+if ($relationship instanceof \Zend\Ext\Views\C\UnionDto) {
+    echo '/* ' . PHP_EOL;
+    echo ' * ' . $this->commentHelper($relationship->description);
+    echo ' */' . PHP_EOL;
+    echo 'class ' . $relationship->name .' {' . PHP_EOL;
+    foreach($relationship->members as $member) {
+        echo '    /* ' . PHP_EOL;
+        echo '     * ' . $this->commentHelper($member->getDescription());
+        //echo '     * @var ' . $member->getType()->getName() . PHP_EOL;
+        echo '     */' . PHP_EOL;
+        echo '    public $' .$member->getName() . ';' . PHP_EOL;
+    }
+    echo '}' . PHP_EOL;
+}
+endforeach; ?>

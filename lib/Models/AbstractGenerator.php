@@ -37,10 +37,16 @@ abstract class AbstractGenerator implements GeneratorInterface
     protected $short_description = '';
 
     /**
-     * The root of the generator, usually PackageGenerator
+     * The PackageGenerator of item
      * @var Zend\Ext\Models\PackageGenerator $ownPackage
      */
     protected $ownPackage = NULL;
+
+    /**
+     * The root of the generator, usually PackageGenerator
+     * @var Zend\Ext\Models\PackageGenerator $package
+     */
+    protected $package = NULL;
 
     /**
      * @var Zend\Ext\Models\AbstractGenerator $parentGenerator
@@ -192,17 +198,17 @@ abstract class AbstractGenerator implements GeneratorInterface
      */
     public function getOwnPackage():? PackageGenerator
     {
-        if (isset($this->ownPackage)) {
-            return $this->ownPackage;
-        }
-        if ($this instanceof PackageGenerator) {
-            return $this;
-        }
-        $parent = $this->getParentGenerator();
-        if ($parent) {
-            $this->ownPackage = $parent->getOwnPackage();
-        } else {
-            throw new \Exception("Your Generator is not a part of a PackageGenerator");
+        if (empty($this->ownPackage)) {
+            $parent = $this->getParentGenerator();
+            if ($parent) {
+                if ($parent instanceof PackageGenerator) {
+                    $this->ownPackage = $parent;
+                } else {
+                    $this->ownPackage = $parent->getOwnPackage();
+                }
+            } else {
+                throw new \Exception("Your Generator is not a part of a PackageGenerator");
+            }
         }
         return $this->ownPackage;
     }
@@ -216,4 +222,35 @@ abstract class AbstractGenerator implements GeneratorInterface
         $this->ownPackage = $ownPackage;
         return $this;
     }
+
+
+    /**
+     * Return the root package
+     * @return Zend\Ext\Models\PackageGenerator
+     */
+    public function getPackage():? PackageGenerator
+    {
+        if (isset($this->package)) {
+            return $this->package;
+        }
+        $parent = $this;
+        while($parent) {
+            if ($parent instanceof PackageGenerator) {
+                $this->package = $parent;
+            }
+            $parent = $parent->getParentGenerator();
+        }
+        return $this->package;
+    }
+
+    /**
+     * @param Zend\Ext\Models\PackageGenerator $package
+     * @return AbstractGenerator
+     */
+    public function setPackage(PackageGenerator $package): AbstractGenerator
+    {
+        $this->package = $package;
+        return $this;
+    }
+
 }

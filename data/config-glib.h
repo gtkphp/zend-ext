@@ -71,6 +71,28 @@ typedef struct _GPrivate        GPrivate;
 
 typedef struct _GHashTableIter GHashTableIter;
 
+//cairo (FreeType)
+typedef int FT_Face;
+typedef int FcPattern;
+typedef int LOGFONTW;
+typedef int HFONT;
+typedef int CGFontRef;
+typedef int ATSUFontID;
+typedef int CGContextRef;
+typedef int xcb_connection_t;
+typedef int xcb_drawable_t;
+typedef int xcb_visualtype_t;
+typedef int xcb_screen_t;
+typedef int xcb_pixmap_t;
+typedef int xcb_render_pictforminfo_t;
+typedef int Display;
+typedef int Drawable;
+typedef int Screen;
+typedef int XRenderPictFormat;
+typedef int Pixmap;
+typedef int Visual;
+
+
 
 //GObject
 typedef int GInitiallyUnownedClass;

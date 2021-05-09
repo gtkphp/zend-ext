@@ -1,6 +1,81 @@
 Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
+# Model
+
+Package(Gtkml):Object {
+      description => "Gtk Markup Language"
+      subpackage=>[
+            Package(G):Object {
+                  description => "G library"
+                  subpackage=>[
+                        Package(glib):Object {
+                              description => "Data structure library"
+                              
+                        }
+                        Package(gobject):Object {
+                              
+                        }
+                        Package(gio):Object {
+                              
+                        }
+                  ]
+            }
+            Package(Cairo):Object {
+                  description => "Cairo Graphic library"
+                  children => [
+                        Class(Cairo):Object {
+                              parent => Class:Object{$package->get_list_type_object};
+                              instance => Struct:Object { members=>[
+                                    Var:Object(parent_instance){}
+                                    Var:Object(status){}
+                              ]}
+                              virtualTable => Struct:Object{members=> [
+                                    Var:Object(debug){}
+                                    Var:Object(cairo_move_to){ type: Prototype}
+                              ]}
+                              children => [// related 
+                                    Method:Object(Create) {}
+                                    Function:Object(Create) {????}
+                                    Enum:Object(Antialias) {}
+                                    Struct:Object(Rectangle) {}
+                              ]
+                        }
+                        Class(Path):Object {
+                              Instance =>
+                              VirtualTable =>
+                              children => [
+                                    Union(PathData) {
+                                          members =>
+                                          children => [
+                                                Enum(PathDataType):Object {Constants =>}
+                                          ]
+                                    }
+                              ]
+                        }
+                        Object(ErrorHandling.c) {
+                              children => [
+                                    Enum(Status){}
+                                    Function(get_status_message){}
+                              ]
+                        }
+                  ]
+            }
+            Package(Gtk):Object {
+                  Package(gtk):Object {
+                        
+                  }
+                  Package(gdk):Object {
+                        
+                  }
+            }
+            Package(GStream):Object {
+                  
+            }
+      ]
+}
+
+
 # Where generate C
 
 $ # find special char for cairo documentation
@@ -11,6 +86,18 @@ TODO: var_dump(GtkWidget)
       // var_dump($widget['app-paintable']); // output: bool(true)
       // g_signal_list_ids(GType)
 
+
+TODO: docBook::getPackage()
+TODO: Generate each cairo, gdk,... have it's own PackageGenerator::name
+TODO: Generate Php => add use
+TODO: Generate C source => add include( path depend on cairo_glyph_path...)
+TODO: Generate C source => PHP_GTK_ASSERT(cr)
+TODO: Generate C source => write_property
+TODO: Generate C source => disable property if void
+TODO: Generate C source => disable dimension...
+TODO: Generate C source => generate dependency
+TODO: Generate C source => overwrite CallHelper( <src>/Cairo.php)
+TODO: Generate C source => overwrite GtkWidget class
 
 TODO: short or no
 TODO : GtkWidget['styles::cursor-color']// gtk_widget_style_get_property
@@ -43,6 +130,8 @@ $widget = new GtkWidget(); destroy zval.value.object
 TODO: Cairo gerer les version(cairo-version.h) et les features( cairo-config.h)
 
 TODO: Gtk::loadEnum like Gtk::loadClass
+      ClassGenerator and EnumGenerator extends FileGenerator::getRelatedObject
+      // file.phtml display object, and object->related
 TODO: See Also
 TODO : GtkWidget properties
 TODO: GtkWidget::property, signal, style

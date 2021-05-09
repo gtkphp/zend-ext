@@ -1,8 +1,15 @@
 <?php
 
-class Implementation {
+namespace Zend\ExtGtk;
 
-    // override struct _zend_object_handlers
+use Zend\ExtGtk\Cairo as CairoImplementation;
+
+/**
+ * All function than start by 'php_' will be write in code generated
+ * All function with same name as Gtk... will override excecute in code generated
+ */
+class Implementation {
+    // Control override of struct _zend_object_handlers
     protected $enable_clone = false;
     protected $enable_property = false;
     protected $enable_dimension = false;
@@ -12,6 +19,33 @@ class Implementation {
     protected $enable_compare = false;
     protected $enable_debug = false;
     
+    static public function Factory($name) {
+        switch ($name) {
+            case 'cairo':
+            case 'Cairo':
+                return new CairoImplementation();
+                break;
+            case 'gdk':
+            case 'Gdk':
+                return new CairoImplementation();
+                break;
+            default:
+                echo 'Unknown "' . $name . '" implementation override.' . PHP_EOL;
+                return new Implementation();
+                break;
+        }
+    }
+
+    public function writeFunctions(bool $declaration=false) {
+        $output = '';
+        $methods = get_class_methods ($this);
+        foreach ($methods as $method) {
+            if ('php_'==substr($method, 0, 4)) {
+                $output .= $this->$method($declaration);
+            }
+        }
+        return $output;
+    }
 
     /*
     struct _zend_object_handlers {

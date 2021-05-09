@@ -15,6 +15,7 @@ use Zend\Ext\Models\AbstractGenerator;
 
 class TypeGenerator extends AbstractGenerator
 {
+    // TODO grouper en fonction du type zend resultant( INT8, INT16,..)
     // C types
     const PRIMITIVE_VOID   = 0x00;
     const PRIMITIVE_BOOL   = 0x01;
@@ -43,6 +44,7 @@ class TypeGenerator extends AbstractGenerator
     const PRIMITIVE_POINTER = 0x21;
 
     // correspondance entre C->Model
+
 
     private static $internalCTypes = [
         'void'                => self::PRIMITIVE_VOID,
@@ -113,11 +115,16 @@ class TypeGenerator extends AbstractGenerator
         'int'                 => self::PRIMITIVE_INT,
         'double'              => self::PRIMITIVE_DOUBLE,
         'char'                => self::PRIMITIVE_CHAR,
+        'unsigned int'        => self::PRIMITIVE_INT,
+        
     ];
 
     /**
      * @var bool
      */
+    //protected $isUnion=False;
+    //protected $isStruct=False;
+    protected $isAnonymous=false;
     protected $isArray=False;
     protected $isPrimitive=False;
     protected $isPrototype=False;
@@ -125,12 +132,16 @@ class TypeGenerator extends AbstractGenerator
     protected $primitiveType=NULL;
     protected $expressionArray;
 
+    static public $anonymous = 0; 
+    public $anony_definition = null;
+    
     /**
      * @param  string|array $options
      */
     public function __construct($options = NULL)
     {
         parent::__construct($options);
+        //$name = $this->getName(); replace repeat ws
         
         if (empty($options)) {
             $this->primitiveType = self::PRIMITIVE_VOID;
@@ -143,6 +154,21 @@ class TypeGenerator extends AbstractGenerator
             $this->isPrimitive = False;
         }
     }
+
+    static public function Create(array $data)
+    {
+        $type = new TypeGenerator($data['type']);
+        return $type;
+    }
+
+    static public function CreateAnonymous()
+    {
+        $name = '@anonymous#'.(self::$anonymous++);
+        $type = new TypeGenerator($name);
+        $type->isAnonymous = true;
+        return $type;
+    }
+    
     public function setArray($isArray=True)
     {
         $this->isArray = $isArray;

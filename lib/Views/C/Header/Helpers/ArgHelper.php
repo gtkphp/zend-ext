@@ -14,6 +14,7 @@ class ArgHelper extends AbstractHelper
     public function __invoke(MethodGenerator $method)
     {
         $parameters = $method->getParameters();
+        $enums = $method->getOwnPackage()->getListTypeEnum();
 
         $output = '';
         $output .= 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$method->getName().', 0, ZEND_SEND_BY_VAL, '.count($parameters).')'. PHP_EOL;
@@ -30,7 +31,11 @@ class ArgHelper extends AbstractHelper
                     $output .= '    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', IS_STRING, 0)'. PHP_EOL;// 0 = allow_null
                     break;
                 default:
-                    $output .= '    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getType()->getName().', 0)'. PHP_EOL;// 0 = allow_null
+                    if (isset($enums[$parameter->getType()->getName()])) {
+                        $output .= '    ZEND_ARG_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().')'. PHP_EOL;
+                    } else {
+                        $output .= '    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getType()->getName().', 0)'. PHP_EOL;// 0 = allow_null
+                    }
                     break;
             }
         }
@@ -39,9 +44,3 @@ class ArgHelper extends AbstractHelper
         return $output;
     }
 }
-
-/*
-
-ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, cr, cairo_matrix_t, 0)
-    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, x, IS_DOUBLE, 0)
-*/

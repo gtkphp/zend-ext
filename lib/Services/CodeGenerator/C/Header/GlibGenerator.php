@@ -59,6 +59,23 @@ class GlibGenerator extends CodeGenerator
         return $model;
     }
 
+    function getViewModelEnum($dto):ViewModel
+    {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', '31/12/1999');
+        $licenseModel->setTemplate('license.phtml');
+
+        $classModel = new ViewModel((array)$dto);
+        $classModel->setTemplate('enum.phtml');
+
+        $model = parent::getViewModel((array)$dto);
+        $model->addChild($licenseModel, 'license');
+        $model->addChild($classModel, 'class');
+        $model->setTemplate('file.phtml');
+
+        return $model;
+    }
+
     function getRenderer():RendererInterface
     {
         if ($this->renderer) {

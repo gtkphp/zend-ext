@@ -13,8 +13,11 @@ class ArgHelper extends AbstractHelper
 {
     public function __invoke(MethodGenerator $method)
     {
+
         $parameters = $method->getParameters();
         $extra = '';
+        $enums = $method->getOwnPackage()->getListTypeEnum();
+
 
         $output = '';
         foreach($parameters as $parameter) {
@@ -34,8 +37,12 @@ class ArgHelper extends AbstractHelper
                         $output .= '    int argc;'. PHP_EOL;
                         $output .= '    zval *args = NULL;'. PHP_EOL;
                     } else {
-                        //$output .= '    php_'.$parameter->getType()->getName().' *'.$parameter->getName().';'. PHP_EOL;
-                        $output .= '    zval *z'.$parameter->getName().';'. PHP_EOL;
+                        if (isset($enums[$parameter->getType()->getName()])) {
+                            $output .= '    zend_long z'.$parameter->getName().';'. PHP_EOL;
+                        } else {
+                            //$output .= '    php_'.$parameter->getType()->getName().' *'.$parameter->getName().';'. PHP_EOL;
+                            $output .= '    zval *z'.$parameter->getName().';'. PHP_EOL;
+                        }
                     }
                     break;
             }
@@ -43,7 +50,8 @@ class ArgHelper extends AbstractHelper
 
         $output .= PHP_EOL;
 
-        $output .= '    ZEND_PARSE_PARAMETERS_START('. count($parameters) .', '. count($parameters).')'. PHP_EOL;
+        if(count($parameters))
+            $output .= '    ZEND_PARSE_PARAMETERS_START('. count($parameters) .', '. count($parameters).')'. PHP_EOL;
         foreach($parameters as $parameter) {
             //$output .= $parameter->getType()->getName() . ', '. $parameter->getType()->getPrimitiveType().PHP_EOL;
             switch ($parameter->getType()->getPrimitiveType()) {
@@ -62,23 +70,30 @@ class ArgHelper extends AbstractHelper
                     } else {
                         $parameterTypeName = $parameter->getType()->getName();
                         $nameFunction = $this->getView()->nameclassHelper($parameterTypeName, -1);
-                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;
+                        if (isset($enums[$parameterTypeName])) {
+                            $output .= '        Z_PARAM_LONG(z'.$parameter->getName().')'. PHP_EOL;
 
-                        $extra .= '    php_' . $parameterTypeName . ' *php_' . $parameter->getName();
-                        $extra .= ' = ';
-                        $extra .= 'ZVAL_IS_PHP_'. strtoupper($parameterTypeName);
-                        $extra .= '(z'. $parameter->getName() . ')? ';
-                        $extra .= 'ZVAL_GET_PHP_'. strtoupper($parameterTypeName);
-                        $extra .= '(z'. $parameter->getName() .'): NULL;'.PHP_EOL;
+                            $extra .= '    '.$parameterTypeName . ' '.$parameter->getName() . ' = z' . $parameter->getName() . ';'. PHP_EOL;
+                        } else {
+                            $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;
 
-                        $extra .= '    ' . $parameterTypeName . ' *' . $parameter->getName();
-                        $extra .= ' = ';
-                        $extra .= ' php_'. $parameter->getName() .'==NULL ? NULL : php_'.$parameter->getName().'->ptr;'.PHP_EOL;
+                            $extra .= '    php_' . $parameterTypeName . ' *php_' . $parameter->getName();
+                            $extra .= ' = ';
+                            $extra .= 'ZVAL_IS_PHP_'. strtoupper($parameterTypeName);
+                            $extra .= '(z'. $parameter->getName() . ')? ';
+                            $extra .= 'ZVAL_GET_PHP_'. strtoupper($parameterTypeName);
+                            $extra .= '(z'. $parameter->getName() .'): NULL;'.PHP_EOL;
+    
+                            $extra .= '    ' . $parameterTypeName . ' *' . $parameter->getName();
+                            $extra .= ' = ';
+                            $extra .= ' php_'. $parameter->getName() .'==NULL ? NULL : php_'.$parameter->getName().'->ptr;'.PHP_EOL;
+                        }
                     }
                     break;
             }
         }
-        $output .= '    ZEND_PARSE_PARAMETERS_END();'. PHP_EOL;
+        if(count($parameters))
+            $output .= '    ZEND_PARSE_PARAMETERS_END();'. PHP_EOL;
 
         if (!empty($extra)) {
             $output .= PHP_EOL.$extra;

@@ -9,15 +9,25 @@
 
 namespace Zend\Ext\Models;
 
-use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Models\ObjectGenerator;
 
-class EnumGenerator extends AbstractGenerator
+class EnumGenerator extends ObjectGenerator
 {
 
     /**
      * @var array $constants array('CONST_A'=>0x00, 'CONST_B'=>0x03, ...)
      */
     protected $constants=[];
+
+    /**
+     * @var MethodGenerator[] Array of methods
+     */
+    public $methods = [];
+
+    /**
+     * @var array Objects related to this object
+     */
+    protected $relatedObjects;
 
     /**
      * @return array
@@ -37,6 +47,24 @@ class EnumGenerator extends AbstractGenerator
         return $this;
     }
 
+
+    /**
+     * @return array
+     */
+    public function getRelatedObjects(): array
+    {
+        return empty($this->relatedObjects) ? array() : $this->relatedObjects;
+    }
+
+    /**
+     * @param array $relatedObjects
+     * @return EnumGenerator
+     */
+    public function setRelatedObjects(array $relatedObjects): EnumGenerator
+    {
+        $this->relatedObjects = $relatedObjects;
+        return $this;
+    }
 
 
 }

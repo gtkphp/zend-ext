@@ -1,0 +1,91 @@
+<?php echo $this->license; ?>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+<?php
+foreach($this->includeFiles as $include) {
+echo '#include '.$include.PHP_EOL;
+}
+?>
+
+#include "<?php echo $this->headerFile ?>"
+
+extern zend_module_entry gtk_module_entry;
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+/*{{{ php_<?php echo $this->nameFunction ?>_class_init */
+zend_class_entry*
+php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+<?php foreach($this->relationships as $relationship):
+
+if ($relationship instanceof Zend\Ext\Views\C\EnumDto) {
+    foreach($relationship->constants as $constant) {
+        echo '    ';
+        echo 'zend_register_long_constant("'.$constant['name'].'", sizeof("'.$constant['name'].'")-1,'.PHP_EOL;
+        echo '        '.$constant['name'].', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);'.PHP_EOL;
+    }
+    echo PHP_EOL;
+}
+
+endforeach; ?>
+
+    return NULL;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
+
+<?php foreach($this->methods as $name=>$method): ?>
+/* {{{ <?php echo $method->docblock ?> */
+PHP_FUNCTION(<?php echo $name ?>)
+{
+<?php echo $method->args.PHP_EOL; ?>
+<?php echo $method->call.PHP_EOL; ?>
+<?php echo $method->return.PHP_EOL; ?>
+}/* }}} */
+
+<?php endforeach; ?>
+
+ <?php
+ /*----------------------------------------------------------------------+
+ | RELATED                                                              |
+ +----------------------------------------------------------------------*/
+
+ /* foreach($this->relationships as $relationship):
+
+$model = new \Zend\View\Model\ViewModel((array)$relationship);
+$model->setTemplate('handler.phtml');
+echo $this->render($model);
+
+endforeach; */ ?>

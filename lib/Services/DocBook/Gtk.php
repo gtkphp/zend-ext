@@ -6,31 +6,267 @@ namespace Zend\Ext\Services\DocBook;
 namespace Zend\Ext\Services\DocBook;
 
 use SimpleXMLElement;
-use Zend\Ext\Models\ClassGenerator;
-use Zend\Ext\Models\EnumGenerator;
-use Zend\Ext\Models\MethodGenerator;
+
 use Zend\Ext\Models\PackageGenerator;
-use Zend\Ext\Models\PropertyGenerator;
 use Zend\Ext\Models\TypeGenerator;
+use Zend\Ext\Models\ClassGenerator;
+use Zend\Ext\Models\StructGenerator;
+use Zend\Ext\Models\EnumGenerator;
+use Zend\Ext\Models\UnionGenerator;
+use Zend\Ext\Models\VarGenerator;
+use Zend\Ext\Models\ConstantGenerator;
+
+use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\PropertyGenerator;
 use Zend\Ext\Models\TagGenerator;
+
 use Zend\Ext\Services\DocBook;
 
 
 class Gtk extends DocBook
 {
+    public $blacklist = array();
+    public $remap = array();
+    
     /**
-     * @var Zend\Ext\Models\PackageGenerator $package
+     * @var PackageGenerator
      */
     protected $package;
+
     /**
-     * @var Zend\Ext\Models\AbstractGenerator $current_generator
+     * @var String
+     */
+    protected $filename=null;
+    // $codeGenerator//sub package
+
+    protected $includesDir = [];
+    
+    /**
+     * @var AbstractGenerator
      */
     protected $current_generator;
 
-    function save($dirname): string
+    /*function save($dirname): string
     {
         $service = current($this->codeGenerator);
         return $service->render($this->package);
+    }*/
+
+    public function __construct(string $filename, string $tmp_dir) {
+        $this->filename = $filename;
+        $this->tmp_dir = realpath($tmp_dir);
+    }
+    public function addIncludeDir(string $path) {
+        $this->includesDir[] = $path;
+    }
+
+    public function getPackage(string $name=null) {
+        if (empty($name)) {
+            if ($this->package) {
+                return $this->package;
+            }
+            $this->package = $this->loadParts($this->filename);
+            return $this->package;
+        }
+        // TODO
+    }
+
+    /**
+     * TODO rename by 'load'
+     * class-level DocBlock example.
+     * @package applies_to_bluh
+     * @subpackage bluh
+     */
+    protected function loadParts(string $filename): PackageGenerator
+    {
+        $doc = new \DomDocument();
+        $doc->load($filename);
+
+        $id = $doc->documentElement->getAttribute('id');//id="cairo"
+
+        $this->package = new PackageGenerator($id);
+        $xpath = new \DOMXpath($doc);
+        $elements = $xpath->query("/book/title");
+        $title = $elements[0]->nodeValue;
+        $this->package->setDescription($title);
+
+
+        /**
+         * @var PackageGenerator
+         */
+        $package = null;
+        $whitelist = [];
+
+        foreach($doc->documentElement->childNodes as $node) {
+            if ($node->nodeType == XML_ELEMENT_NODE
+            && 'part'==$node->nodeName) {
+                //echo $doc->saveXML($node);
+                $group_id = $node->getAttribute('id');//id="cairo-drawing"
+                $whitelist = null;
+                $files = [];
+                foreach($node->childNodes as $child) {
+                    switch ($child->nodeName) {
+                        case 'title':
+                            $group_title = $child->nodeValue;
+                            break;
+                        case 'partinfo':
+                            $whitelist = $this->loadPartinfo($child);
+                            break;
+                        case 'xi:include':
+                            $href = $child->getAttribute('href');
+                            if ('gtk'==$group_id) {
+                                $filepath = $this->tmp_dir.DIRECTORY_SEPARATOR
+                                . $group_id.'-build-doc'.DIRECTORY_SEPARATOR
+                                . $href;
+                            } else {
+                                $filepath = $this->tmp_dir.DIRECTORY_SEPARATOR
+                                . $group_id.DIRECTORY_SEPARATOR
+                                . $href;
+                            }
+                            ///echo $filepath, PHP_EOL;
+                            $files[] = $filepath;
+                            break;
+                    }
+                }
+                $package = $this->package->createPackage($group_id);
+                $package->doc_files = $files;
+                $package->setDescription($group_title);
+                $this->setWhitelist($whitelist);
+                $this->current_generator = $package;
+                $this->loadPackage($package);
+                $this->current_generator = $this->package;
+
+            }
+        }
+
+        return $this->package;
+    }
+    
+    /**
+     * class bluh
+     * class-level DocBlock example.
+     * @package applies_to_bluh
+     * @subpackage bluh
+     */
+    protected function loadPartinfo(\DOMElement $node)
+    {
+        $whitelist = [];
+        $primary = '';
+        foreach($node->childNodes as $child) {
+            switch ($child->nodeName) {
+                case 'indexterm':
+                    foreach($child->childNodes as $item) {
+                        switch ($item->nodeName) {
+                            case 'primary':
+                                $primary = trim($item->nodeValue);
+                                $whitelist[$primary] = array();
+                                //$this->useWhitelist = true;
+                                break;
+                            case 'secondary':
+                                $whitelist[$primary][trim($item->nodeValue)] = $item->getAttribute('id');
+                                break;
+                        }
+                    }
+                    break;
+            }
+        }
+        if (empty($whitelist)) {
+            return null;
+        }
+        return $whitelist;
+    }
+
+    /**
+     * class bluh
+     * class-level DocBlock example.
+     * @package applies_to_bluh
+     * @subpackage bluh
+     */
+    protected function loadPackage($package)
+    {
+        foreach($package->doc_files as $filename) {
+            $doc = new \DomDocument();
+            $doc->load($filename);
+            $this->loadChapter($doc->documentElement);
+        }
+    }
+
+    /**
+     * class bluh
+     * class-level DocBlock example.
+     * @package applies_to_bluh
+     * @subpackage bluh
+     */
+    protected function loadChapter(\DOMElement $element)
+    {
+        $id = $element->getAttribute('id');//id="cairo"
+        $doc = $element->ownerDocument;
+        $filename = $doc->documentURI;
+        //var_dump($id);
+
+        //$group_package = $this->current_generator->createPackage($id);
+        $group_package = $this->current_generator;
+
+        $xpath = new \DOMXpath($doc);
+        $elements = $xpath->query("/book/title");
+        if (count($elements)) {
+            $title = $elements[0]->nodeValue;
+            $group_package->setDescription($title);
+        }
+
+        /**
+         * @var PackageGenerator
+         */
+        $package = null;
+
+        foreach($element->childNodes as $node) {
+            // cairo
+            if ($node->nodeType == XML_ELEMENT_NODE
+            && 'chapter'==$node->nodeName) {
+                $group_id = $node->getAttribute('id');//id="cairo-drawing"
+                //echo "     $id=>$group_id\n";
+                if(!$this->isAllowed($id, $group_id)) {
+                    continue;
+                }
+                $title = '';
+                $files = array();
+                foreach($node->childNodes as $child) {
+                    switch ($child->nodeName) {
+                        case 'title':
+                            $title = $child->nodeValue;
+                            break;
+                        case 'xi:include':
+                            $href = $child->getAttribute('href');
+                            $path = dirname($filename);
+
+                            if (in_array(basename($href), $this->blacklist)) {
+                                echo 'Skeep: ' . $path.DIRECTORY_SEPARATOR.$href . PHP_EOL;
+                                break;
+                            }
+
+                            $files[] = $path.DIRECTORY_SEPARATOR.$href;
+                            break;
+                    }
+                }
+                $package = $group_package->createPackage($group_id);
+                $package->setDescription($title);
+                $package->doc_files = $files;// TODO: remove doc_files
+                foreach($package->doc_files as $filepath) {
+                    $this->current_generator = $package;
+                    $this->loadRefentry($filepath);
+                }
+            }
+            // gtk
+            if ($node->nodeType == XML_ELEMENT_NODE
+            && 'part'==$node->nodeName) {
+                $id_ref = $node->getAttribute('id');// gtkobjects
+                //echo "$id=>$id_ref\n";
+                if($this->isAllowed($id, $id_ref)) {
+                    $this->loadChapter($node);
+                }
+            }
+        }
+        $this->current_generator = $group_package;
     }
 
     /**
@@ -41,165 +277,474 @@ class Gtk extends DocBook
      *   </chapter>
      * </book>
      */
-    function load(): PackageGenerator
+    protected function loadRefentry($filename)
     {
-        $this->package = new PackageGenerator(array(
-            'name' => 'Gtk',
-            'shortDescription' => 'Gtk 3.22.0'
-        ));
+        $current_generator = $this->current_generator;
 
-        //foreach xi:include
+        $id = $this->current_generator->getName();// cairo-drawing
 
-        // TODO: $this->getSourceCodeStruct();
-        //$glist = $this->getSourceCode('GLib')->getStruct('GList');
-        //$glist = $this->sourceCode['Glib']->getStruct('GList');
-        //$cmp = $this->sourceCode['Glib']->getProto('GHookCompareFunc');
-        //$cmp = $this->sourceCode['Glib']->getProto('GCompareFunc');
-        //print_r($cmp);
-        //$this->getSourceCode('Glib')->getStruct('GList');
-        
-        /*
-        $files = [
-            '/home/dev/Projects/cairo/doc/public/xml/cairo-status.xml',
-        ];
-        foreach($files as $filename) {
-            $xml = simplexml_load_file($filename);
-            $enum = $this->loadEnum($xml);
+        $file = file_get_contents($filename);
+        $temp = str_replace(array('&#160;', '&nbsp;', '&ast;'), '', $file);
+        $xml = simplexml_load_string($temp) or die("xml not loading: '$filename'");
+
+        $id_ref = (string)$xml['id'];
+
+        if($this->isAllowed($id, $id_ref)) {
+
+            echo 'Process::', $filename, PHP_EOL;
+            $class = null;
+            $methods = [];
+
+            foreach($xml->refsect1 as $refsect1) {
+                $refsect1_id=$refsect1['id'];//"GtkWidget.functions"
+                $refsect1_name = substr($refsect1_id, strlen($id_ref)+1);
+                $name = $refsect1_name;//str_replace('_', '-', $refsect1_name);
+                switch($name) {
+                    case 'functions':
+                        $array = $this->getFunctions($xml);
+                        foreach($array as $name=>$linkend) {
+                            //echo $name, PHP_EOL;
+                        }
+                        break;
+                    case 'properties':
+                        break;
+                    case 'style-properties':
+                        break;
+                    case 'signals':
+                        break;
+                    case 'other':
+                        break;
+                    case 'object-hierarchy':
+                        break;
+                    case 'derived-interfaces':
+                        break;
+                    case 'implemented-interfaces':
+                        break;
+                    case 'includes':
+                        break;
+                    case 'description':
+                        break;
+                    case 'functions_details':
+                        $methods = $this->getFunctionsDetails($xml);
+                        break;
+                    case 'property-details':
+                        break;
+                    case 'style-property-details':
+                        break;
+                    case 'signal-details':
+                        break;
+                    case 'other_details':
+                        $class = $this->getOtherDetails($xml);
+                        break;
+                    case 'see-also':
+                        break;
+                    default:
+                        echo 'Unimplemented <refsect1 id="'.$id_ref.'.'.$refsect1_name.'">'.PHP_EOL;
+                        break;
+                }
+            }
+            $class->addMethods($methods);
         }
-        */
-
-        /**/
-        $files = [
-            //'/home/dev/Projects/glib-build-doc/docs/reference/gobject/xml/objects.xml',
-            '/home/dev/Projects/cairo/doc/public/xml/cairo.xml',
-            '/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml',
-            //'/home/dev/Projects/gtk-build-doc/docs/reference/gtk/xml/gtkcontainer.xml',
-        ];
-        foreach($files as $filename) {
-            $xml = simplexml_load_file($filename);
-            $class = $this->loadClass($xml);
-        }
-        /**/
-        
         // $package->addBoxed($class);
         // $package->addFunction($class);
-        return $this->package;
+
+        $this->current_generator = $current_generator;
     }
-    protected function loadEnum(SimpleXMLElement $xml): EnumGenerator
+    protected function getFunctions(SimpleXMLElement $xml):array
     {
-        $map = array(
-            'Error handling' => 'cairo_status_t',
-        );// <------------------------------------------------------------------------
-        $id = trim((string)$xml['id']);
-        $enumName = (string)$xml->refmeta->refentrytitle;
-        $enumName = $map[$enumName] ?? $enumName;
+        $id = (string)$xml['id'];
 
-        // - ClassGenerator extends PackageGenerator::setRelatedObject
-        // - EmptyClassGenerator extends ClassGenerator
-        $enum = $this->package->createEnum($enumName);// create subPackage('Error Handling')
-        $this->current_generator = $enum;
+        $array = array();
 
-        /*
-         * Peek related object
-         */
-        /*
-        $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row/entry/link");
-        $relatedObjects = $this->getRelatedObjects($nodes, $enumName);
-        $relatedClasses = array();
-        foreach($relatedObjects as $linked=>$relatedObject) {
-            //echo "$linked=>$relatedObject\n";
-            //if ($linked=='GtkRequisition-struct') {
-                $nodes = $xml->xpath("refsect1/refsect2[@id='$linked']");
-                if (!empty($nodes)) {
-                    $related = $this->getRelatedObject($nodes[0], $enumName);
-                    $relatedClasses[$relatedObject] = $related;
-                }
-            //}
+        $nodes = $xml->xpath("refsect1[@id='$id.functions']/informaltable/tgroup/tbody/row/entry[@role='function_name']/link");
+        foreach($nodes as $node) {
+            $linkend = (string) $node['linkend'];
+            $function = (string) $node;
+            $array[$function] = $linkend;
         }
-        $enum->setRelatedObjects($relatedClasses);
-        */
+        return $array;
+    }
+    protected function getProperties(SimpleXMLElement $xml){
 
-        return $enum;
+    }
+    protected function getStyleProperties(SimpleXMLElement $xml){
+
+    }
+    protected function getSignals(SimpleXMLElement $xml){
+
+    }
+    protected function getOther(SimpleXMLElement $xml){
+        // loadOthers
+    }
+    protected function getObjectHierarchy(SimpleXMLElement $xml){
     }
 
-    protected function loadClass(SimpleXMLElement $xml): ClassGenerator
-    {
-        $map = array(
-        );// <------------------------------------------------------------------------
-        $id = trim((string)$xml['id']);//glib-Hash-Tables
+    protected function getDerivedInterfaces(SimpleXMLElement $xml){
+    }
 
-        /*
-         * Peek the class name : 'GList'
-         */
-        $className = (string)$xml->refmeta->refentrytitle;
-        $className = $map[$className] ?? $className;
+    protected function getImplementedInterfaces(SimpleXMLElement $xml){
+    }
 
-        $class = $this->package->createClass($className);
-        $this->current_generator = $class;
+    protected function getIncludes(SimpleXMLElement $xml){
+    }
 
-        /*
-         * Peek the description : The description of <link>class name</link>
-         */
-        $description = (string)$xml->refnamediv->refpurpose;
-        $class->setDescription($description);
+    protected function getDescription(SimpleXMLElement $xml){
+    }
 
-        /*
-         * Peek methodes
-         */
-        $result = $xml->xpath("refsect1[@id='$id.functions_details']/refsect2");
-        foreach ($result as $node) {
-            $method = $this->loadMethod($node);
-            if ($method) {
-                $class->addMethodFromGenerator($method);
+    protected function getFunctionsDetails(SimpleXMLElement $xml){
+        $generator = $this->current_generator;
+        $package = $generator->getPackage();
+        $methods = [];
 
-                $tmpa = strtolower($class->getName());
-                $tmpb = str_replace('_', '', strtolower($method->getName()));
-                if (False === strpos($tmpb, $tmpa)) {
-                    $method->setIsStatic();
-                    $method->setIsCallback();
-                } else {
-                    $parameters = $method->getParameters();
-                    if (count($parameters) > 0) {
-                        $parameter = current($parameters);
-                        if ($className != $parameter->getType()->getName()) {
-                            $method->setIsStatic();
+        $id = (string)$xml['id'];
+        $nodes = $xml->xpath("refsect1[@id='$id.functions_details']/refsect2");
+        foreach($nodes as $node) {
+            $function_id = $node['id'];
+            $function_name = (string)$node->indexterm[0]->primary;
+
+            $signature = $this->sourceCode['Glib']->getFunction($function_name);
+            if (empty($signature)) {
+                $signature = $this->sourceCode['Glib']->getProto($function_name);
+                if (!empty($signature)) {
+                    echo 'continue: '.$function_id . ', ' . $function_name. PHP_EOL;
+                    continue;
+                }
+                $signature = $this->sourceCode['Glib']->getMacro($function_name);
+                if (!empty($signature)) {
+                    echo 'continue: '.$function_id . ', ' . $function_name. PHP_EOL;
+                    continue;
+                }
+    
+            }
+
+            
+            $method = $package->createMethod($function_name);
+            $method->setOwnPackage($generator->getOwnPackage());
+            $parameters = [];
+            
+            // programlisting :
+            
+
+            // Description :
+            $description = '';
+            $short_description = '';
+            foreach($node->children() as $child) {
+                if ('para'==$child->getName()) {
+                    $description .= $child->asXML();
+                    if (null==$short_description)
+                        $short_description .= $child->asXML();
+                }
+                if ('refsect3'==$child->getName())
+                    break;
+            }
+            $method->setDescription($description);
+            $method->setShortDescription($short_description);
+
+
+            // Parameters :
+            $node_parameters = $node->xpath("refsect3[@id='$function_id.parameters']");
+
+            foreach ($node_parameters as $node_parameter) {
+                $rows = $node_parameter->xpath("informaltable/tgroup/tbody/row");
+                foreach($rows as $row) {
+                    $parameter_name = '';
+                    $parameter_description = null;
+                    $parameter_annotations = [];
+                    foreach($row->entry as $entry) {
+                        $role = $entry['role'];
+                        switch ($role) {
+                            case 'parameter_name':
+                                $parameter_name = (string)$entry->para;
+                                break;
+                            case 'parameter_description':
+                                $parameter_description = (string)$entry->asXml();
+                                break;
+                            case 'parameter_annotations':
+                                $parameter_annotations = [];
+                                break;
                         }
+                    }
+
+                    $parameter = $package->createParameter($parameter_name);
+                    $parameter->setDescription($parameter_description);
+
+                    $param_type = $package->createType($signature['signature']['parameters'][$parameter_name]['type']);
+                    $parameter->setType($param_type);
+
+                    $parameters[] = $parameter;
+                }
+            }
+            $method->setParameters($parameters);
+            
+            // Returns :
+            $parameter_return = $package->createParameter('Returns');
+            $node_parameters = $node->xpath("refsect3[@id='$function_id.returns']");
+            $description = '';
+            foreach($node_parameters as $node_parameter) {
+                foreach($node->children() as $node) {
+                    if ('para'==$node->getName()) {
+                        $description .= $node->asXML();
                     }
                 }
             }
+
+            $parameter_return->setDescription($description);
+            $return_type = $package->createType($signature['signature']['return']['type']);
+            $parameter_return->setType($return_type);
+
+            $method->setParameterReturn($parameter_return);
+
+            $methods[] = $method;
         }
 
-        /*
-         * Peek related object
-         */
-        $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row/entry/link");
-        $relatedObjects = $this->getRelatedObjects($nodes, $className);
-        $relatedClasses = array();
-        foreach($relatedObjects as $linked=>$relatedObject) {
-            //echo "$linked=>$relatedObject\n";
-            //if ($linked=='GtkRequisition-struct') {
-                $nodes = $xml->xpath("refsect1/refsect2[@id='$linked']");
-                if (!empty($nodes)) {
-                    $related = $this->getRelatedObject($nodes[0], $className);
-                    $relatedClasses[$relatedObject] = $related;
+        $this->current_generator = $generator;
+        return $methods;
+    }
+
+    protected function getPropertyDetails(SimpleXMLElement $xml){
+
+    }
+    protected function getStylePropertyDetails(SimpleXMLElement $xml){
+
+    }
+    protected function getSignalDetails(SimpleXMLElement $xml){
+
+    }
+    protected function getOtherDetails(SimpleXMLElement $xml){
+        $package = $this->current_generator;
+
+        $id = (string)$xml['id'];
+        //cairo-Paths.other_details
+        $refpurpose = (string)$xml->refnamediv[0]->refpurpose;
+
+        // informaltable/tgroup/tbody/row
+        $nodes = $xml->xpath("refsect1[@id='$id.other_details']/refsect2");
+        
+        $map = null;
+        $package_name = $package->getName();
+        if (isset($this->whitelist[$package_name])) {
+            if (isset($this->whitelist[$package_name][$id])) {
+                $map = $this->whitelist[$package_name][$id];
+            }
+        }
+       
+
+        $is_class = false;
+        $struct_names = [];
+        $class_name = null;
+        foreach($nodes as $node) {
+            $role = (string)$node['role'];
+            switch($role) {
+                case 'struct':
+                    $struct_name = (string)$node->indexterm[0]->primary;
+                    $struct_names[$struct_name] = $struct_name;
+                    if ('Class'==substr($struct_name, -5)) {
+                        $class_name = substr($struct_name, 0, -5);
+                        $is_class = true;
+                    }
+                    $this->loadStruct($node);
+                    break;
+                case 'enum':
+                    $struct_name = (string)$node->indexterm[0]->primary;
+                    $struct_names[$struct_name] = $struct_name;
+                    $this->loadEnum($node);
+                    break;
+                case 'union':
+                    $struct_name = (string)$node->indexterm[0]->primary;
+                    $struct_names[$struct_name] = $struct_name;
+                    $this->loadUnion($node);
+                    break;
+                case 'typedef':
+                default:
+                    echo 'Unimplemented <refsect2 role="'.$role.'">'.PHP_EOL;
+                    break;
+            }
+        }
+        if ($is_class) {
+            $classGenerator = $package->createClass($class_name);
+            $classGenerator->setDescription($refpurpose);
+            $instance = $package->getStruct($class_name);
+            $vtable = $package->getStruct($class_name.'Class');
+            $classGenerator->setInstance($instance);
+            $classGenerator->setVTable($vtable);
+
+            foreach($struct_names as $struct_name) {
+                if (!in_array($struct_name, array($class_name, $class_name.'Class'))) {
+                    $classGenerator->addRelatedObject($package->children[$struct_name]);
                 }
-            //}
+                unset($package->children[$struct_name]);
+            }
+            // foreach enum, union
+
+            $package->children[$class_name] = $classGenerator;
+        } else {
+            // check if file correspond to struct name
+            // how to get the master object ?
+            if (empty($map)) {
+                $map = str_replace('-', '_', $id);
+                $map = strtolower($map);
+            }
+            if (isset($this->remap[$map])) {
+                $map = $this->remap[$map];
+            }
+            
+            $classGenerator = $package->createClass($map);
+            $classGenerator->setDescription($refpurpose);
+            $classGenerator->setShortDescription($refpurpose);
+            $instance = $package->getStruct($map);
+            if (isset($instance)) {
+                $classGenerator->setInstance($instance);
+            } else {
+                echo 'Unexpected Struct('.$map.')::instance null'.PHP_EOL;
+            }
+
+            foreach($struct_names as $struct_name) {
+                if (!in_array($struct_name, array($map, $map.'Class'))) {
+                    $classGenerator->addRelatedObject($package->children[$struct_name]);
+                }
+                unset($package->children[$struct_name]);
+            }
+            $package->children[$map] = $classGenerator;
         }
-        $class->setRelatedObjects($relatedClasses);
+
+        $this->current_generator = $package;
+        return $classGenerator;
+    }
+
+    protected function getSeeAlso(SimpleXMLElement $xml){
         
+    }
+
+    protected function loadOthers(SimpleXMLElement $xml, $id):array
+    {
+        $array = array();
+
+        $nodes = $xml->xpath("refsect1[@id='$id.other']/informaltable/tgroup/tbody/row");
+        foreach($nodes as $node) {
+            $entry_type=null;
+            $entry_value=null;
+            $entry_linkend=null;
+            foreach($node->children() as $entry) {
+                $role = (string)$entry['role'];
+                switch($role) {
+                    case 'typedef_keyword':
+                        $entry_type = (string)$entry;// "typedef"
+                        break;
+                    case 'datatype_keyword':
+                        $entry_type = (string)$entry;// "struct", 'enum', 'union', ''
+                        break;
+                    case 'function_name':
+                        if (isset($entry->link)) {
+                            $entry_linkend = (string)$entry->link['linkend'];// "GtkWidget-struct"
+                            $entry_value = (string)$entry->link;// "GtkWidget"
+                        } else {
+                            echo 'Unexpected null <link>'.PHP_EOL;
+                        }
+                        break;
+                    default:
+                        echo 'Unexpected role: "' . $role . '"' . PHP_EOL;
+                        break;
+                }
+            }
+            $array[] = $entry_linkend;
+        }
+
+        return $array;
+    }
+
+    protected function loadStruct(SimpleXMLElement $refsect2):StructGenerator
+    {
+        $generator = $this->current_generator;
+
+        $name = (string)$refsect2->indexterm[0]->primary;
+        $struct = $generator->createStruct($name);
+        $this->current_generator = $struct;
+        $generator->children[$name] = $struct;
+
+        $description = '';
+        $short_description = null;
+        foreach($refsect2->children() as $node) {
+            if ('para'==$node->getName()) {
+                $description .= $node->asXML();
+                if (null==$short_description)
+                    $short_description .= $node->asXML();
+            }
+            if ('refsect3'==$node->getName())
+                break;
+        }
+
+        $struct->setDescription($description);
+        $struct->setShortDescription($short_description);
+
+        //echo '      '.$id.':'.PHP_EOL;// "struct_members"
+        foreach($refsect2->refsect3 as $refsect3) {
+            $this->loadStructMembers($refsect3);
+        }
+
+        $this->current_generator = $generator;
+        return $struct;
+    }
+    
+    protected function loadStructMembers(SimpleXMLElement $refsect3)
+    {
+        $members = array();
+        $rows = $refsect3->informaltable->tgroup->tbody->row;
+        foreach($rows as $row) {
+            $name = '';
+            $type = null;
+            $type_linkend = '';
+            $description = '';
+            $annotations = [];
+            //echo "process structure : ".$refsect3['id']."\n";
+            foreach($row->entry as $entry) {
+                $role = (string)$entry['role'];
+                switch ($role) {
+                    case 'struct_member_name':
+                        $name = (string)$entry->para[0]->structfield;
+                        $type_linkend = (string)$entry->para[0]->link[0]['linkend'];
+                        if (!empty($entry->para[0]->link)) {
+                            $type = (string)$entry->para[0]->link[0]->type;
+                        }
+                        break;
+                    case 'struct_member_description':
+                        $description = $entry->para->asXml();
+                        break;
+                    case 'struct_member_annotations':
+                        $annotations = (string)$entry;
+                        if (!empty($annotations)) {
+                            //$property = $this->loadStructMemberAnnoations($row, $class);
+                            //$properies[] = $property;
+                            echo 'Unimplemented annotation'.PHP_EOL;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            $var = $this->package->createVar($name);
+            if (!empty($type)) {
+                $member_type = $this->package->createType($type);// maybe use name instead
+                $var->setType($member_type);
+            } else {
+                // TODO
+                $className = $this->current_generator->getName();
+                $struct = $this->sourceCode['Glib']->getStruct($className);
+                $member_type = TypeGenerator::CreateAnonymous();
+                $member_type->setPackage($this->package);
+                $member_type->setIsPrototype(true);
+                $member_type->setPrototype($struct['members'][$name]);
+                
+                $var->setType($member_type);
+            }
+            $var->setShortDescription($description);
+            $var->setDescription($description);
+            $members[$name] = $var;
+        }
+        $this->current_generator->setMembers($members);
 
         /*
-         * Peek properties
-         */
-        // <-- setProperties -->
-        //$this->loadGObjectProperties($xml, $class);
-
-
-        // Source property
-
-        //var_dump($this->sourceCode['Glib']->data['STRUCT']['_GHashTableIter']);
         $struct = $this->sourceCode['Glib']->getStruct($className);
-        
         if (empty($struct))
             echo '"', $className, '" not found in source', PHP_EOL;
         else if (!empty($struct['members'])) {
@@ -216,516 +761,171 @@ class Gtk extends DocBook
                 $count++;
             }
         }
-        //var_dump($struct);
-
-
-        //$this->loadProperties($nodes);
-        //$class->addProperties($this->loadProperties($node, $class));
-
-        // <-- setSignals -->
-        // <-- setStyles -->
-        // <-- setRelatedObjects -->
-
-        return $class;
+        */
     }
+    
+    protected function loadEnum($refsect2) {
+        $generator = $this->current_generator;
 
-    protected function loadGObjectProperties(SimpleXMLElement $xml, ClassGenerator $class): array
-    {
-        $id = trim((string)$xml['id']);//glib-Hash-Tables
-        //<refsect1 id="GtkWidget.properties" role="properties">
+        $name = (string)$refsect2->indexterm[0]->primary;
+        $enum = $generator->createEnum($name);
+        $this->current_generator = $enum;
+        $generator->children[$name] = $enum;
 
-        $properties = array();
-        $rows = $xml->xpath("refsect1[@id='$id.properties']/informaltable/tgroup/tbody/row");
-        foreach($rows as $row) {
-            $properties[] = $this->loadGObjectProperty($row, $class);
+        $id = (string)$refsect2['role'];
+        $description = '';
+        foreach($refsect2->children() as $node) {
+            if ('para'==$node->nodeName)
+                $description .= $node->asXML();
+            if ('refsect3'==$node->nodeName)
+                break;
+        }
+        $enum->setDescription($description);
+
+        //echo '      '.$id.':'.PHP_EOL;// "struct_members"
+        foreach($refsect2->refsect3 as $refsect3) {
+            $this->loadEnumConstants($refsect3);
         }
 
-        $class->addProperties($properties);
-
-        $details = $xml->xpath("refsect1[@id='".$id.".property-details']/refsect2");
-        foreach($details as $detail) {
-            $this->loadGObjectPropertyDetails($detail, $class);
-        }
-
-        return $properties;
+        $this->current_generator = $generator;
+        return $enum;
     }
 
-    protected function loadGObjectProperty(SimpleXMLElement $xml, ClassGenerator $class): ?PropertyGenerator
-    {
-        $type = '';
-        $name = '';
-        $linkend = '';
-        $flags = '';
-        $entries = $xml->xpath("entry");
-        foreach($entries as $entry) {
-            switch($entry['role']) {
-                case 'property_type':
-                    $type = (string)$entry->link->type;
-                    break;
-                case 'property_name':
-                    $name = (string)$entry->link;
-                    $linkend = (string)$entry->link['linkend'];// 'GtkWidget--app-paintable'
-                    break;
-                case 'property_flags':
-                    $flags = (string)$entry->link;// 'Read / Write'
-                    break;
-                default:
-                    echo 'Error: Unexpected reached'.PHP_EOL;
-                    break;
-            }
-        }
-
-        $property = $this->package->createProperty($name, $class);
-        $property->setType($this->package->createType($type));
-        //TODO: $property->setFlags($flags);
-
-        return $property;
-    }
-
-    protected function loadGObjectPropertyDetails(SimpleXMLElement $xml, ClassGenerator $class)
-    {
-
-        $linkend = $xml['id'];// 'GtkWidget--app-paintable'
-        $property_name = substr($linkend, strpos($linkend, '--')+2);// 'app-paintable'
-
+    public function loadUnionMembers(SimpleXMLElement $refsect3) {
         /**
-         * @var PropertyGenerator
+         * @var UnionGenerator
          */
-        $property = $class->getProperty($property_name);
+        $union = $this->current_generator;
+        $package = $this->current_generator->getOwnPackage();
 
-        
-        $description = '';
-        $tags = array();
-        $default_value = '';
-        foreach( $xml->children() as $child) {
-            switch($child->getName()) {
-                case 'para':
-                    $pos = strpos((string)$child, ':');
-                    if(false===$pos || $pos > 15) {
-                        $description .= (string)$child;
-                    } else {
-                        $tag_name = substr((string)$child, 0, $pos);
-                        $tag = new TagGenerator(trim($tag_name));
-                        $tag_value = trim(substr((string)$child, strpos((string)$child, ':')+1));
-                        $tag->setValue($tag_value);
-                        $tags[] = $tag;
-                    }
-                    break;
-                default:
-                    // indexterm
-                    // programlisting
-                    // warning
-                    break;
+        $union_members = [];
+        if (empty($refsect3)) {
+
+            $name = $this->current_generator->getName();
+
+            $data_union = $this->sourceCode['Glib']->getUnion($name);
+            foreach($data_union['members'] as $member_name=>$member_data) {
+                $member_type = $member_data['type'];
+                switch ($member_type) {
+                    case 'struct':
+                        $member = $package->createVar($member_name);
+
+                        $member_type = TypeGenerator::CreateAnonymous();
+                        $member_struct = $package->createStruct($member_type->getName());
+                        unset($member_data['name']);
+                        $member_struct->setOptions($member_data);
+                        $member->setType($member_type);
+                        $union->children[] = $member_struct;
+
+                        $union_members[$member_name] = $member;
+                        break;
+                    case 'union':
+                        //$struct_member = UnionGenerator::Create($name);
+                        break;
+                    default:
+                        $union_members[$member_name] = VarGenerator::Create($member_data);
+                        break;
+                }
+                //$this->package->createVar();
             }
-        }
-        $property->setShortDescription($description);
-        $property->addTags($tags);
-        
+            $union->setMembers($union_members);
+            //print_r($data_union);
+            //print_r($data_union);
 
-    }
-
-    protected function loadMethod(SimpleXMLElement $xml): ?MethodGenerator
-    {
-        $methodName = (string)$xml->indexterm->primary;
-        $id = trim((string)$xml['id']);
-
-        $method = $this->package->createMethod($methodName);
-        $blackList = array('g_hash_table_freeze', 'g_hash_table_thaw');// <---------------------------------------------------
-        if (in_array($methodName, $blackList)) {
-            echo 'Skip macro' . $methodName . PHP_EOL;
-            return Null;
-        }
-        // <-- setType -->
-        $data = Null;
-        if (isset($this->sourceCode['Glib']->data['TYPEDEF'][$methodName])) {
-            $data = array(
-                'functions' => array(
-                    $this->sourceCode['Glib']->data['TYPEDEF'][$methodName]
-                )
-            );
-            //print_r($data);
-            // $method->setIsCallback();
-            return Null;
-        } else if ($xml['role'] == 'macro') {
-            echo 'TODO 555.666: ', $methodName, PHP_EOL;
-            return NULL;
-        } else if ($xml->programlisting) {
-            $str = strip_tags($xml->programlisting->asXml());
-            $str = str_replace(' ', ' ', $str);
-            file_put_contents(__DIR__ . '/../../../tmp/declaration.h', $str);
-            try {
-                $data = $this->sourceCode['Glib']->parse($str);
-            } catch (\Zend\C\Engine\Error $exc) {
-                echo $methodName, PHP_EOL;
-                echo $str, PHP_EOL;
-                // #define             g_list_previous(list)
-                echo $exc->getMessage() . PHP_EOL;
-                return NULL;
-            }
         } else {
-            echo "Error 88 unexpected\n";
-        }
-        //var_dump($data);
-
-        $keys = array_keys($data['functions']);
-        $func = $data['functions'][$keys[count($keys) - 1]];
-
-        $typeName = $func['signature']['return']['type'];
-
-        if (False) {
-            /*
-            $typedefs = $this->sourceCode['Glib']->data['TYPEDEF'];
-            $type_pass='';
-            if (isset($typedefs[$typeName])) {
-                $type = $this->package->createType($typedefs[$typeName]['type']);
-                if (isset($typedefs[$typeName]['pass'])) {
-                    $type_pass = $typedefs[$typeName]['pass'];
-                }
-            } else {
-                $type = $this->package->createType($typeName);
-            }
-            $method->setType($type);
-            if (isset($func['signature']['return']['pass'])) {
-                $pass = $func['signature']['return']['pass'];
-                $type_pass = $pass.$type_pass;
-            }
-            if (!empty($type_pass)) {
-                $method->setPass($type_pass);
-            }
-            */
 
         }
-        if (True) {
-            $type = $this->package->createType($typeName);
-            $method->setType($type);
-            if (isset($func['signature']['return']['pass'])) {
-                $pass = $func['signature']['return']['pass'];
-                $method->setPass($pass);
-            }
-        }
+        $this->current_generator = $union;
+    }
 
-        $typedefs = $this->sourceCode['Glib']->data['TYPEDEF'];
+    protected function loadUnion($refsect2) {
+        $generator = $this->current_generator;
+        //echo get_class($this->current_generator), PHP_EOL;
+        //echo '  '.$this->current_generator->getName(), PHP_EOL;
+        //echo get_class($this->current_generator->getPackage()), PHP_EOL;
+        //echo '  '.$this->current_generator->getPackage()->getName(), PHP_EOL;
+        //echo get_class($this->current_generator->getPackage()), PHP_EOL;
+        //echo '  '.get_class($this->current_generator->getOwnPackage()), PHP_EOL;
+        
 
-        // <-- setParameter -->
-        $parametersData = $func['signature']['parameters'];
+        $name = (string)$refsect2->indexterm[0]->primary;
+        $union = $generator->createUnion($name);
+        $this->current_generator = $union;
+        $generator->children[$name] = $union;//-------------------------------
 
-        // TODO variadic parameter( PHP Warning:  Illegal string offset 'name')
-        foreach ($parametersData as $options) {
-            if (is_string($options) && '...'==$options) {
-                $parameter = $this->package->createParameter($options);
-                $parameterType = $this->package->createType('');
-                $parameter->setType($parameterType);
-                $method->setParameter($parameter);
-                continue;
-            }
-            if (is_null($options['name']) && 'void' == $options['type']) {
-                // GList *g_list_alloc (void);
-                continue;
-            }
-            if (empty($options['type'])) {
-                echo 'TODO: array parameter[]' . PHP_EOL;
-                continue;
-            }
-            $parameter = $this->package->createParameter($options['name']);
-            $parameterType = $this->package->createType($options['type']);
-            $parameter->setType($parameterType);
-            if (isset($options['pass'])) {
-                $parameter->setPass($options['pass']);
-            }
-            $method->setParameter($parameter);
-
-            if (isset($typedefs[$options['type']])) {
-                if ('function' == $typedefs[$options['type']]['type']) {
-                    $parameter->setIsCallback();
-                    $parameterType->setIsPrototype(True);
-                    $parameterType->setPrototype($typedefs[$options['type']]['signature']);
-                }
-            }
-        }
-
-        // <-- setDescription -->
-        /* use the constants &true; or
-         * &false;. Both are case-insensitive.
-         */
-        $paragraphs = $xml->para;
-        if(empty($paragraphs)) {
-            echo 'Notice : No documention found for function : '.$methodName , PHP_EOL;
-        } else {
-            $method->setShortDescription($paragraphs[0]->asXml());
-            $description = '';
-            foreach ($paragraphs as $paragraph) {
-                $description .= $paragraph->asXml();
-            }
-            $method->setDescription($description);
-            //$method->setShortDescription($description);
-        }
-
-        // <-- parameter::setDescription -->
-        $refsect3 = $xml->xpath("refsect3[@id='$id.parameters']");
-        if (!empty($refsect3)) {
-            $rows = $refsect3[0]->informaltable->tgroup->tbody->row;
-            foreach ($rows as $row) {
-                $parameterName = (string)$row->entry[0]->para[0];
-                if ($parameterName == '...') {
-                    echo 'FIX: Assume variadic parameter' . PHP_EOL;
-                    //continue;
-                }
-                $parameter = $method->getParameter($parameterName);
-
-                $parameterDescription = $row->entry[1]->para->asXml();
-                //$parameter->setDescription($parameterDescription);
-                $parameter->setShortDescription($parameterDescription);
-
-                $parameterAnnotations = $row->entry[2]->emphasis->acronym;
-                if (isset($parameterAnnotations))
-                    foreach ($parameterAnnotations as $annotation) {
-                        $acronym = (string)$annotation;
-                        switch ($acronym) {
-                            case 'optional':
-                                $parameter->setIsOptional(True);
-                                break;
-                            case 'out':// Php as pass reference
-                            case 'nullable':
-                            case 'not nullable':
-                            default:
-                                //echo "Unimplemented annotation: '$acronym'\n";
-                                break;
-                        }
-                    }
-            }
-        }
-
-        // <-- methodType::setDescription -->
-        $type = $method->getType();
-        $paragraphs = $xml->xpath("refsect3[@id='$id.returns']/para");
         $description = '';
-        foreach ($paragraphs as $paragraph) {
-            $description .= $paragraph->asXml();
+        foreach($refsect2->children() as $node) {
+            if ('para'==$node->getName())
+                $description .= $node->asXML();
+            if ('refsect3'==$node->getName())
+                break;
         }
-        $type->setDescription($description);
+        $union->setDescription($description);
 
-        return $method;
+        $this->loadUnionMembers($refsect2->refsect3);
+
+        $this->current_generator = $generator;
     }
 
-    /*protected function loadParameters($xml, MethodGenerator $method)
+    protected function loadEnumConstants(SimpleXMLElement $refsect3)
     {
-    }
-    protected function loadParameter($xml, MethodGenerator $method)
-    {
-    }*/
-
-    protected function loadProperties($xml, ClassGenerator $class)
-    {
-        $properies = array();
-        $id = $xml['id'];
-        $rows = $xml->xpath("refsect3[@id='$id.members']/informaltable/tgroup/tbody/row");
+        $members = array();
+        $rows = $refsect3->informaltable->tgroup->tbody->row;
         foreach($rows as $row) {
-            $property = $this->loadProperty($row, $class);
-            $properies[] = $property;
-        }
-        return $properies;
-    }
-
-    protected function loadProperty($xml, ClassGenerator $class)
-    {
-        $property = null;
-        $name='';
-        $type='';
-        $description='';
-        $annotations='';
-        $entries = $xml->xpath("entry");
-        foreach($entries as $entry) {
-            switch($entry['role']) {
-                case 'struct_member_name':
-                    $name = (string) $entry->para->structfield;
-                    $type = (string) $entry->para->link->type;
-                    break;
-                case 'struct_member_description':
-                    $description = $entry->asXml();
-                    break;
-                case 'struct_member_annotations':
-                    // TODO load annotation
-                    break;
-            }
-        }
-        $property = $this->package->createProperty(trim($name), $class);
-        $property->setType($this->package->createType(trim($type)));
-        $property->setShortDescription($description);
-
-        return $property;
-    }
-
-    protected function getSignals()
-    {
-
-    }
-
-    protected function getStyles()
-    {
-
-    }
-
-    protected function getRelatedObjects($nodes, $className)
-    {
-        $array = [];
-        foreach ($nodes as $node) {
-            $linked = ((string)$node['linkend']);
-            $objName = (string)$node;
-            if ($objName != $className) {
-                $array[$linked] = $objName;
-            }
-        }
-        return $array;
-    }
-
-    protected function getRelatedObject($node, $className)
-    {
-        $struct_name = (string)$node->indexterm->primary;//'GtkRequisition'
-        $role = (string)$node['role'];//'enum'|'struct'
-        $map = array(
-        );// <------------------------------------------------------------------------
-        $id = trim($struct_name);//glib-Hash-Tables
-
-        //$str = (string)$node->programlisting;
-        switch($role) {
-            case 'typedef':
-                $struct = $this->sourceCode['Glib']->getProto($struct_name);
-                $struct = $this->sourceCode['Glib']->getStruct($struct['type']);
-                if (empty($struct)) {
-                    var_dump('Error: '. $role. ' / '. $struct_name);
-                    return null;
+            $name = '';
+            $description = '';
+            $annotations = [];
+            foreach($row->entry as $entry) {
+                $role = (string)$entry['role'];
+                switch ($role) {
+                    case 'enum_member_name':
+                        $name = (string)$entry->para;
+                        break;
+                    case 'enum_member_description':
+                        $description = $entry->children()->asXml();
+                        break;
+                    case 'enum_member_annotations':
+                        $annotations = (string)$entry;
+                        if (!empty($annotations)) {
+                            //$property = $this->loadEnumConstantAnnoations($row, $class);
+                            echo 'Unimplemented enum annotation'.PHP_EOL;
+                        }
+                        break;
+                    default:
+                        if (!in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
+                            echo 'Unexpected role "'.$role.'" for enum '. $this->current_generator->getName() . PHP_EOL;
+                        }
+                        break;
                 }
-                $struct_name = str_replace('_', '', $struct['name']);
-                $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
-                break;
-            case 'enum':
-                $struct = $this->sourceCode['Glib']->getEnum($struct_name);
-                $struct['name']=$struct_name;
-                $class = $this->package->createRelatedEnum($struct_name, $this->current_generator);
-                $class->setConstants($struct['constants']);
-                break;
-            case 'struct':
-                $struct = $this->sourceCode['Glib']->getStruct($struct_name);
-                if ($struct_name==$className.'Class') {
-                    //$class = $this->current_generator->createVTableClass($struct_name);
-                    $class = $this->getVTable($node, $struct);
-                    $this->current_generator->setVTable($class);
+            }
+
+            $constant = $this->package->createConstant($name, $this->current_generator);
+            $constant->setDescription($description);
+            $constants[$name] = $constant;
+        }
+        if (in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
+            echo 'Documentation of constant enum cairo_svg_unit_t is in description'. PHP_EOL;
+        }
+
+        $enum = $this->sourceCode['Glib']->getEnum($this->current_generator->getName());
+        if ($enum['constants']) {
+            $i = 0;
+            foreach($enum['constants'] as $constant) {
+                if (isset($constant['value'])) {
+                    $i = intval($constant['value']);
+                    $constants[$constant['name']]->setValue($i);
                 } else {
-                    $class = $this->package->createRelatedClass($struct_name, $this->current_generator);
-                    $class->addProperties($this->loadProperties($node, $class));
+                    $constants[$constant['name']]->setValue($i);
                 }
-                break;
-            case 'macro':
-                return null;
-                break;
-            default:
-                echo 'role: ', $role, PHP_EOL;
-                break;
+                $i++;
+            }
+        } else {
+            //$enum = $this->sourceCode['Glib']->getProto($this->current_generator->getName());
+            //var_dump($enum);
+            echo '    Enum "'.$this->current_generator->getName().'"not found in sourceCode'.PHP_EOL;
         }
 
-        $description = $node->para->asXml();
-        //var_dump($description);
-        $class->setDescription($description);
-
-        if (empty($struct))
-            echo '"', $className, '" not found in source', PHP_EOL;
-        else if (!empty($struct['members']))
-            foreach ($struct['members'] as $member) {
-                $property = $class->getProperty($member['name']);
-                if (empty($property)) {
-                    // No Documentation info => get info from decl.txt
-                    $property = new PropertyGenerator($member['name']);
-                    $type = new TypeGenerator($member['type']);
-                    $property->setType($type);
-                    //$property->setPass($member['pass']);
-                    $class->addPropertyFromGenerator($property);
-                }
-            }
-        else
-            echo 'Member not found in '.$struct_name.PHP_EOL;
-
-        return $class;
+        $this->current_generator->setConstants($constants);
     }
-    protected function getVTable($node, array $struct)
-    {
-        // TODO parse DocBook
-        $name = trim ($struct['name'], "_" );
-
-        $vtable = $this->package->createVTable($name);
-        $vtable->setParentGenerator($this->current_generator);
-
-        $i=0;
-        foreach($struct['members'] as $member) {
-            if ('parent_class'==$member['name']) {
-                $vtable->setExtendedClass($member['type']);
-            } else if ('function'==$member['type']) {
-                $funcGenerator = $this->getFunction($member);
-                //$this->current_generator->addVirtualFromGenerator($funcGenerator);
-                $vtable->addMethodFromGenerator($funcGenerator);
-                //$vtable->addPropertyFromGenerator($funcGenerator);
-                if($i++>2)
-                break;
-            } else {
-                //$vtable->addProperty($funcGenerator);// static memeber of $class
-            }
-        }
-
-        return $vtable;
-    }
-
-    protected function getFunction($data)
-    {
-        $function = new MethodGenerator($data['name']); //VirtualGenerator();
-
-        
-        $this->setType($function, $data['signature']['return']);
-
-
-        // TODO variadic parameter( PHP Warning:  Illegal string offset 'name')
-        foreach ($data['signature']['parameters'] as $parameterData) {
-            ///echo $parameterData['name'] , PHP_EOL;
-            if (empty($parameterData['name']) && empty($parameterData['type'])) {
-                echo 'TODO: Assume variadic parameter 2' . PHP_EOL;
-                continue;
-            }
-            if (is_null($parameterData['name']) && 'void' == $parameterData['type']) {
-                // GList *g_list_alloc (void);
-                continue;
-            }
-            $parameter = $this->package->createParameter($parameterData['name']);
-            $parameterType = $this->package->createType($parameterData['type']);
-            //echo $parameterData['type'].', '.$parameterType->getName().PHP_EOL;
-            $parameter->setType($parameterType);
-            if (isset($parameterData['pass'])) {
-                $parameter->setPass($parameterData['pass']);
-            }
-            $function->setParameter($parameter);
-
-            if (isset($typedefs[$parameterData['type']])) {
-                if ('function' == $typedefs[$parameterData['type']]['type']) {
-                    $parameter->setIsCallback();
-                    $parameterType->setIsPrototype(True);
-                    $parameterType->setPrototype($typedefs[$parameterData['type']]['signature']);
-                }
-            }
-        }
-
-        return $function;
-    }
-
-    /**
-     * @param ParameterGenerator|MethodGenerator $generator
-     * @param array $data
-     */
-    protected function setType($generator, $data) {
-        $typeName = $data['type'];
-        
-        $type = $this->package->createType($typeName);
-        $generator->setType($type);
-        if (isset($data['pass'])) {
-            $pass = $data['pass'];
-            $generator->setPass($pass);
-        }
-
-    }
+    
 }

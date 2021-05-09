@@ -36,6 +36,19 @@ class PpGenerator extends CodeGenerator
         return $model;
     }
 
+    function getViewModelEnum($dto):ViewModel
+    {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', '31/12/1999');
+        $licenseModel->setTemplate('license.phtml');
+
+        $model = parent::getViewModel((array)$dto);
+        $model->addChild($licenseModel, 'license');
+        $model->setTemplate('enum.phtml');
+
+        return $model;
+    }
+
 
     function getRenderer():RendererInterface
     {

@@ -34,6 +34,8 @@
 #define PHP_<?php echo $this->nameMacro ?>_RSHUTDOWN_FUNCTION() {\
 }
 
+extern zend_class_entry     *php_<?php echo $this->nameFunction ?>_class_entry;
+
 typedef struct _php_<?php echo $this->nameFunction ?> php_<?php echo $this->nameFunction ?>;
 struct _php_<?php echo $this->nameFunction ?> {
     <?php echo $this->name ?> *ptr;
@@ -41,7 +43,7 @@ struct _php_<?php echo $this->nameFunction ?> {
     zend_object std;
 };
 
-<?php foreach($this->methods as $name=>$method): ?>
+<?php /*foreach($this->methods as $name=>$method): ?>
 <?php echo $method->type ?>php_<?php echo $name ?>(<?php
     $glue = '';
     foreach($method->parameters as $parameter) {
@@ -50,7 +52,7 @@ struct _php_<?php echo $this->nameFunction ?> {
         $glue = ', ';
     }
 ?>);
-<?php endforeach; ?>
+<?php endforeach;*/ ?>
 
 zend_class_entry *php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
 

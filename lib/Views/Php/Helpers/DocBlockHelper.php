@@ -14,7 +14,7 @@ class DocBlockHelper extends AbstractHelper
 
     public function __invoke(MethodGenerator $method)
     {
-        $str_type = $this->getView()->typeHelper($method->getType());
+        $str_type = $this->getView()->typeHelper($method->getParameterReturn()->getType());
         $glue = '';
         $param_type = '';
         foreach($method->getParameters() as $parameter) {

@@ -24,6 +24,7 @@
     "autoload": {
         "psr-4": {
             "Zend\\Ext\\": "lib/",
+            "Zend\\ExtGtk\\": "src/",
             "Zend\\C\\": "src/",
             "Zend\\View\\": "src/"
         }

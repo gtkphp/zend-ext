@@ -1,349 +1,520 @@
+<?php echo $this->license; ?>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+<?php
+foreach($this->includeFiles as $include) {
+echo '#include '.$include.PHP_EOL;
+}
+?>
+
+#include "<?php echo $this->headerFile ?>"
+
+<?php
+foreach($this->dependencies as $dependencie) {
+echo '#include "'.$dependencie.'"'.PHP_EOL;
+}
+?>
+
+
+extern HashTable         classes;
+extern zend_module_entry gtk_module_entry;
+
+
+zend_class_entry     *php_<?php echo $this->nameFunction ?>_class_entry;
+zend_object_handlers  php_<?php echo $this->nameFunction ?>_handlers;
+
+//#define TRACE(format, string, option) php_printf(format, string, option)
+#define TRACE(format, string, option)
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+static const zend_function_entry php_<?php echo $this->nameFunction ?>_methods[] = {
+    PHP_ME(<?php echo $this->nameFunction ?>, __construct, arginfo_<?php echo $this->nameFunction ?>___construct, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+<?php
+/*foreach($this->implementations->handler as $func) {
+    $cb = array($this->implementations, $func);
+    echo call_user_func ($cb);
+    echo PHP_EOL, PHP_EOL;
+}*/
+?>
+
+<?php if(isset($this->vtable)): ?>
+
+
+// for each parent...
+static GtkWidgetClass php_<?php echo $this->nameFunction ?>_klass = {G_TYPE_INVALID};
+
+<?php
+    $this_ns = $this->namespaceHelper($this->name, 1);
+    $this_no = str_replace($this_ns.'_', '', $this->nameclassHelper($this->name, 1));
+
+    $nameFunction = strtolower($this_ns.'_'.$this_no);
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
+
+        echo '// override '.$parent->name.' methods'.PHP_EOL;
+        echo '// -----------------------------------------------------------------------'.PHP_EOL;
+        foreach($vtable->methods as $virtual) {
+
+            echo 'static '.$virtual->type.PHP_EOL;
+            echo 'php_'.$nameFunction.'_override_'.$no.'_'.$virtual->name.'(';
+            $glue = '';
+            foreach($virtual->parameters as $parameter) {
+                echo $glue.$parameter->type.' '.$parameter->name;
+                $glue = ', ';
+            }
+            echo '){'.PHP_EOL;
+            echo '    //TODO: DECL_MACRO();'. PHP_EOL;
+            echo '    //TODO: Implement'. PHP_EOL;
+            echo '}'. PHP_EOL;
+        }
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
+    }
+
+
+?>
+
+static void
+php_<?php echo $this->nameFunction ?>_class_init_override() {
+<?php
+        echo '    ';
+        echo $this->name.'Class *'. $this->abbr .'_klass = g_type_class_peek('.$this_ns.'_TYPE_'. $this_no.');'.PHP_EOL;
+
+        $parent = $this->parent;
+        while($parent) {
+            echo '    ';
+            echo $parent->name.'Class *'. $parent->abbr.'_klass = ';
+            $ns = $this->namespaceHelper($parent->name, 1);
+            $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, 1));
+            echo $ns.'_TYPE_'.$no.'('.$this->abbr.'_klass);'.PHP_EOL;
+
+            $parent= $parent->parent;
+        }
+?>
+
+
+    if (NULL==G_TYPE_FROM_CLASS(&php_<?php echo $this->nameFunction ?>_klass)) {
+        memcpy(&php_<?php echo $this->nameFunction ?>_klass, <?php echo $this->abbr ?>_klass, sizeof(<?php echo $this->vtable->name ?>));
+        G_TYPE_FROM_CLASS(&php_<?php echo $this->nameFunction ?>_klass) = <?php echo $this_ns . '_TYPE_' . $this_no; ?>;
+
 <?php
 
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
 
-    /**
-     * viewer-file.h
-     * ViewerFile *viewer_file_new (void);
-     *
-     * @return string
-     */
-    public function generate_arginfo()
-    {
-        /*
-ZEND_BEGIN_ARG_INFO(name, _unused)
-ZEND_BEGIN_ARG_INFO_EX(name, _unused, return_reference, required_num_args=-1)
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO(name, type, allow_null)
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(name, return_reference=0, required_num_args=-1, type, allow_null)
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO(name, class_name, allow_null)
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(name, return_reference=0, required_num_args=-1, class_name, allow_null)
-
------------------------------
-ZEND_ARG_INFO(pass_by_ref, name)
-ZEND_ARG_PASS_INFO(pass_by_ref)
-ZEND_ARG_OBJ_INFO(pass_by_ref, name, classname, allow_null) <- argument de type zend_object/GObject
-ZEND_ARG_ARRAY_INFO(pass_by_ref, name, allow_null)
-ZEND_ARG_CALLABLE_INFO(pass_by_ref, name, allow_null)
-
-ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
-ZEND_ARG_VARIADIC_INFO(pass_by_ref, name)
-ZEND_ARG_VARIADIC_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
-ZEND_ARG_VARIADIC_OBJ_INFO(pass_by_ref, name, classname, allow_null)
-
-------------------------
-
-ZEND_BEGIN_ARG_INFO(arginfo_gtk_window___construct, 0)
-    //ZEND_ARG_INFO(0, factor)
-    ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, type, IS_LONG, 0, 0)
-ZEND_END_ARG_INFO()
-
-         */
-        $output = '';
-
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-
-        $object = $this->getParentGenerator();
-        $object_ns = str_replace('\\', '_', $object->getNamespaceName());
-        $object_name = str_replace('\\', '_', $object->getName());
-        $name = $object_name;
-        if (!empty($object_ns)) {
-            $name = $object_ns.'_'.$object_name;
+        foreach($vtable->methods as $virtual) {
+            echo '        ';
+            echo $no.'_klass->'.$virtual->name.' = php_'.$this->nameFunction.'_override_'.$no.'_'.$virtual->name.';'. PHP_EOL;
         }
-        $method_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($name));
-
-        $unused = 'NULL';//count($this->parameters);
-        $output .= "ZEND_BEGIN_ARG_INFO(arginfo_{$object_name}_{$method_name}, $unused)" . self::LINE_FEED;
-
-        foreach($this->getParameters() as $parameter) {
-            $output .= $this->getIndentation()
-                    . 'ZEND_ARG_INFO(' . $parameter->generate('arginfo') . ')' . self::LINE_FEED;
-        }
-        $output .= "ZEND_END_ARG_INFO()" . self::LINE_FEED;
-
-        return $output;
-
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
     }
 
-
-    public function generate_PHP_METHOD()
-    {
-        // TIME TO USE Naming\PHPStrategy();
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-
-        $tab = $this->getIndentation();
-        $output = '';
-
-        $obj = $this->getParentGenerator();
-        $object_ns = $camelCaseToUnderscore->filter($obj->getNamespaceName());
-        $object_name = $camelCaseToUnderscore->filter($obj->getName());
-        $name = $object_name;
-        if (!empty($object_ns)) {
-            $name = $object_ns.'_'.$object_name;
-        }
-
-        $method_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-        $parameters = $this->getParameters();
-
-        $output = '';
-        $output .= '/*{{{ */' . self::LINE_FEED;
-
-        $output .= "PHP_METHOD($name, $method_name)" . self::LINE_FEED;
-        $output .= "{" . self::LINE_FEED;
-
-        // TODO: hook PHP_METHOD declaration
-
-        $num = count($parameters);
-        if ($num) {
-            $min_num_args=$num;
-            $max_num_args=$num;
-            foreach($parameters as $parameter) {
-                if ($parameter->isOptional())
-                    $min_num_args--;
-            }
-            $output .= $tab. "ZEND_PARSE_PARAMETERS_START($min_num_args, $max_num_args)" . self::LINE_FEED;
-            foreach($parameters as $parameter) {
-                if ($parameter->isOptional()) {
-                    $output .= $tab. $tab . 'Z_PARAM_OPTIONAL' . self::LINE_FEED;
-                }
-                $output .= $tab. $tab;
-                $name = $parameter->getName();
-                $type = strtoupper($parameter->getType()->getName());
-                $output .= "Z_PARAM_$type($name)";
-                $output .= self::LINE_FEED;
-            }
-            $output .= $tab. "ZEND_PARSE_PARAMETERS_END();" . self::LINE_FEED;
-            $output .= self::LINE_FEED;
-
-
-            $output .= $tab. "if (ZEND_NUM_ARGS() > 0) {" . self::LINE_FEED;
-            foreach($parameters as $parameter) {
-                $output .= $tab. $tab;
-                $name = $parameter->getName();
-                $type = $parameter->getType()->getName();
-                //TODO converte it to zend_property_type
-                $output .= "zend_update_property_$type(";
-                $output .= 'Z_OBJCE_P(ZEND_THIS), Z_OBJ_P(ZEND_THIS),'. self::LINE_FEED;
-                $output .= $tab. $tab. $tab;
-                $output .= "\"$name\", sizeof(\"$name\")-1, $name";
-                $output .= ');' . self::LINE_FEED;
-
-                $output .= self::LINE_FEED;
-            }
-            $output .= $tab. "}" . self::LINE_FEED;
-        }
-
-        // TODO: hook PHP_METHOD implementation
-
-        $output .= "} ";
-        $output .= '/*}}} */' . self::LINE_FEED;
-
-        $output .= self::LINE_FEED;
-        return $output;
+?>
     }
-    /**
-     * viewer-file.h
-     * ViewerFile *viewer_file_new (void);
-     *
-     * @return string
-     */
-    public function generate_me()
-    {
-        /*
-    PHP_ME(Gtk_Window,
-        __construct,
-        arginfo_gtk_window___construct,
-        ZEND_ACC_PUBLIC)
-         */
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
+}
 
-        $object = $this->getParentGenerator();
-        $object_ns = str_replace('\\', '_', $object->getNamespaceName());
-        $object_name = str_replace('\\', '_', $object->getName());
-        $name = $object_name;
-        if (!empty($object_ns)) {
-            $name = $object_ns.'_'.$object_name;
-        }
+<?php endif;/*isset($this->vtable)*/ ?>
 
-        $method_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($name));
 
-        $visibility = array(
-            AbstractGenerator::VISIBILITY_PUBLIC=>"ZEND_ACC_PUBLIC",
-            AbstractGenerator::VISIBILITY_PROTECTED=>"ZEND_ACC_PROTECTED",
-            AbstractGenerator::VISIBILITY_PRIVATE=>"ZEND_ACC_PRIVATE",
-        );
-        $access = $visibility[$this->getVisibility()];
+/* {{{ php_<?php echo $this->nameFunction ?>_create_object */
+static zend_object*
+php_<?php echo $this->nameFunction ?>_create_object(zend_class_entry *class_type)
+{
+    php_<?php echo $this->nameFunction ?> *intern = ecalloc(1, sizeof(php_<?php echo $this->nameFunction ?>) + zend_object_properties_size(class_type));
 
-        return "PHP_ME($name, $method_name, arginfo_{$object_name}_{$method_name}, $access)";
+    zend_object_std_init(&intern->std, class_type);
+    object_properties_init(&intern->std, class_type);
+
+    intern->ptr = NULL;
+
+    intern->std.handlers = &php_<?php echo $this->nameFunction ?>_handlers;
+
+    TRACE("php_<?php echo $this->nameFunction ?>_create_object(%p) / %d\n", &intern->std, intern->std.gc.refcount);
+    return &intern->std;
+}
+/* }}} php_<?php echo $this->nameFunction ?>_create_object */
+
+
+static void
+php_<?php echo $this->nameFunction ?>_dtor_object(zend_object *obj) {
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(obj);
+
+}
+
+/* {{{ php_<?php echo $this->nameFunction ?>_free_object */
+static void
+php_<?php echo $this->nameFunction ?>_free_object(zend_object *object)
+{
+    php_<?php echo $this->nameFunction ?> *intern = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(object);
+    TRACE("php_<?php echo $this->nameFunction ?>_free_object(\e[1;31m\"%s\"\e[0;m) / %d\n", intern->data.value.str->val, object->gc.refcount);
+
+    if (intern->ptr!=NULL) {
+        efree(intern->ptr);
     }
-        /**
-     * viewer-file.h
-     * ViewerFile *viewer_file_new (void);
-     *
-     * @return string
-     */
-    public function generateHeader()
-    {
-        $output = '';// const unsigned char *argv[]
-        $tab = str_repeat($this->getIndentation(), 1);
+    /* Used for print_r((array)my_class); get_properties
+    if (intern->properties!=NULL) {
+        zend_hash_destroy(intern->properties);
+        efree(intern->properties);
+        intern->properties=NULL;
+    }
+    */
 
-        $naming = new Naming\GnomeStrategy();
-        $function_name = $naming->generateFunctionName($this);
-        $type_name = $naming->generateTypeName($this->getParentGenerator());
+    zend_object_std_dtor(&intern->std);
+    //efree(intern);
+}
+/* }}} php_<?php echo $this->nameFunction ?>_free_object */
 
-        $output .= $this->getType() . self::LINE_FEED;
-        $output .= $function_name . '(';
-        $output .= $type_name . '* self';
+<?php if (true) : ?>
+
+<?php include ('handler.phtml'); ?>
+
+<?php endif; ?>
+
+
+
+static void
+php_<?php echo $this->nameFunction ?>_unset_property(zval *object, zval *member, void **cache_slot) {
+    php_<?php echo $this->nameFunction ?> *obj = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    zend_string *member_str = zval_get_string(member);
+    php_printf("%s(%s)\n", __FUNCTION__, member->value.str->val);
+
+    zend_object_handlers *std_hnd = zend_get_std_object_handlers();
+    std_hnd->unset_property(object, member, cache_slot);
+
+    zend_string_release(member_str);
+}
+
+<?php if (false): ?>
+
+static HashTable*
+php_<?php echo $this->nameFunction ?>_get_debug_info(zval *object, int *is_temp) /* {{{ */
+{
+    php_<?php echo $this->nameFunction ?>  *obj =  ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    HashTable   *debug_info,
+    *std_props;
+    zend_string *string_key = NULL;
+    zval *value;
+
+    *is_temp = 1;
+    std_props = zend_std_get_properties(object);
+    debug_info = zend_array_dup(std_props);
+
+
+    ZEND_HASH_FOREACH_STR_KEY_VAL(obj->std.properties, string_key, value) {
+        zend_hash_add(debug_info, string_key, value);
+    } ZEND_HASH_FOREACH_END();
+
+
+    zval data; ZVAL_COPY(&data, &obj->data);
+    zend_hash_str_update(debug_info, "data", 4, &data);
+
+    zval child; ZVAL_SET_PHP_<?php echo $this->nameMacro ?>(&child, obj->child);
+    zend_hash_str_update(debug_info, "child", 5, &child);
+
+    zval parent; ZVAL_SET_PHP_<?php echo $this->nameMacro ?>(&parent, obj->parent);
+    zend_hash_str_update(debug_info, "parent", 6, &parent);
+
+    return debug_info;
+}
+/* }}} */
+<?php endif; ?>
+
+static HashTable*
+php_<?php echo $this->nameFunction ?>_get_properties(zval *object){
+    php_<?php echo $this->nameFunction ?>  *self =  ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    HashTable *props = NULL;
+#if 0
+    HashTable *props = self->properties;
+    if (props==NULL) {
+        ALLOC_HASHTABLE(self->properties);
+        props = self->properties;
+    } else {
+        // TODO: rebuild the props( update)
+        return props;// Else leaks : zend_hash_next_index_insert
+    }
+
+    zend_long length = php_<?php echo $this->nameFunction ?>_length(self);
+
+    zend_hash_init(props, length, NULL, ZVAL_PTR_DTOR, 1);
+
+    zval data;
+
+    php_<?php echo $this->nameFunction ?> *it;
+    for(it=php_<?php echo $this->nameFunction ?>_first(self); it; it = it->child){
+        ZVAL_COPY(&data, &it->data);
+        zend_hash_next_index_insert(props, &data);
+    }
+#endif
+    return props;
+}
+
+
+static int
+php_<?php echo $this->nameFunction ?>_cast_object(zval *readobj, zval *retval, int type)
+{
+    ZVAL_NULL(retval);
+
+    return FAILURE;
+}
+
+
+/* updates *count to hold the number of elements present and returns SUCCESS.
+* Returns FAILURE if the object does not have any sense of overloaded dimensions */
+static int
+php_<?php echo $this->nameFunction ?>_count_elements(zval *object, zend_long *count) {
+
+    *count = 0;//php_<?php echo $this->nameFunction ?>_length(ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object));
+
+    return SUCCESS;
+}
+
+static int
+php_<?php echo $this->nameFunction ?>_has_dimension(zval *object, zval *member, int check_empty) {
+    //return FAILURE;
+    return SUCCESS;
+}
+
+static zval*
+php_<?php echo $this->nameFunction ?>_read_dimension(zval *object, zval *offset, int type, zval *rv) /* {{{ */
+{
+    if (!offset) {
+    return NULL;
+    }
+#if 0
+    php_<?php echo $this->nameFunction ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameMacro ?>(object);
+    php_<?php echo $this->nameFunction ?> *list;
+    void *cache=NULL;
+
+    if (Z_TYPE_P(offset)==IS_LONG) {
+        list = php_<?php echo $this->nameFunction ?>_nth(intern, offset->value.lval);
+        if (list) {
+            ZVAL_COPY(rv, &list->data);
+        } else {
+            ZVAL_NULL(rv);
+            zend_error(E_USER_WARNING, "Undefined offset: %d", offset->value.lval);
+        }
+        return rv;
+    } else if (Z_TYPE_P(offset)==IS_STRING) {
+        return php_<?php echo $this->nameFunction ?>_read_property(object, offset, type, &cache, rv);
+    } else {
+        // error
+    }
+#endif
+    return rv;
+} /* }}} end php_g_hash_table_read_dimension */
+
+
+static void
+php_<?php echo $this->nameFunction ?>_write_dimension(zval *object, zval *offset, zval *value)
+{
+    void *cache = NULL;
+    zval member;
+    ZVAL_COPY(&member, offset);
+    php_<?php echo $this->nameFunction ?>_write_property(object, &member, value, &cache);
+}
+
+static void
+php_<?php echo $this->nameFunction ?>_unset_dimension(zval *object, zval *offset) {
+    //php_g_list *list = ZVAL_GET_PHP_G_LIST(object);
+    void *cache;
+
+    switch(Z_TYPE_P(offset)) {
+    case IS_LONG:
+    // @TODO
+    //zend_hash_index_del(list->prop_handler, );
+    // php_g_list
+    break;
+    case IS_STRING:
+        php_<?php echo $this->nameFunction ?>_unset_property(object, offset, &cache);
+    break;
+    default:
+    break;
+    }
+}
+
+
+static zend_object_handlers*
+php_<?php echo $this->nameFunction ?>_get_handlers()
+{
+    memcpy(&php_<?php echo $this->nameFunction ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    php_<?php echo $this->nameFunction ?>_handlers.offset = PHP_<?php echo $this->nameMacro ?>_OFFSET;
+    //php_<?php echo $this->nameFunction ?>_handlers.clone_obj;
+    //php_<?php echo $this->nameFunction ?>_handlers.compare;
+    //php_<?php echo $this->nameFunction ?>_handlers.compare_objects;
+    //php_<?php echo $this->nameFunction ?>_handlers.get_constructor;
+    php_<?php echo $this->nameFunction ?>_handlers.dtor_obj = php_<?php echo $this->nameFunction ?>_dtor_object;
+    php_<?php echo $this->nameFunction ?>_handlers.free_obj = php_<?php echo $this->nameFunction ?>_free_object;
+    php_<?php echo $this->nameFunction ?>_handlers.read_property = php_<?php echo $this->nameFunction ?>_read_property;
+    php_<?php echo $this->nameFunction ?>_handlers.write_property = php_<?php echo $this->nameFunction ?>_write_property;
+    php_<?php echo $this->nameFunction ?>_handlers.unset_property = php_<?php echo $this->nameFunction ?>_unset_property;
+    //php_<?php echo $this->nameFunction ?>_handlers.get_property_ptr_ptr = php_<?php echo $this->nameFunction ?>_get_property_ptr_ptr;
+
+    php_<?php echo $this->nameFunction ?>_handlers.get_debug_info = php_<?php echo $this->nameFunction ?>_get_debug_info;
+    php_<?php echo $this->nameFunction ?>_handlers.get_properties = php_<?php echo $this->nameFunction ?>_get_properties;//get_properties_for TODO php 8.0
+    //php_<?php echo $this->nameFunction ?>_handlers.set = php_<?php echo $this->nameFunction ?>_set;
+    php_<?php echo $this->nameFunction ?>_handlers.cast_object = php_<?php echo $this->nameFunction ?>_cast_object;
+
+    php_<?php echo $this->nameFunction ?>_handlers.count_elements = php_<?php echo $this->nameFunction ?>_count_elements;
+    php_<?php echo $this->nameFunction ?>_handlers.has_dimension = php_<?php echo $this->nameFunction ?>_has_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.read_dimension = php_<?php echo $this->nameFunction ?>_read_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.unset_dimension = php_<?php echo $this->nameFunction ?>_unset_dimension;
+    php_<?php echo $this->nameFunction ?>_handlers.write_dimension = php_<?php echo $this->nameFunction ?>_write_dimension;
+
+
+    return &php_<?php echo $this->nameFunction ?>_handlers;
+}
+
+
+
+/*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+/*{{{ php_<?php echo $this->nameFunction ?>_class_init */
+zend_class_entry*
+php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+    php_<?php echo $this->nameFunction ?>_get_handlers();
+    PHP_GTK_INIT_CLASS_ENTRY((*container_ce), "<?php echo $this->nameType ?>", php_<?php echo $this->nameFunction ?>_methods);
+    php_<?php echo $this->nameFunction ?>_class_entry = zend_register_internal_class_ex(container_ce, parent_ce);
+    php_<?php echo $this->nameFunction ?>_class_entry->create_object = php_<?php echo $this->nameFunction ?>_create_object;
+    //ce->serialize;
+    /*
+    zend_hash_init(&php_<?php echo $this->nameFunction ?>_prop_handlers, 0, NULL, php_<?php echo $this->nameFunction ?>_dtor_prop_handler, 1);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "prev", sizeof("prev")-1, php_<?php echo $this->nameFunction ?>_read_prev, php_<?php echo $this->nameFunction ?>_write_prev);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "data", sizeof("data")-1, php_<?php echo $this->nameFunction ?>_read_data, php_<?php echo $this->nameFunction ?>_write_data);
+    php_<?php echo $this->nameFunction ?>_register_prop_handler(&php_<?php echo $this->nameFunction ?>_prop_handlers, "next", sizeof("next")-1, php_<?php echo $this->nameFunction ?>_read_next, php_<?php echo $this->nameFunction ?>_write_next);
+    zend_hash_add_ptr(&classes, ce->name, &php_<?php echo $this->nameFunction ?>_prop_handlers);
+    */
+<?php foreach($this->relationships as $relationship):
+
+if ($relationship instanceof Zend\Ext\Views\C\EnumDto) {
+    foreach($relationship->constants as $constant) {
+        echo '    ';
+        echo 'zend_register_long_constant("'.$constant['name'].'", sizeof("'.$constant['name'].'")-1,'.PHP_EOL;
+        echo '        '.$constant['name'].', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);'.PHP_EOL;
+    }
+    echo PHP_EOL;
+}
+
+endforeach; ?>
+
+    return php_<?php echo $this->nameFunction ?>_class_entry;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+<?php
+foreach($this->implementations->require as $func) {
+    $cb = array($this->implementations, $func);
+    echo call_user_func ($cb);
+    echo PHP_EOL, PHP_EOL;
+}
+?>
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+ <?php if(false): ?>
+<?php foreach($this->methods as $name=>$method): ?>
+<?php echo $method->type ?>
+
+php_<?php echo $method->name ?>(<?php
+    $glue = '';
+    foreach($method->parameters as $parameter) {
+        echo $glue.$parameter->type;
+        echo $parameter->name;
         $glue = ', ';
-        foreach ($this->parameters as $parameter) {
-            $output .= $glue . $parameter->generate('header');
-        }
-        $output .= ', GError **error';
-        $output .= ');' . self::LINE_FEED;
-
-        return $output;
     }
-
-    /**
-     * void (*open) (ViewerFile  *self, GError **error);
-     * @return string
-     */
-    public function generateHeaderBoiler()
-    {
-        $output = '';// const unsigned char *argv[]
-
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
-
-        $output .= $this->getType() . ' ';
-        $output .= '(*' . $object_name . ') (';
-        $output .= $this->getObjectName() . '* self';
-        $glue = ', ';
-        for ($i=0; $i<count($this->parameters); $i++) {
-            $parameter = $this->parameters[$i];
-            $output .= $glue . $parameter->generate();
-        }
-        $output .= ');' . self::LINE_FEED;
-
-        return $output;
+?>) {
+<?php
+    $cb = array($this->implementations, 'php_'.$method->name);
+    if (is_callable($cb)) {
+        echo call_user_func ( $cb);
+    } else {
+        echo '    // TODO: implementation';
     }
+?>
 
-    /**
-     * @return string
-     */
-    public function generateSourceBoiler()
-    {
-        $output = '';// const unsigned char *argv[]
-        $tab = $this->getIndentation();
-        /*
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-        $stringToUpper = new \Zend\Filter\StringToUpper();
+}
 
-        $objectClass;// DomNodeClass
-        $objectCheck;// DOM_IS_NODE
-        $objectCast;//DOM_NODE
-        */
+<?php endforeach; ?>
+<?php endif; ?>
 
-        $output .= $this->getType() . self::LINE_FEED;
-        $namespaceName = $this->getParentGenerator()->getNamespaceName();
-        $objectSimpleName = $this->getParentGenerator()->getName();
-        $objectName = $this->getObjectName();
-        $camelCaseToUnderscore = new \Zend\Filter\Word\CamelCaseToUnderscore();
-        $stringToLower = new \Zend\Filter\StringToLower();
-        $stringToUpper = new \Zend\Filter\StringToUpper();
-        $object_name = $stringToLower->filter($camelCaseToUnderscore->filter($objectName));
-        $OBJECT_NAME = $stringToUpper->filter($camelCaseToUnderscore->filter($objectName));
-        $objectIsName = $stringToUpper->filter($camelCaseToUnderscore->filter($namespaceName));
-        $objectIsName .= '_SI_' . $stringToUpper->filter($camelCaseToUnderscore->filter($objectSimpleName));
-        $method_name = $stringToLower->filter($camelCaseToUnderscore->filter($this->getName()));
 
-        $output .= $object_name . '_';
-        $output .= $stringToLower->filter($camelCaseToUnderscore->filter($this->getName())) . '(';
-        $output .= $this->getObjectName() . '* self';
-        $glue = ', ';
-        for ($i=0; $i<count($this->parameters); $i++) {
-            $parameter = $this->parameters[$i];
-            $output .= $glue . $parameter->generate('source');
-        }
-        $output .= ', GError **error';
-        $output .= ') {' . self::LINE_FEED;
-        $output .= $tab . $this->getObjectName() . 'Class *klass;' . self::LINE_FEED;
-        $output .= $tab . self::LINE_FEED;
-        $output .= $tab . 'g_return_if_fail(' . $objectIsName . '(self));' . self::LINE_FEED;
-        $output .= $tab . 'g_return_if_fail (error == NULL || *error == NULL);' . self::LINE_FEED;
-        $output .= $tab . self::LINE_FEED;
-        $output .= $tab . 'klass = ' . $OBJECT_NAME . '_GET_CLASS (self);' . self::LINE_FEED;
-        $output .= $tab . self::LINE_FEED;
-        $output .= $tab . 'g_return_if_fail (klass->' . $method_name . ' != NULL);' . self::LINE_FEED;
-        $output .= $tab . 'return klass->' . $method_name . ' (self, error);' . self::LINE_FEED;
-        $output .= '}' . self::LINE_FEED;
 
-        return $output;
-    }
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
 
-    /**
-     * @return string
-     */
-    public function generateSource()
-    {
-        $output = '';// const unsigned char *argv[]
-        $tab = str_repeat($this->getIndentation(), 1);
+/* {{{ <?php echo $this->nameType ?>::__construct() */
+PHP_METHOD(<?php echo $this->nameFunction ?>, __construct)
+{
+    zval *data=NULL;
 
-        $naming = new Naming\GnomeStrategy();
-        $function_name = $naming->generateFunctionName($this);
-        $type_name = $naming->generateTypeName($this->getParentGenerator());
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(data)
+    ZEND_PARSE_PARAMETERS_END();
 
-        $output .= 'static ';
-        $output .= $this->getType() . self::LINE_FEED;
-        $output .= $function_name . '(';
-        $output .= $type_name . '* self';
-        $glue = ', ';
-        foreach ($this->parameters as $parameter) {
-            $output .= $glue . $parameter->generate('source');
-        }
-        $output .= ', GError **error';
-        $output .= ') {' . self::LINE_FEED;
-        $output .= '}' . self::LINE_FEED;
+    zend_object *zobj = Z_OBJ_P(getThis());
+    php_<?php echo $this->nameFunction ?> *self = ZOBJ_TO_PHP_<?php echo $this->nameMacro ?>(zobj);
 
-        return $output;
-    }
+    self->ptr = emalloc(sizeof(<?php echo $this->nameType ?>));
 
-    /**
-     * @return string
-     */
-    public function generate($scope)
-    {
-        return parent::generate($scope);
+}
+/* }}} */
 
-        switch ($scope) {
-            case 'header':
-                return $this->generateHeader();
-                break;
-            case 'source':
-                return $this->generateSource();
-            default:
-                break;
-        }
-        //echo $this->generateHeaderBoiler() . PHP_EOL;
-        //echo $this->generateSourceBoiler() . PHP_EOL;
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
 
-/*
-        if ($this->getQualifier()!=null) {
-            $output .= $this->getQualifier() . ' ';
-        }
-        if ($this->getModifier()!=null) {
-            $output .= $this->getModifier() . ' ';
-        }
-        if ($this->getPass()!=null) {
-            $output .= $this->getPass();
-        }
-*/
-        return '';
-    }
+<?php foreach($this->methods as $name=>$method): ?>
+/* {{{ <?php echo $method->docblock ?> */
+PHP_FUNCTION(<?php echo $name ?>)
+{
+<?php echo $method->args.PHP_EOL; ?>
+<?php echo $method->call.PHP_EOL; ?>
+<?php echo $method->return.PHP_EOL; ?>
+}/* }}} */
+
+<?php endforeach; ?>
+
+ <?php
+ /*----------------------------------------------------------------------+
+ | RELATED                                                              |
+ +----------------------------------------------------------------------*/
+
+ /* foreach($this->relationships as $relationship):
+
+$model = new \Zend\View\Model\ViewModel((array)$relationship);
+$model->setTemplate('handler.phtml');
+echo $this->render($model);
+
+endforeach; */ ?>
