@@ -19,7 +19,7 @@ class CallHelper extends AbstractHelper
     }
     protected function isEnum($type, $package) {
         $name = $type->getName();
-        $objects = $package->getListTypeEnum();
+        $objects = $package->getPackage()->getListTypeEnum();
         return isset($objects[$name]);
     }
     
@@ -46,7 +46,7 @@ class CallHelper extends AbstractHelper
         }
 
         //$impl = new Implementation::Factory($method->getOwnPackage()->getName());
-        $impl = Implementation::Factory($method->getOwnPackage()->getName());
+        $impl = Implementation::Factory($method->getOwnPackage()->getOwnPackage()->getName());
 
         $class = $method->getParentGenerator();
         if ($class) {
@@ -70,13 +70,18 @@ class CallHelper extends AbstractHelper
             $output .= '    '.$method->getName() .'(';
             $glue='';
             foreach($method->getParameters() as $parameter) {
+                $is_deref = $parameter->isDeref();
                 switch ($parameter->getType()->getPrimitiveType()) {
                     case TypeGenerator::PRIMITIVE_FLOAT:
                     case TypeGenerator::PRIMITIVE_DOUBLE:
                     case TypeGenerator::PRIMITIVE_LONG:
                     case TypeGenerator::PRIMITIVE_INT:
                     case TypeGenerator::PRIMITIVE_CHAR:
-                        $output .= $glue.$parameter->getName();
+                        if ($is_deref) {
+                            $output .= $glue.'&'.$parameter->getName();
+                        } else {
+                            $output .= $glue.$parameter->getName();
+                        }
                         break;
                     default:
                         if ('...'==$parameter->getName()) {
@@ -123,6 +128,7 @@ class CallHelper extends AbstractHelper
             }
             $output .= ');'.PHP_EOL;
 
+            /*
             if ($this->isEnum($methodType, $method->getOwnPackage())) {
                 $output .= '    RETURN_LONG(ret);'.PHP_EOL;
             } elseif ($methodType->isPrimitive()) {
@@ -162,6 +168,7 @@ class CallHelper extends AbstractHelper
                 $output .= '        RETURN_NULL();'.PHP_EOL;
                 $output .= '    }'.PHP_EOL;
             }
+            */
         }
         return $output;
     }

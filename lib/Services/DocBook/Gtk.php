@@ -16,9 +16,11 @@ use Zend\Ext\Models\UnionGenerator;
 use Zend\Ext\Models\VarGenerator;
 use Zend\Ext\Models\ConstantGenerator;
 
+use Zend\Ext\Models\FunctionGenerator;
 use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\PropertyGenerator;
 use Zend\Ext\Models\TagGenerator;
+use Zend\Ext\Models\AnnotationGenerator;
 
 use Zend\Ext\Services\DocBook;
 
@@ -27,7 +29,8 @@ class Gtk extends DocBook
 {
     public $blacklist = array();
     public $remap = array();
-    
+    public $remap_function=array();
+
     /**
      * @var PackageGenerator
      */
@@ -66,6 +69,53 @@ class Gtk extends DocBook
                 return $this->package;
             }
             $this->package = $this->loadParts($this->filename);
+
+
+            /** */
+            foreach($this->package->subpackage as $subpackage) {
+                //echo $subpackage->getName().PHP_EOL;
+                foreach($subpackage->subpackage as $package) {
+                    //echo '  '.$package->getName().PHP_EOL;
+                    foreach($package->children as $fileGenerator) {
+                        //echo '    '.$fileGenerator->getName().PHP_EOL;
+                        $types = array();
+                        foreach($fileGenerator->children as $child) {
+                            /** */
+                            if ($child instanceof FunctionGenerator) {
+                                $parameters = $child->getParameters();
+                                foreach($parameters as $parameter) {
+                                    if (!$parameter->getType()->isPrimitive()) {
+                                        $types[$parameter->getType()->getName()] = 1;
+
+                                    }
+                                }
+                                if (!$child->getParameterReturn()->getType()->isPrimitive()) {
+                                    $types[$child->getParameterReturn()->getType()->getName()] = 1;
+                                }
+                            } else {
+                                $types[$child->getName()] = 1;
+                            }
+                            /** */
+                        }
+                        $master = $fileGenerator->getMatserObject();
+                        if ($master) {
+                            $master_name = $master->getName();
+                            echo $master_name . ' : ' . PHP_EOL;
+                            unset($types['cairo_bool_t']);
+                            unset($types['cairo_user_data_key_t']);
+                            unset($types['cairo_destroy_func_t']);
+                            unset($types[$master_name]);
+                            ///print_r($types);
+   
+                            $master->dependencies = $types;
+                        } else {
+                            echo 'No master object in '.$fileGenerator->getName() . PHP_EOL;
+                        }
+                    }
+                }
+            }
+            /** */
+
             return $this->package;
         }
         // TODO
@@ -129,11 +179,12 @@ class Gtk extends DocBook
                     }
                 }
                 $package = $this->package->createPackage($group_id);
+                $package->setIsModule();
                 $package->doc_files = $files;
                 $package->setDescription($group_title);
                 $this->setWhitelist($whitelist);
                 $this->current_generator = $package;
-                $this->loadPackage($package);
+                $this->loadPackage($package);// TODO: refactor : pass $files
                 $this->current_generator = $this->package;
 
             }
@@ -189,6 +240,9 @@ class Gtk extends DocBook
             $doc->load($filename);
             $this->loadChapter($doc->documentElement);
         }
+
+        // TODO foreach package as recursive; get functions and put it in Class
+        // cairo_create(Surface); => $cr = $surface->cairoCreate();
     }
 
     /**
@@ -266,6 +320,46 @@ class Gtk extends DocBook
                 }
             }
         }
+
+
+        // TODO: mettre aussi les function dans $root->children
+        //echo $this->package->getName().PHP_EOL;
+        foreach($this->package->subpackage as $subpackage) {
+            //echo $subpackage->getName().PHP_EOL;
+            foreach($subpackage->subpackage as $package) {
+                //echo '  '.$package->getName().PHP_EOL;
+                foreach($package->children as $fileGenerator) {
+                    //echo '    '.$fileGenerator->getName().PHP_EOL;
+                    foreach($fileGenerator->children as $child) {
+                        /** */
+                        if ($child instanceof FunctionGenerator) {
+                            if (isset($this->remap_function[$child->getName()])) {
+                                $link_name = $this->remap_function[$child->getName()];
+                                $link_object = $fileGenerator->getPackage()->getSymbol($link_name);
+                                $link_object->relateds[$child->getName()] = $child;
+                                $child->setParentGenerator($link_object);
+                                $child->isClassified = true;
+                                continue;
+                            }
+                            $parameters = $child->getParameters();
+                            if (count($parameters)) {
+                                $first = current($parameters);
+                                $type_name = $first->getType()->getName();
+                                $link_object = $fileGenerator->getPackage()->getSymbol($type_name);
+                                if ($link_object) {
+                                    $child->isClassified = true;
+                                    $link_object->relateds[$child->getName()] = $child;
+                                    $child->setParentGenerator($link_object);
+                                    continue;
+                                }
+                            }
+                        }
+                        /**/
+                    }
+                }
+            }
+        }
+
         $this->current_generator = $group_package;
     }
 
@@ -291,7 +385,24 @@ class Gtk extends DocBook
 
         if($this->isAllowed($id, $id_ref)) {
 
-            echo 'Process::', $filename, PHP_EOL;
+            echo "\e[1;32m".'Process'."\e[0m : ".$filename . PHP_EOL;
+            /**
+             * @var FileGenerator $fileGenerator
+             */
+            $fileGenerator = $current_generator->createFile(basename($filename));
+            $current_generator->children[]=$fileGenerator;
+            $this->current_generator = $fileGenerator;
+
+            //$id = (string)$xml['id'];
+            //$refpurpose = (string)$xml->refnamediv[0]->refpurpose;
+            $refname = (string)$xml->refnamediv[0]->refname;
+            //$refentrytitle = (string)$xml->refmeta[0]->refentrytitle;
+            $name = $refname;
+            if (isset($this->remap[$id_ref])) {
+                $name = $this->remap[$id_ref];
+            }
+            $this->major_name = $name;
+
             $class = null;
             $methods = [];
 
@@ -343,7 +454,14 @@ class Gtk extends DocBook
                         break;
                 }
             }
-            $class->addMethods($methods);
+            // FileGenerator->addFunctions($methods);
+            // FileGenerator->addClass($methods);
+            //  class->addMethods($methods);
+            //if ($class)
+            //    $class->addMethods($methods);// Transformations ?
+            // cairo_translate(cr);
+            // 
+            // we can create the Class because all reference are not defined yet.
         }
         // $package->addBoxed($class);
         // $package->addFunction($class);
@@ -391,15 +509,35 @@ class Gtk extends DocBook
     protected function getDescription(SimpleXMLElement $xml){
     }
 
+    protected function getAnnotations(SimpleXMLElement $xml){
+        $annotations=[];
+        $nodes = $xml->xpath("emphasis/acronym");
+        foreach($nodes as $node) {
+            $acronym = (string)$node;
+            $annotation = AnnotationGenerator::Factory($acronym);
+            if ($annotation) {
+                $annotations[] = $annotation;
+            }
+        }
+        return $annotations;
+    }
+
     protected function getFunctionsDetails(SimpleXMLElement $xml){
-        $generator = $this->current_generator;
+        $generator = $this->current_generator;//FileGenerator
         $package = $generator->getPackage();
+        $module = $generator->getModulePackage();
         $methods = [];
 
         $id = (string)$xml['id'];
         $nodes = $xml->xpath("refsect1[@id='$id.functions_details']/refsect2");
         foreach($nodes as $node) {
             $function_id = $node['id'];
+            $role = $node['role'];// 'function'
+            if ('macro'==$role) {
+                echo "Skip $id.functions_details( $function_id)\n";
+                continue;
+            }
+
             $function_name = (string)$node->indexterm[0]->primary;
 
             $signature = $this->sourceCode['Glib']->getFunction($function_name);
@@ -417,13 +555,24 @@ class Gtk extends DocBook
     
             }
 
-            
+            /**
+             * @var MethodGenerator
+             */
             $method = $package->createMethod($function_name);
             $method->setOwnPackage($generator->getOwnPackage());
-            $parameters = [];
             
-            // programlisting :
-            
+            // Hack : bad documentation
+            $signature_function = $this->sourceCode['Glib']->getFunction($function_name);
+            if ($signature_function) {
+                foreach($signature_function['signature']['parameters'] as $param) {
+                    if (empty($param['name'])) {
+                        continue;
+                    }
+                    $parameter = $package->createParameter($param['name']);
+                    $parameter->setType($package->createType($param['type']));
+                    $method->setParameter($parameter);
+                }
+            }
 
             // Description :
             $description = '';
@@ -460,21 +609,26 @@ class Gtk extends DocBook
                                 $parameter_description = (string)$entry->asXml();
                                 break;
                             case 'parameter_annotations':
-                                $parameter_annotations = [];
+                                $parameter_annotations = $this->getAnnotations($entry);
                                 break;
                         }
                     }
 
-                    $parameter = $package->createParameter($parameter_name);
-                    $parameter->setDescription($parameter_description);
+                    $parameter = $method->getParameter($parameter_name);
+                    //$parameter = $package->createParameter($parameter_name);
+                    if(empty($parameter)) {
+                        echo "Unexpected error parameter\n";
+                    } else {
+                        $parameter->setDescription($parameter_description);
+                        $parameter->setAnnotations($parameter_annotations);
+                    }
 
-                    $param_type = $package->createType($signature['signature']['parameters'][$parameter_name]['type']);
-                    $parameter->setType($param_type);
+                    //$param_type = $package->createType($signature['signature']['parameters'][$parameter_name]['type']);
+                    //$parameter->setType($param_type);
 
-                    $parameters[] = $parameter;
                 }
             }
-            $method->setParameters($parameters);
+
             
             // Returns :
             $parameter_return = $package->createParameter('Returns');
@@ -494,6 +648,7 @@ class Gtk extends DocBook
 
             $method->setParameterReturn($parameter_return);
 
+            $generator->children[$function_name] = $method;
             $methods[] = $method;
         }
 
@@ -511,11 +666,33 @@ class Gtk extends DocBook
 
     }
     protected function getOtherDetails(SimpleXMLElement $xml){
-        $package = $this->current_generator;
+        $generator = $this->current_generator;// FileGenerator
+        $package = $generator->getOwnPackage();// PackageGenerator
 
         $id = (string)$xml['id'];
         //cairo-Paths.other_details
+        /*
         $refpurpose = (string)$xml->refnamediv[0]->refpurpose;
+        $refname = (string)$xml->refnamediv[0]->refname;
+        $refentrytitle = (string)$xml->refmeta[0]->refentrytitle;
+
+        $name = $refname;
+        if (isset($this->remap[$id])) {
+            $name = $this->remap[$id];
+        }
+        $this->major_name = $name;
+        */
+        
+
+        ///echo "\e[1;31m".$package->getOwnPackage()->getName()."\e[0m";
+        //echo " \e[1;32m".$refpurpose."\e[0m";
+        //echo " \e[1;33m".$name."\e[0m" . PHP_EOL;
+        ///echo "::\e[1;34m".$name."\e[0m" . PHP_EOL;
+
+        // $name = 'cairo_path_t' <= id="cairo-Paths"/cairo-paths.xml
+        // namespace == cairo
+        //$fileGenerator = $package->loadFileGenerator('php_cairo', $name);
+        //$fileGenerator->addObject();
 
         // informaltable/tgroup/tbody/row
         $nodes = $xml->xpath("refsect1[@id='$id.other_details']/refsect2");
@@ -527,16 +704,15 @@ class Gtk extends DocBook
                 $map = $this->whitelist[$package_name][$id];
             }
         }
-       
-
+        
         $is_class = false;
         $struct_names = [];
         $class_name = null;
         foreach($nodes as $node) {
             $role = (string)$node['role'];
+            $struct_name = (string)$node->indexterm[0]->primary;
             switch($role) {
                 case 'struct':
-                    $struct_name = (string)$node->indexterm[0]->primary;
                     $struct_names[$struct_name] = $struct_name;
                     if ('Class'==substr($struct_name, -5)) {
                         $class_name = substr($struct_name, 0, -5);
@@ -545,66 +721,48 @@ class Gtk extends DocBook
                     $this->loadStruct($node);
                     break;
                 case 'enum':
-                    $struct_name = (string)$node->indexterm[0]->primary;
                     $struct_names[$struct_name] = $struct_name;
                     $this->loadEnum($node);
                     break;
                 case 'union':
-                    $struct_name = (string)$node->indexterm[0]->primary;
                     $struct_names[$struct_name] = $struct_name;
                     $this->loadUnion($node);
                     break;
                 case 'typedef':
+                    $struct = $this->sourceCode['Glib']->getProto($struct_name);
+                    $proto = $this->sourceCode['Glib']->getProto($struct['name']);
+                    $substruct = $this->sourceCode['Glib']->getStruct($struct['name']);
+                    if (null==$proto && null==$substruct) {
+                        // dummy structure
+                        if ('struct'==$struct['type']) {
+                            $struct_names[$struct_name] = $struct_name;
+                            $this->loadStruct($node);
+                        } else {
+                            echo 'Unimplemented <refsect2 role="'.$role.'" '.$struct_name.'>'.PHP_EOL;
+                        }
+                    }
+                    break;
                 default:
-                    echo 'Unimplemented <refsect2 role="'.$role.'">'.PHP_EOL;
+                    echo 'Unimplemented <refsect2 role="'.$role.'">'.$struct_name.'</>'.PHP_EOL;
                     break;
             }
         }
-        if ($is_class) {
-            $classGenerator = $package->createClass($class_name);
-            $classGenerator->setDescription($refpurpose);
-            $instance = $package->getStruct($class_name);
-            $vtable = $package->getStruct($class_name.'Class');
-            $classGenerator->setInstance($instance);
-            $classGenerator->setVTable($vtable);
+        $classGenerator = null;
 
-            foreach($struct_names as $struct_name) {
-                if (!in_array($struct_name, array($class_name, $class_name.'Class'))) {
-                    $classGenerator->addRelatedObject($package->children[$struct_name]);
+
+        if (isset($generator->children[$this->major_name])) {
+            $master = $generator->children[$this->major_name];
+            $generator->setMasterObject($master);// FileGenerator
+            $master->isClassified = true;
+            foreach($generator->children as $child) {
+                // promot to class if vtable exist
+                if (/*($child instanceof StructGenerator || $child instanceof UnionGenerator || $child instanceof EnumGenerator)*/ 
+                    ! $child instanceof FunctionGenerator
+                &&  $this->major_name!=$child->getName()) {
+                    $master->relateds[$child->getName()] = $child;// this add Class as related
+                    $child->isClassified = true;
                 }
-                unset($package->children[$struct_name]);
             }
-            // foreach enum, union
-
-            $package->children[$class_name] = $classGenerator;
-        } else {
-            // check if file correspond to struct name
-            // how to get the master object ?
-            if (empty($map)) {
-                $map = str_replace('-', '_', $id);
-                $map = strtolower($map);
-            }
-            if (isset($this->remap[$map])) {
-                $map = $this->remap[$map];
-            }
-            
-            $classGenerator = $package->createClass($map);
-            $classGenerator->setDescription($refpurpose);
-            $classGenerator->setShortDescription($refpurpose);
-            $instance = $package->getStruct($map);
-            if (isset($instance)) {
-                $classGenerator->setInstance($instance);
-            } else {
-                echo 'Unexpected Struct('.$map.')::instance null'.PHP_EOL;
-            }
-
-            foreach($struct_names as $struct_name) {
-                if (!in_array($struct_name, array($map, $map.'Class'))) {
-                    $classGenerator->addRelatedObject($package->children[$struct_name]);
-                }
-                unset($package->children[$struct_name]);
-            }
-            $package->children[$map] = $classGenerator;
         }
 
         $this->current_generator = $package;
@@ -654,10 +812,19 @@ class Gtk extends DocBook
 
     protected function loadStruct(SimpleXMLElement $refsect2):StructGenerator
     {
-        $generator = $this->current_generator;
+        $generator = $this->current_generator;// FileGenerator
+        //$package = $generator->getModulePackage();
+        $package = $generator->getOwnPackage();
 
         $name = (string)$refsect2->indexterm[0]->primary;
-        $struct = $generator->createStruct($name);
+
+        if ($name==$this->major_name) {
+            echo "  Struct \e[1;35m".$name."\e[0m".PHP_EOL;
+        } else {
+            echo "  Struct \e[4;35m".$name."\e[0m".PHP_EOL;
+        }
+
+        $struct = $package->createStruct($name);
         $this->current_generator = $struct;
         $generator->children[$name] = $struct;
 
@@ -674,6 +841,10 @@ class Gtk extends DocBook
         }
 
         $struct->setDescription($description);
+        if(empty($short_description)) {
+            echo 'No description found for : '.$name.PHP_EOL;
+            $short_description='';
+        }
         $struct->setShortDescription($short_description);
 
         //echo '      '.$id.':'.PHP_EOL;// "struct_members"
@@ -766,9 +937,12 @@ class Gtk extends DocBook
     
     protected function loadEnum($refsect2) {
         $generator = $this->current_generator;
+        //$package = $generator->getPackage();
+        $package = $generator->getOwnPackage();
 
         $name = (string)$refsect2->indexterm[0]->primary;
-        $enum = $generator->createEnum($name);
+        echo "    Enum \e[2;35m".$name."\e[0m".PHP_EOL;
+        $enum = $package->createEnum($name);
         $this->current_generator = $enum;
         $generator->children[$name] = $enum;
 
@@ -840,6 +1014,9 @@ class Gtk extends DocBook
 
     protected function loadUnion($refsect2) {
         $generator = $this->current_generator;
+        //$package = $generator->getModulePackage();
+        $package = $generator->getOwnPackage();
+
         //echo get_class($this->current_generator), PHP_EOL;
         //echo '  '.$this->current_generator->getName(), PHP_EOL;
         //echo get_class($this->current_generator->getPackage()), PHP_EOL;
@@ -849,7 +1026,8 @@ class Gtk extends DocBook
         
 
         $name = (string)$refsect2->indexterm[0]->primary;
-        $union = $generator->createUnion($name);
+        echo "   Union \e[3;35m".$name."\e[0m".PHP_EOL;
+        $union = $package->createUnion($name);
         $this->current_generator = $union;
         $generator->children[$name] = $union;//-------------------------------
 

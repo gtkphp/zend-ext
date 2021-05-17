@@ -1,0 +1,187 @@
+<?php
+
+$name_function = $this->nameclassHelper($this->name);
+$name_macro = strtoupper($name_function);
+$has_members = count($this->members);
+
+?>
+<?php echo $this->license; ?>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+<?php
+foreach($this->requires as $require) {
+    echo '#include <' . $require .'>' . PHP_EOL;
+}
+echo PHP_EOL;
+
+echo '#include "php_gtk.h"' . PHP_EOL;
+foreach($this->dependencies as $dependency) {
+    if (empty($dependency)) {
+        echo PHP_EOL;
+        continue;
+    }
+    echo '#include "' . $dependency .'"' . PHP_EOL;
+}
+
+?>
+
+
+extern HashTable         classes;
+extern zend_module_entry gtk_module_entry;
+
+
+zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+zend_object_handlers  php_<?php echo $name_function ?>_handlers;
+
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+static const zend_function_entry
+php_<?php echo $name_function ?>_methods[] = {
+    PHP_ME(<?php echo $name_function ?>, __construct, arginfo_<?php echo $name_function ?>___construct, ZEND_ACC_PUBLIC)
+    PHP_FE_END
+};
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+
+/* {{{ php_<?php echo $name_function ?>_create_object */
+static zend_object*
+php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
+{
+    php_<?php echo $name_function ?> *intern = ecalloc(1, sizeof(php_<?php echo $name_function ?>) + zend_object_properties_size(class_type));
+
+    zend_object_std_init(&intern->std, class_type);
+    object_properties_init(&intern->std, class_type);
+
+    intern->ptr = NULL;
+
+    intern->std.handlers = &php_<?php echo $name_function ?>_handlers;
+
+    return &intern->std;
+}
+/* }}} php_<?php echo $name_function ?>_create_object */
+
+
+static void
+php_<?php echo $name_function ?>_dtor_object(zend_object *obj) {
+    php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(obj);
+
+}
+
+/* {{{ php_<?php echo $name_function ?>_free_object */
+static void
+php_<?php echo $name_function ?>_free_object(zend_object *object)
+{
+    php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(object);
+
+    if (intern->ptr!=NULL) {
+        efree(intern->ptr);
+    }
+
+    zend_object_std_dtor(&intern->std);
+}
+/* }}} php_<?php echo $name_function ?>_free_object */
+
+<?php if($has_members): ?>
+<?php   include("handler-lookup-property.phtml") ?>
+<?php   include("handler-read_property.phtml") ?>
+<?php   include("handler-write_property.phtml") ?>
+<?php endif; ?>
+
+
+<?php if ($this->implementation->enable_debug): ?>
+<?php   include("handler-get_debug_info.phtml") ?>
+<?php endif; ?>
+
+
+static zend_object_handlers*
+php_<?php echo $name_function ?>_get_handlers()
+{
+    memcpy(&php_<?php echo $name_function ?>_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    php_<?php echo $name_function ?>_handlers.offset = PHP_<?php echo $name_macro ?>_OFFSET;
+    php_<?php echo $name_function ?>_handlers.dtor_obj = php_<?php echo $name_function ?>_dtor_object;
+    php_<?php echo $name_function ?>_handlers.free_obj = php_<?php echo $name_function ?>_free_object;
+
+<?php if($has_members): ?>
+    php_<?php echo $name_function ?>_handlers.read_property = php_<?php echo $name_function ?>_read_property;
+    php_<?php echo $name_function ?>_handlers.write_property = php_<?php echo $name_function ?>_write_property;
+<?php endif; ?>
+
+<?php if ($this->implementation->enable_debug): ?>
+    php_<?php echo $name_function ?>_handlers.get_debug_info = php_<?php echo $name_function ?>_get_debug_info;
+<?php endif; ?>
+
+
+    return &php_<?php echo $name_function ?>_handlers;
+}
+
+/*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+ /*{{{ php_<?php echo $name_function ?>_class_init */
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+    php_<?php echo $name_function ?>_get_handlers();
+    PHP_GTK_INIT_CLASS_ENTRY((*container_ce), "<?php echo $this->name ?>", php_<?php echo $name_function ?>_methods);
+    php_<?php echo $name_function ?>_class_entry = zend_register_internal_class_ex(container_ce, parent_ce);
+    php_<?php echo $name_function ?>_class_entry->create_object = php_<?php echo $name_function ?>_create_object;
+
+    return php_<?php echo $name_function ?>_class_entry;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+<?php
+echo $this->implementation->writeFunctions(false);
+?>
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
+
+ /* {{{ <?php echo $name_function ?>::__construct() */
+PHP_METHOD(<?php echo $name_function ?>, __construct)
+{
+    zend_object *zobj = Z_OBJ_P(getThis());
+    php_<?php echo $name_function ?> *self = ZOBJ_TO_PHP_<?php echo $name_macro ?>(zobj);
+
+    // $this->implementation->zend_extends('__construct');
+    // zend_extends___construct()
+    // else :
+    self->ptr = emalloc(sizeof(<?php echo $name_function ?>));
+
+}
+/* }}} */
+
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
+
+<?php foreach($this->methods as $name=>$method): ?>
+/* {{{ <?php echo $method->docblock ?> */
+PHP_FUNCTION(<?php echo $method->name ?>)
+{
+<?php echo $method->args.PHP_EOL; ?>
+<?php echo $method->call.PHP_EOL; ?>
+<?php echo $method->return.PHP_EOL; ?>
+}/* }}} */
+
+<?php endforeach; ?>

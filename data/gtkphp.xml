@@ -16,7 +16,7 @@
       <releaseinfo>
         <ulink url="https://github.com/freedesktop/cairo"><citetitle>1.6</citetitle></ulink>
       </releaseinfo>
-      <!--indexterm>
+      <!--indexterm order="deny,allow" allow="all" deny="all">
         <primary>cairo</primary>
         <secondary>cairo-drawing</secondary>
 
@@ -24,6 +24,7 @@
         <secondary id="cairo_path_t">cairo-Paths</secondary>
         <secondary id="cairo_t">cairo-cairo-t</secondary>
       </indexterm-->
+
     </partinfo>
     <xi:include href="doc/public/cairo-docs.xml"/>
   </part>

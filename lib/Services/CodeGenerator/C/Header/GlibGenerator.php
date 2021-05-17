@@ -12,6 +12,7 @@ use Zend\Ext\Views\C\VTableDto;
 use Zend\Ext\Views\C\MethodDto;
 use Zend\Ext\Views\C\ParameterDto;
 use Zend\Ext\Views\C\EnumDto;
+use Zend\Ext\Views\StructDto;
 
 use Zend\Filter\FilterChain;
 use Zend\Filter\StripTags;
@@ -33,7 +34,9 @@ use Zend\Ext\Models\ClassGenerator;
 use Zend\Ext\Models\EnumGenerator;
 
 use Zend\Ext\Services\CodeGenerator;
-use function Webmozart\Assert\Tests\StaticAnalysis\maxLength;
+
+use Zend\ExtGtk\Implementation;
+
 
 class GlibGenerator extends CodeGenerator
 {
@@ -44,17 +47,31 @@ class GlibGenerator extends CodeGenerator
 
     function getViewModel($dto):ViewModel
     {
+        if ($dto instanceof StructDto) {
+            return $this->getViewModelStruct($dto);
+        }
+        if ($dto instanceof EnumDto) {
+            return $this->getViewModelEnum($dto);
+        }
+        return null;
+    }
+
+    function getViewModelStruct($dto):ViewModel
+    {
         $licenseModel = new ViewModel(array('author' => 'No Name'));
-        $licenseModel->setVariable('date', '31/12/1999');
+        $licenseModel->setVariable('date', date("m/d/y"));
+        $licenseModel->setVariable('php_version', Implementation::$version);
         $licenseModel->setTemplate('license.phtml');
 
-        $classModel = new ViewModel((array)$dto);
-        $classModel->setTemplate('class.phtml');
+        $marksModel = new ViewModel();
+        $marksModel->setTemplate('vim-marks.phtml');
 
-        $model = parent::getViewModel((array)$dto);
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
         $model->addChild($licenseModel, 'license');
-        $model->addChild($classModel, 'class');
+        $model->addChild($marksModel, 'vimMarks');
         $model->setTemplate('file.phtml');
+
 
         return $model;
     }
@@ -83,9 +100,9 @@ class GlibGenerator extends CodeGenerator
         }
         $resolver = new TemplatePathStack();
 
-        $resolver->addPath(__DIR__.'/../../../../Views/C/Header');
-        $resolver->addPath(__DIR__.'/../../../../Views/C');
         $resolver->addPath(__DIR__.'/../../../../Views');
+        $resolver->addPath(__DIR__.'/../../../../Views/C');
+        $resolver->addPath(__DIR__.'/../../../../Views/C/Header');
 
         $renderer = parent::getRenderer();
         $renderer->setResolver($resolver);

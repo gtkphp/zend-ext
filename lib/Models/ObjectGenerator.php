@@ -13,5 +13,9 @@ use Zend\Ext\Models\AbstractGenerator;
 
 class ObjectGenerator extends AbstractGenerator
 {
+    public $isClassified = FALSE;// is put in related ?
+
     public $children=[];
+    public $relateds=[];
+    public $dependencies=[];
 }

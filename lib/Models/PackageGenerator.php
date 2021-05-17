@@ -11,11 +11,12 @@ namespace Zend\Ext\Models;
 
 use Zend\Ext\Models\AbstractGenerator;
 use Zend\Ext\Models\ObjectGenerator;
+use Zend\Ext\Models\FileGenerator;
+use Zend\Ext\Models\EnumGenerator;
+use Zend\Ext\Models\UnionGenerator;
 use Zend\Ext\Models\ClassGenerator;
 use Zend\Ext\Models\StructGenerator;
 use Zend\Ext\Models\VarGenerator;
-use Zend\Ext\Models\UnionGenerator;
-use Zend\Ext\Models\EnumGenerator;
 use Zend\Ext\Models\ConstantGenerator;
 use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\ParameterGenerator;
@@ -23,6 +24,8 @@ use Zend\Ext\Models\TypeGenerator;
 
 class PackageGenerator extends ObjectGenerator
 {
+    protected $isModule = false;
+
     /**
      * @var array $list_type_object array('GtkWidget', 'GtkBin', ...)
      */
@@ -57,6 +60,13 @@ class PackageGenerator extends ObjectGenerator
      * @var array $symbols array('GtkWidget', 'GtkWidgetClass', 'GObjectClass', ...)
      */
     protected $symbols = array();
+
+    public function setIsModule($is=true) {
+        $this->isModule = $is;
+    }
+    public function isModule() {
+        return $this->isModule;
+    }
     
     public function createPackage(string $name): PackageGenerator {
         $package = new PackageGenerator($name);
@@ -72,6 +82,10 @@ class PackageGenerator extends ObjectGenerator
         $class = new ClassGenerator($name);
         $class->setParentGenerator($this);
         $class->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $module = $this->getModulePackage();
+        $module->list_type_object[$name] = $class;
+        $module->symbols[$name] = $class;
 
         $root = $this->getPackage();
         $root->list_type_object[$name] = $class;
@@ -107,6 +121,11 @@ class PackageGenerator extends ObjectGenerator
         $struct = new StructGenerator($name);
         $struct->setOwnPackage($this);
 
+        $module = $this->getModulePackage();
+        //echo 'module : '.$module->getName().PHP_EOL;
+        $module->list_type_struct[$name] = $struct;
+        $module->symbols[$name] = $struct;
+
         $root = $this->getPackage();
         $root->list_type_struct[$name] = $struct;
         $root->symbols[$name] = $struct;
@@ -126,6 +145,10 @@ class PackageGenerator extends ObjectGenerator
         $enum->setParentGenerator($this);
         $enum->setOwnPackage($this);//CHECK me is Package has parent package
 
+        $module = $this->getModulePackage();
+        $module->list_type_enum[$name] = $enum;
+        $module->symbols[$name] = $enum;
+
         $root = $this->getPackage();
         $root->list_type_enum[$name] = $enum;
         $root->symbols[$name] = $enum;
@@ -137,6 +160,10 @@ class PackageGenerator extends ObjectGenerator
         $union = new UnionGenerator($name);
         $union->setParentGenerator($this);
         $union->setOwnPackage($this);//CHECK me is Package has parent package
+
+        $module = $this->getModulePackage();
+        $module->list_type_union[$name] = $union;
+        $module->symbols[$name] = $union;
 
         $root = $this->getPackage();
         $root->list_type_union[$name] = $union;
@@ -170,6 +197,8 @@ class PackageGenerator extends ObjectGenerator
     public function createMethod($name) {
         $method = new MethodGenerator($name);
         $method->setOwnPackage($this);
+
+        //$this->symbols[$name] = $method;
         return $method;
     }
 
@@ -192,12 +221,20 @@ class PackageGenerator extends ObjectGenerator
         return $type;
     }
 
+    public function createFile($name) {
+        $file = new FileGenerator($name);
+        $file->setParentGenerator($this);
+        $file->setOwnPackage($this);
+        return $file;
+    }
+    
+
     /**
      * @return array
      */
     public function getListTypeStruct(): array
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return $root->list_type_struct;
     }
     /**
@@ -205,7 +242,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getStruct($name)
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         if (isset($root->list_type_struct[$name])) {
             return $root->list_type_struct[$name];
         }
@@ -217,7 +254,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getListTypeObject(): array
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return $root->list_type_object;
     }
     /**
@@ -225,7 +262,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getObject($name)
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         if (isset($root->list_type_object[$name])) {
             return $root->list_type_object[$name];
         }
@@ -236,7 +273,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getListObject(): array
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return array_keys($root->list_type_object);
     }
 
@@ -246,18 +283,26 @@ class PackageGenerator extends ObjectGenerator
      */
     public function setListTypeObject(array $list_type_object): PackageGenerator
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         $root->list_type_object = $list_type_object;
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getListTypeUnion(): array
+    {
+        $root = $this;//$this->getPackage();
+        return $root->list_type_union;
+    }
 
     /**
      * @return array
      */
     public function getListTypeEnum(): array
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return $root->list_type_enum;
     }
 
@@ -267,7 +312,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function setListTypeEnum(array $list_type_enum): PackageGenerator
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         $root->list_type_enum = $list_type_enum;
         return $this;
     }
@@ -277,7 +322,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getSymbols(): array
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return $root->symbols;
     }
 
@@ -287,8 +332,7 @@ class PackageGenerator extends ObjectGenerator
      */
     public function getSymbol($name)
     {
-        $root = $this->getPackage();
+        $root = $this;//$this->getPackage();
         return isset($root->symbols[$name]) ? $root->symbols[$name] : null;
     }
-    
 }

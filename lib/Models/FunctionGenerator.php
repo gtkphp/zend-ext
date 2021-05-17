@@ -15,6 +15,7 @@ namespace Zend\Ext\Models;
 //use Zend\Code\Reflection\DocBlockReflection;
 use Zend\Ext\Models\AbstractGenerator;
 use Zend\Ext\Models\ParameterGenerator;
+use Zend\Ext\Exceptions\InvalidArgumentException;
 
 
 use function explode;
@@ -26,7 +27,7 @@ use function trim;
 use function wordwrap;
 
 // my_object_class_init(const GObject &object)
-class FunctionGenerator extends AbstractGenerator
+class FunctionGenerator extends ObjectGenerator
 {
     /**
      * @var TypeGenerator
@@ -136,8 +137,11 @@ class FunctionGenerator extends AbstractGenerator
     }
 
 
-    public function getParameter(string $name):ParameterGenerator {
-        return $this->parameters[$name];
+    public function getParameter(string $name):?ParameterGenerator {
+        if (isset($this->parameters[$name])) {
+            return $this->parameters[$name];
+        }
+        return null;
     }
 
     public function getParameters() {
@@ -146,13 +150,13 @@ class FunctionGenerator extends AbstractGenerator
 
     /**
      * @param  array $parameters
-     * @throws Exception\InvalidArgumentException
-     * @return Zend\Ext\MethodGenerator
+     * @throws InvalidArgumentException
+     * @return MethodGenerator
      */
     public function setParameters($parameters) {
         $len = count($parameters);
-        for($i = 0; $i<$len; $i++) {
-            $this->setParameter($parameters[$i]);
+        foreach($parameters as $parameter) {
+            $this->setParameter($parameter);
         }
 
         return $this;
@@ -161,8 +165,8 @@ class FunctionGenerator extends AbstractGenerator
 
     /**
      * @param  ParameterGenerator|array|string $parameter
-     * @throws Exception\InvalidArgumentException
-     * @return Zend\Ext\MethodGenerator
+     * @throws InvalidArgumentException
+     * @return MethodGenerator
      */
     public function setParameter($parameter)
     {
@@ -171,10 +175,12 @@ class FunctionGenerator extends AbstractGenerator
         }
 
         if (! $parameter instanceof ParameterGenerator) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s is expecting either a string, array or an instance of %s\ParameterGenerator',
+            throw new InvalidArgumentException(sprintf(
+                '%s is expecting either a string, array or an instance of %s\ParameterGenerator, %d given for %s',
                 __METHOD__,
-                __NAMESPACE__
+                __NAMESPACE__,
+                $parameter,
+                $this->getName()
             ));
         }
 

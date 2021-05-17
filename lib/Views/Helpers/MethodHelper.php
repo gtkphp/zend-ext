@@ -13,27 +13,20 @@ use Zend\View\Helper\AbstractHelper;
 
 class MethodHelper extends AbstractHelper
 {
-    public function __invoke($method)
+    public function __invoke($methodDto)
     {
         $licenseModel = new ViewModel(array('author' => 'No Name'));
         $licenseModel->setVariable('date', '31/12/1999');
-        $licenseModel->setVariable('name', $method->name);
+        $licenseModel->setVariable('name', $methodDto->name);
         $licenseModel->setVariable('short_description', ''/*$method->getShortDescription()*/);
         $licenseModel->setVariable('type', ''/*$method->getType()*/);
-        $licenseModel->setVariable('method', $method);
-        $licenseModel->setVariable('parameters', $method->parameters);
+        $licenseModel->setVariable('method', $methodDto);
+        $licenseModel->setVariable('parameters', $methodDto->parameters);
         $licenseModel->setTemplate('method.phtml');
 
-        $view = $this->getView();
-        /*
-        $view->render($licenseModel); /!\ not an instance of Zend\View
-        $output = $view->getResponse()->getContent();
-        */
         $view = $this->getView();// instance of PhpRenderer
         $output = $view->render($licenseModel);
-        //$gtkwindow_c = $view->getResponse()->getContent();
 
-        //$output = get_class($view)."\n";
         return $output;
     }
 }

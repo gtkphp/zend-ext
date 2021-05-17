@@ -223,6 +223,18 @@ abstract class AbstractGenerator implements GeneratorInterface
         return $this;
     }
 
+    public function getModulePackage() {
+        $module = null;
+        $parent = $this;
+        while($parent) {
+            if ($parent instanceof PackageGenerator && $parent->isModule()) {
+                $module = $parent;
+                break;
+            }
+            $parent = $parent->getParentGenerator();
+        }
+        return $module;
+    }
 
     /**
      * Return the root package

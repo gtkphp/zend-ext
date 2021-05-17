@@ -1,0 +1,9 @@
+<?php echo $this->license; ?>
+
+<?php
+foreach ($this->objects as $objectDto) {
+    echo $this->objectHelper($objectDto);
+}
+?>
+
+<?php echo $this->vimMarks; ?>

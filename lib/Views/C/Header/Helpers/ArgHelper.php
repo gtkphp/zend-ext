@@ -16,25 +16,39 @@ class ArgHelper extends AbstractHelper
         $parameters = $method->getParameters();
         $enums = $method->getOwnPackage()->getListTypeEnum();
 
+        $send_by = 'ZEND_SEND_BY_VAL';
+        $is_deref = $method->getParameterReturn()->isDeref();
+        if ($is_deref)
+            $send_by = 'ZEND_SEND_BY_REF';
+
         $output = '';
-        $output .= 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$method->getName().', 0, ZEND_SEND_BY_VAL, '.count($parameters).')'. PHP_EOL;
+        $output .= 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$method->getName().', 0, '.$send_by.', '.count($parameters).')'. PHP_EOL;
         foreach($parameters as $parameter) {
+
+            $send_by = 'ZEND_SEND_BY_VAL';
+            $is_deref = $parameter->isDeref();
+            if ($is_deref)
+                $send_by = 'ZEND_SEND_BY_REF';
+    
             //$output .= $parameter->getType()->getName() . ', '. $parameter->getType()->getPrimitiveType().PHP_EOL;
             switch ($parameter->getType()->getPrimitiveType()) {
                 case TypeGenerator::PRIMITIVE_DOUBLE:
-                    $output .= '    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', IS_DOUBLE, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, 0)'. PHP_EOL;// 0 = allow_null
                     break;
                 case TypeGenerator::PRIMITIVE_INT:
-                    $output .= '    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', IS_LONG, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_LONG, 0)'. PHP_EOL;// 0 = allow_null
                     break;
                 case TypeGenerator::PRIMITIVE_CHAR:
-                    $output .= '    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', IS_STRING, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_STRING, 0)'. PHP_EOL;// 0 = allow_null
                     break;
                 default:
                     if (isset($enums[$parameter->getType()->getName()])) {
-                        $output .= '    ZEND_ARG_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().')'. PHP_EOL;
+                        $output .= '    ZEND_ARG_INFO('.$send_by.', '.$parameter->getName().')'. PHP_EOL;
                     } else {
-                        $output .= '    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getType()->getName().', 0)'. PHP_EOL;// 0 = allow_null
+                        if ($is_deref)
+                            $output .= '    ZEND_ARG_INFO('.$send_by.', '.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
+                        else
+                            $output .= '    ZEND_ARG_OBJ_INFO('.$send_by.', '.$parameter->getName().', '.$parameter->getType()->getName().', 0)'. PHP_EOL;
                     }
                     break;
             }

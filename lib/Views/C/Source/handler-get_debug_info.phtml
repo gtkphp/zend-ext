@@ -1,0 +1,74 @@
+
+<?php $output = $this->implementation->zend_override('get_debug_info'); if($output): ?>
+
+<?php echo $output; ?>
+
+<?php else: ?>
+
+<?php
+$param = $this->implementation->param;
+$get_param = $this->implementation->get_param;
+?>
+/* {{{ php_<?php echo $name_function ?>_get_debug_info */
+static HashTable*
+php_<?php echo $name_function ?>_get_debug_info(<?php echo $param ?>, int *is_temp)
+{
+    php_<?php echo $name_function ?>  *obj = <?php echo $get_param ?><?php echo $name_macro ?>(object);
+    HashTable   *debug_info,
+    *std_props;
+    zend_string *string_key = NULL;
+    zval *value;
+
+    *is_temp = 1;
+    std_props = zend_std_get_properties(object);
+    debug_info = zend_array_dup(std_props);
+
+<?php
+    // what is override ?
+    foreach($this->members as $property) {
+        $extra = '';
+        echo '    ';
+        echo 'zval z'.$property->name.'; ';
+        $type = trim($property->type);
+        switch ($type) {
+            case 'int':
+            case 'zend_long':
+                echo 'ZVAL_LONG(&z'.$property->name.', obj->ptr->'.$property->name.');'.PHP_EOL;
+                break;
+            case 'float':
+            case 'double':
+                echo 'ZVAL_DOUBLE(&z'.$property->name.', obj->ptr->'.$property->name.');'.PHP_EOL;
+                break;
+            case 'zval':
+                echo 'if (obj->ptr->'.$property->name.'==NULL) ZVAL_NULL(&z'.$property->name.'); else ZVAL_COPY(&z'.$property->name.', obj->ptr->'.$property->name.')';
+                //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                break;
+            default:
+                $output  = PHP_EOL;
+                $output .= '    zval member_'.$property->name.'; ZVAL_STRING(&member_'.$property->name.', "'.$property->name.'");'.PHP_EOL;
+                $output .= '    php_'.$name_function.'_read_property(object, &member_'.$property->name.', IS_ARRAY, NULL, &'.$property->name.');'.PHP_EOL;
+                //$output .= '    zend_hash_str_update(debug_info, "'.$property->name.'", sizeof("'.$property->name.'")-1, &'.$property->name.');'.PHP_EOL;
+        
+                $extra  = '    zend_string_release(member_'.$property->name.'.value.str);'.PHP_EOL;
+    
+                echo $output;//.'    //'.$type.PHP_EOL;
+                break;
+        }
+        echo '    ';
+        echo 'zend_hash_str_update(debug_info, "'.$property->name.'", sizeof("'.$property->name.'")-1, &z'.$property->name.');'.PHP_EOL;
+        echo $extra;
+        echo PHP_EOL;
+    
+    }
+?>
+<?php $output = $this->implementation->zend_extends('get_debug_info'); if($output): ?>
+<?php echo $output; ?>
+<?php endif; ?>
+
+    return debug_info;
+}
+/* }}} */
+
+
+<?php endif;/* $this->implementation->zend_override */ ?>
+

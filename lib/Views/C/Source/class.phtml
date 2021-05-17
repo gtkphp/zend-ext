@@ -17,7 +17,6 @@ echo '#include '.$include.PHP_EOL;
 ?>
 
 #include "<?php echo $this->headerFile ?>"
-
 <?php
 foreach($this->dependencies as $dependencie) {
 echo '#include "'.$dependencie.'"'.PHP_EOL;
@@ -502,7 +501,7 @@ PHP_FUNCTION(<?php echo $name ?>)
 {
 <?php echo $method->args.PHP_EOL; ?>
 <?php echo $method->call.PHP_EOL; ?>
-<?php echo $method->return.PHP_EOL; ?>
+<?php //echo $method->return.PHP_EOL; ?>
 }/* }}} */
 
 <?php endforeach; ?>

@@ -4,9 +4,15 @@ namespace Zend\Ext\Services;
 
 
 use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Models\ObjectGenerator;
+use Zend\Ext\Models\PackageGenerator;
+use Zend\Ext\Models\FileGenerator;
+use Zend\Ext\Models\EnumGenerator;
+use Zend\Ext\Models\UnionGenerator;
+use Zend\Ext\Models\StructGenerator;
 use Zend\Ext\Models\ClassGenerator;
 use Zend\Ext\Models\MethodGenerator;
-use Zend\Ext\Models\EnumGenerator;
+//use Zend\Ext\Models\FunctionGenerator;
 
 use Zend\Ext\Services\DocBook\Glib as GlibDocBook;
 use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
@@ -14,8 +20,8 @@ use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
 use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
 use Zend\Ext\Views\C\Source\ClassDto;
 use Zend\Ext\Views\C\Source\EnumDto;
+use Zend\Ext\Views\C\UnionDto;
 use Zend\Ext\Views\C\Source\MethodDto;
-//use Zend\Ext\Views\C\EnumDto;
 use Zend\Ext\Views\C\ParameterDto;
 use Zend\Ext\Views\C\PropertyDto;
 
@@ -202,6 +208,15 @@ class CodeGenerator
         $nameclass = $this->filenameHelper($cc_name);
         $namespace = $this->namespaceHelper($cc_name);
     }
+    
+    function getUnionDto(UnionGenerator $generator)
+    {
+        $dto = new UnionDto();
+        $dto->name = $generator->getName();
+        $dto->description = $generator->getDescription();
+        $dto->members = $generator->getMembers();
+        return $dto;
+    }
 
     function getEnumDto(EnumGenerator $generator)
     {
@@ -317,32 +332,42 @@ class CodeGenerator
         $includes[] = '"php_gtk.h"';
 
         $dependencies = [];
-        $tmp = $this->placeholderDependencies($generator);
-        unset($tmp[$generator->getName()]);
-        foreach($tmp as $dependency=>$unused) {
+        $types = $this->placeholderDependencies($generator);
+        unset($types[$generator->getName()]);
+        foreach($types as $dependency=>$unused) {
             $this->typeTo($dependency, $tmp_namespace, $tmp_filename);
-            $dependencies[] = $tmp_filename.'.h';
+            $dependencies[] = 'php_'.$tmp_namespace.'/'.$tmp_filename.'.h';
         }
 
+
+        $top_package = $generator->getOwnPackage()->getOwnPackage();
         
         $dto = new ClassDto();
         $dto->dependencies = $dependencies;
+        $dto->package_description = $top_package->getDescription();
+        $dto->package = $top_package->getName();
+        $dto->subpackage = $generator->getOwnPackage()->getName();
         $dto->namespace = $namespace;// tag @package
         $dto->name = $generator->getName();
         $dto->abbr = $generator->getAbbr();
-        $dto->description = $generator->getDescription();
+        if ($generator->getInstance()) {
+            $dto->description = $generator->getInstance()->getShortDescription();
+        } else {
+            $dto->description = $generator->getShortDescription();
+        }
         $dto->extend = $generator->getExtendedClass();
         $dto->dir = $dir;
         $dto->includeFiles = $includes;
         $dto->fileName = $filename . '.' . $this->getFilenameExtension();
-        $dto->headerFile = $filename . '.h';
+        $dto->headerFile = 'php_'.$namespace.'/'.$filename . '.h';
         $dto->nameMacro = $filter3->filter($name);
         $dto->nameFunction = $filter2->filter($name);
         $dto->nameType = $name;
         $dto->properties = array();
         $properties = array();
 
-        foreach($generator->getProperties() as $property) {
+        if($generator->getInstance())
+        foreach($generator->getInstance()->getMembers() as $property) {
             $propertyDto = new PropertyDto();
             $propertyDto->name = $property->getName();
             $propertyDto->type = $property->getType()->getName();//$this->getRenderer()->typeHelper($property->getType(), '');
@@ -355,13 +380,14 @@ class CodeGenerator
         $dto->methods = array();
         $max_length=0;
         $methods = $generator->getMethods();
+        
         foreach($methods as $method) {
             // Fix if we can use $this->getMethodDto()
             $methodDto = new MethodDto();
             $methodDto->generator = $method;
             $methodDto->name = $method->getName();
             $methodDto->short_description = $method->getDescription();
-            $methodDto->type = $this->getRenderer()->typeHelper($method->getType(), '*');
+            $methodDto->type = $this->getRenderer()->typeHelper($method->getParameterReturn()->getType(), '*');
             $methodDto->max_parameters = count($method->getParameters());
             $methodDto->min_parameters = count($method->getParameters());//TODO
             $methodDto->parameters = array();
@@ -416,8 +442,8 @@ class CodeGenerator
 
         $methodes = $class->getMethods();
         foreach($methodes as $methode) {
-            if($this->isDependency($methode->getType(), $methode->getOwnPackage())) {
-                $types[$methode->getType()->getName()] = 1;
+            if($this->isDependency($methode->getParameterReturn()->getType(), $methode->getOwnPackage())) {
+                $types[$methode->getParameterReturn()->getType()->getName()] = 1;
             }
             foreach($methode->getParameters() as $parameter) {
                 if($this->isDependency($parameter->getType(), $methode->getOwnPackage())) {
@@ -481,6 +507,8 @@ class CodeGenerator
                     //echo '    + ', $name, PHP_EOL;
                     if ($object instanceof EnumGenerator) {
                         $elationships[$name] = $this->getEnumDto($object);
+                    } else if ($object instanceof UnionGenerator) {
+                        $elationships[$name] = $this->getUnionDto($object);
                     } else if ($object instanceof ClassGenerator) {
                         $elationships[$name] = $this->getClassDto($object);
                     }
@@ -501,12 +529,13 @@ class CodeGenerator
         $vtable = $generator->getVTable();
         if ($vtable) {
             $vtableDto = new ClassDto();
+            echo get_class($vtable) . PHP_EOL;
             $vtableDto->name = $vtable->getName();
-            $vtableDto->abbr = $vtable->getAbbr();
-            $vtableDto->extend = $vtable->getExtendedClass();
+            $vtableDto->abbr = 'TODO';//$vtable->getAbbr();
+            $vtableDto->extend = 'TODO';//$vtable->getExtendedClass();
             //$vtableDto->parent = $this->getParentClassDto($generator);
 
-            $methods = $vtable->getMethods();
+            //$methods = $vtable->getMethods();
         }
         foreach($methods as $method) {
             $methodDto = $this->getMethodDto($method);
@@ -563,6 +592,29 @@ class CodeGenerator
         return $methodDto;
     }
 
+
+    // put this in ClassGenerator::getAbbr
+    protected function getFilename(ObjectGenerator $object, string $ns) {
+        $name = $object->getName();
+
+        if('_t'==substr($name, -2))
+            $name = substr($name, 0, -2);
+        if($name==$ns) {
+            return $name;
+        }
+
+        $pos = strlen($ns)+1;
+        $str = substr($name, 0, $pos);
+        if($str==$ns.'_')
+            $name = substr($name, $pos);
+        
+        return str_replace('_', '-', $name);
+    }
+    
+    function getDto(AbstractGenerator $generator)
+    {
+    }
+
     /**
      * @param string $dir
      */
@@ -570,6 +622,36 @@ class CodeGenerator
     {
         $package = $this->getDocBook()->getPackage();//refactor getPackage
 
+        foreach ($package->subpackage as $subpackage) {
+            echo '--- ' . $subpackage->getName() . ' ------------------------------------------------' . PHP_EOL;
+            foreach ($subpackage->subpackage as $group) {
+                foreach ($group->children as $file) {
+                    echo '  '.$file->getName() . PHP_EOL;
+                    foreach ($file->children as $object) {
+                        if ($object instanceof StructGenerator
+                        ||  $object instanceof UnionGenerator
+                        ||  $object instanceof EnumGenerator
+                        //||  $object instanceof ClassGenerator
+                        ) {
+                            echo '    '.$object->getName() .'('.$this->getFilename($object, $subpackage->getName()).')'. PHP_EOL;
+                        }
+                    }
+                }
+            }
+            //foreach ($subpackage->getListTypeStruct() as $struct) {
+            //    echo $struct->getName() . PHP_EOL;
+            //}
+        }
+
+
+        /*
+        foreach ($package->subpackage as $subpackage) {
+            $this->getPackageDto($subpackage);
+        }
+        //foreach ($package->children as $child) {}
+        */
+
+        /*
         $objects = $package->getListObject();
         foreach ($objects as $objectName) {
             $generatorModel = $package->getObject($objectName);//'GList'
@@ -580,7 +662,9 @@ class CodeGenerator
             `mkdir -p $dir/$dto->dir`;
             file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
         }
+        */
         
+        /*
         $objects = $package->getListTypeEnum();
         foreach ($objects as $n=>$generatorModel) {
             $dto = $this->getEnumDto($generatorModel);
@@ -590,6 +674,7 @@ class CodeGenerator
             `mkdir -p $dir/$dto->dir`;
             file_put_contents($dir.'/'.$dto->dir.'/'.$dto->fileName, $output);
         }
+        */
 
         return True;
     }

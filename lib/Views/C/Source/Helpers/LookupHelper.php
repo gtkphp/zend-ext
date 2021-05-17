@@ -13,21 +13,23 @@ class LookupHelper extends AbstractHelper
     {
         
         $properties = array();
-        foreach($renderer->properties as $property) {
+        foreach($renderer->members as $property) {
             $properties[$property->name] = $property->type;
         }
         //var_dump($properties);
         // step one, groupe by length, group by first pattern, etc
 
-        $this->nameFunction = $renderer->nameFunction;
+        $this->nameFunction = $renderer->nameclassHelper($renderer->name);
+        //$this->nameMacro = strtoupper($this->nameFunction);
+        
         $this->index = $this->makeIndex($properties);
 
 
         $output = '';
         $group = $this->groupByLength($properties);
 
-        $output .= 'const struct Php'.$renderer->camelcaseHelper($renderer->nameType).'Property*'.PHP_EOL;
-        $output .= 'php_'.$renderer->nameFunction.'_properties_lookup (const char *str, size_t len)'.PHP_EOL;
+        $output .= 'const struct Php'.$renderer->camelcaseHelper($renderer->name).'Property*'.PHP_EOL;
+        $output .= 'php_'.$this->nameFunction.'_properties_lookup (const char *str, size_t len)'.PHP_EOL;
         $output .= '{'.PHP_EOL;
         
         $glue = '    ';

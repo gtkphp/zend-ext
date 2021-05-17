@@ -18,6 +18,7 @@ use PHPUnit\Runner\Exception;
 use Zend\Ext\Models\AbstractGenerator;
 
 use Zend\Ext\Models\TypeGenerator;
+use Zend\Ext\Models\AnnotationGenerator;
 
 use function explode;
 use function is_array;
@@ -61,7 +62,11 @@ class ParameterGenerator extends AbstractGenerator
      * @var bool $isCallback
      */
     protected $isCallback = FALSE;
-
+    /**
+     * @var array of AnnotationGenerator
+     */
+    protected $annotations = [];
+    
 
     public function __construct($name) {
         if ('...'==$name) {
@@ -138,4 +143,35 @@ class ParameterGenerator extends AbstractGenerator
         return $this->pass;
     }
 
+    /**
+     * @param array of AnnotationGenerator
+     */
+    public function setAnnotations(array $annotations):ParameterGenerator
+    {
+        $this->annotations = $annotations;
+        return $this;
+    }
+
+    public function getAnnotations():array
+    {
+        return $this->annotations;
+    }
+
+    public function hasAnnotation(int $type):bool
+    {
+        foreach($this->annotations as $annotation) {
+            if ($annotation->getType()==$type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isDeref():bool
+    {
+        $is_redef = $this->hasAnnotation(AnnotationGenerator::ANNOTATION_OUT)
+                  | $this->hasAnnotation(AnnotationGenerator::ANNOTATION_INOUT);
+        return $is_redef;
+    }
+    
 }

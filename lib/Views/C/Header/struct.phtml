@@ -1,0 +1,74 @@
+<?php
+
+$name_function = $this->nameclassHelper($this->name);
+$name_macro = strtoupper($name_function);
+$has_members = count($this->members);
+
+?>#ifndef PHP_<?php echo $name_macro ?>_H
+#define PHP_<?php echo $name_macro ?>_H
+
+
+#define PHP_<?php echo $name_macro ?>(ptr)           ((php_<?php echo $name_function ?>*)(ptr))
+#define PHP_<?php echo $name_macro ?>_CLASS          php_<?php echo $name_function ?>_class_entry
+#define PHP_<?php echo $name_macro ?>_OFFSET         (sizeof(php_<?php echo $name_function ?>) - sizeof(zend_object))
+
+#define ZOBJ_IS_PHP_<?php echo $name_macro ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $name_function ?>_class_entry)
+#define ZOBJ_TO_PHP_<?php echo $name_macro ?>(std)   PHP_<?php echo $name_macro ?>( ((void*)(std))-PHP_<?php echo $name_macro ?>_OFFSET )
+
+#define ZVAL_IS_PHP_<?php echo $name_macro ?>(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_<?php echo $name_macro ?>((val)->value.obj))
+#define ZVAL_GET_PHP_<?php echo $name_macro ?>(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_TO_PHP_<?php echo $name_macro ?>((val)->value.obj))
+
+#define ZVAL_SET_PHP_<?php echo $name_macro ?>(z, o) do {      \
+        if (o==NULL) {                              \
+            ZVAL_NULL(z);                           \
+        } else {                                    \
+            zval *__z = (z);                        \
+            Z_OBJ_P(__z) = &(o)->std;               \
+            Z_TYPE_INFO_P(__z) = IS_OBJECT_EX;	    \
+            GC_REFCOUNT(&o->std)++;                 \
+        }                                           \
+    } while (0)
+
+#define PHP_<?php echo $name_macro ?>_FE() \
+<?php foreach($this->methods as $method): ?>
+    PHP_GTK_FE(<?php echo $method->name ?>,<?php echo $method->pad ?> arginfo_<?php echo $method->name ?>) \
+<?php endforeach; ?>
+
+#define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
+
+#define PHP_<?php echo $name_macro ?>_MSHUTDOWN_FUNCTION() { \
+}
+
+#define PHP_<?php echo $name_macro ?>_RSHUTDOWN_FUNCTION() {\
+}
+
+extern zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+
+
+typedef struct _php_<?php echo $name_function ?> php_<?php echo $name_function ?>;
+struct _php_<?php echo $name_function ?> {
+    <?php echo $this->name ?> *ptr;
+
+    zend_object std;
+};
+
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
+
+<?php
+echo $this->implementation->writeFunctions(true);
+?>
+
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $name_function ?>___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(<?php echo $name_function ?>, __construct);
+
+<?php foreach($this->methods as $method): ?>
+<?php echo $method->args; ?>
+PHP_FUNCTION(<?php echo $method->name ?>);
+
+<?php endforeach; ?>
+
+#endif	/* PHP_<?php echo $name_macro ?>_H */

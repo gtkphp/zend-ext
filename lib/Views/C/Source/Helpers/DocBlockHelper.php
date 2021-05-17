@@ -23,9 +23,7 @@ class DocBlockHelper extends AbstractHelper
             $glue = ', ';
         }
         $output = "proto $str_type ".$method->getName()."($param_type)";
-        //$output .= "\n * ".strip_tags($method->getShortDescription());
-
-
+        $output .= "\n   ".$this->getView()->commentHelper($method->getShortDescription());
 
         return $output;
     }

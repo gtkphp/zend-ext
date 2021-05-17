@@ -1,27 +1,37 @@
+<?php
 
-#define PHP_<?php echo $this->nameMacro ?>_FE() \
-<?php foreach($this->methods as $name=>$method): ?>
-    PHP_GTK_FE(<?php echo $name ?>,<?php echo $method->pad ?> arginfo_<?php echo $name ?>) \
+$name_function = $this->nameclassHelper($this->name);
+$name_macro = strtoupper($name_function);
+$has_members = count($this->members);
+
+?>#ifndef PHP_<?php echo $name_macro ?>_H
+#define PHP_<?php echo $name_macro ?>_H
+
+#define PHP_<?php echo $name_macro ?>_FE() \
+<?php foreach($this->methods as $method): ?>
+    PHP_GTK_FE(<?php echo $method->name ?>,<?php echo $method->pad ?> arginfo_<?php echo $method->name ?>) \
 <?php endforeach; ?>
 
-#define PHP_<?php echo $this->nameMacro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
-    php_<?php echo $this->nameFunction ?>_class_init(container_ce, parent_ce)
+#define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
 
-#define PHP_<?php echo $this->nameMacro ?>_MSHUTDOWN_FUNCTION() { \
+#define PHP_<?php echo $name_macro ?>_MSHUTDOWN_FUNCTION() { \
 }
 
-#define PHP_<?php echo $this->nameMacro ?>_RSHUTDOWN_FUNCTION() {\
+#define PHP_<?php echo $name_macro ?>_RSHUTDOWN_FUNCTION() {\
 }
 
-<?php foreach($this->methods as $name=>$method): ?>
-<?php echo $this->argHelper($method->generator); ?>
-<?php if(False): ?>
-ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $name ?>, 0, ZEND_SEND_BY_VAL, <?php echo count($method->parameters) ?>)
-<?php foreach($method->parameters as $parameter): ?>
-    ZEND_ARG_INFO(ZEND_SEND_BY_VAL, <?php echo $parameter->name ?>)
-<?php endforeach; ?>
-ZEND_END_ARG_INFO()
-<?php endif; ?>
-PHP_FUNCTION(<?php echo $name ?>);
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
+
+<?php
+echo $this->implementation->writeFunctions(true);
+?>
+
+<?php foreach($this->methods as $method): ?>
+<?php echo $method->args; ?>
+PHP_FUNCTION(<?php echo $method->name ?>);
 
 <?php endforeach; ?>
+
+#endif	/* PHP_<?php echo $name_macro ?>_H */

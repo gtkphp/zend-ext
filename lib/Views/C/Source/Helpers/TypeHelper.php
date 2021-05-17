@@ -60,7 +60,18 @@ class TypeHelper extends AbstractHelper
             $output = self::$internalPhpTypes[$prime];
         } else {
             $package = $type->getOwnPackage();
+            $package = $type->getOwnPackage()->getPackage();
             $list_objects = $package->getListTypeObject();
+            if (isset($list_objects[$name])) {
+                return 'php_'.$name;
+            }
+
+            $list_objects = $package->getListTypeEnum();
+            if (isset($list_objects[$name])) {
+                return 'int';
+            }
+
+            $list_objects = $package->getListTypeUnion();
             if (isset($list_objects[$name])) {
                 return 'php_'.$name;
             }

@@ -12,7 +12,8 @@ use Zend\Ext\Views\HelperPluginManager;
 
 use Zend\Ext\Views\C\Source\ClassDto;
 use Zend\Ext\Views\C\Source\MethodDto;
-
+use Zend\Ext\Views\StructDto;
+use Zend\Ext\Views\EnumDto;
 use Zend\Stdlib\Response;
 use Zend\View\Model\ViewModel;
 use Zend\View\Renderer\PhpRenderer;
@@ -20,6 +21,8 @@ use Zend\View\Renderer\RendererInterface;
 use Zend\View\Resolver\TemplatePathStack;
 use Zend\View\Strategy\PhpRendererStrategy;
 use Zend\View\View;
+
+use Zend\ExtGtk\Implementation;
 
 class GlibGenerator extends CodeGenerator
 {
@@ -32,6 +35,13 @@ class GlibGenerator extends CodeGenerator
 
     function getViewModel($dto):ViewModel
     {
+        if ($dto instanceof StructDto) {
+            return $this->getViewModelStruct($dto);
+        }
+        if ($dto instanceof EnumDto) {
+            return $this->getViewModelEnum($dto);
+        }
+        /*
         $licenseModel = new ViewModel(array('author' => 'No Name'));
         $licenseModel->setVariable('date', '31/12/1999');
         $licenseModel->setTemplate('license.phtml');
@@ -41,17 +51,43 @@ class GlibGenerator extends CodeGenerator
         $model->setTemplate('class.phtml');
 
         return $model;
+        */
     }
 
     function getViewModelEnum($dto):ViewModel
     {
         $licenseModel = new ViewModel(array('author' => 'No Name'));
-        $licenseModel->setVariable('date', '31/12/1999');
+        $licenseModel->setVariable('date', date("m/d/y"));
+        $licenseModel->setVariable('php_version', Implementation::$version);
         $licenseModel->setTemplate('license.phtml');
 
-        $model = parent::getViewModel((array)$dto);
+        $marksModel = new ViewModel();
+        $marksModel->setTemplate('vim-marks.phtml');
+
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
         $model->addChild($licenseModel, 'license');
-        $model->setTemplate('enum.phtml');
+        $model->addChild($marksModel, 'vimMarks');
+        $model->setTemplate('file.phtml');
+        
+        return $model;
+    }
+
+    function getViewModelStruct($dto):ViewModel
+    {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', date("m/d/y"));
+        $licenseModel->setVariable('php_version', Implementation::$version);
+        $licenseModel->setTemplate('license.phtml');
+
+        $marksModel = new ViewModel();
+        $marksModel->setTemplate('vim-marks.phtml');
+
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
+        $model->addChild($licenseModel, 'license');
+        $model->addChild($marksModel, 'vimMarks');
+        $model->setTemplate('file.phtml');
 
         return $model;
     }
@@ -64,9 +100,9 @@ class GlibGenerator extends CodeGenerator
         }
         $resolver = new TemplatePathStack();
 
-        $resolver->addPath(__DIR__.'/../../../../Views/C/Source');
-        $resolver->addPath(__DIR__.'/../../../../Views/C');
         $resolver->addPath(__DIR__.'/../../../../Views');
+        $resolver->addPath(__DIR__.'/../../../../Views/C');
+        $resolver->addPath(__DIR__.'/../../../../Views/C/Source');
 
         $renderer = new PhpRenderer();
         $renderer->setResolver($resolver);
@@ -108,5 +144,8 @@ class GlibGenerator extends CodeGenerator
         //file_put_contents(__DIR__.'/../../../../tmp/properties.gperf', $output);
         return $output;
     }
-
+    
+    function getFilenameExtension() {
+        return 'c';
+    }
 }

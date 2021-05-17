@@ -3,6 +3,173 @@ Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
 # Model
 
+Package(gtkml):Object {
+      objects => []
+      enums => []
+      structs => []
+      classes => []
+      symbols => []
+      description => "Gtk Markup Language"
+      subpackage=>[
+            Package(cairo):Object {
+                  description => "Cairo: A Vector Graphics Library"
+                  subpackage=>[
+                        Package(cairo-drawing):Object {
+                              description => "Drawing"
+                              children => [
+                                    File(cairo.xml):Object {
+                                          children : [
+                                                Struct(cairo_t):Object {
+                                                }
+                                                Function(cairo_create):Object {}
+                                                Function(cairo_reference):Object {}
+                                                Function(cairo_destroy):Object {}
+                                                Function(cairo_status):Object {}
+                                                Function(cairo_save):Object {}
+                                                Function(cairo_restore):Object {}
+                                                Function(cairo_get_target):Object {}
+                                                Function(cairo_push_group):Object {}
+                                                Function(cairo_push_group_with_content):Object {}
+                                                Function(cairo_pop_group):Object {}
+                                                Function(cairo_pop_group_to_source):Object {}
+                                                Function(cairo_get_group_target):Object {}
+                                                Function(cairo_set_source_rgb):Object {}
+                                                Function(cairo_set_source_rgba):Object {}
+                                                Function(cairo_set_source):Object {}
+                                                Function(cairo_set_source_surface):Object {}
+                                                Function(cairo_get_source):Object {}
+                                                Function(cairo_set_antialias):Object {}
+                                                Function(cairo_get_antialias):Object {}
+                                                Function(cairo_set_dash):Object {}
+                                                Function(cairo_get_dash_count):Object {}
+                                                Function(cairo_get_dash):Object {}
+                                                Function(cairo_set_fill_rule):Object {}
+                                                Function(cairo_get_fill_rule):Object {}
+                                                Function(cairo_set_line_cap):Object {}
+                                                Function(cairo_get_line_cap):Object {}
+                                                Function(cairo_set_line_join):Object {}
+                                                Function(cairo_get_line_join):Object {}
+                                                Function(cairo_set_line_width):Object {}
+                                                Function(cairo_get_line_width):Object {}
+                                                Function(cairo_set_miter_limit):Object {}
+                                                Function(cairo_get_miter_limit):Object {}
+                                                Function(cairo_set_operator):Object {}
+                                                Function(cairo_get_operator):Object {}
+                                                Function(cairo_set_tolerance):Object {}
+                                                Function(cairo_get_tolerance):Object {}
+                                                Function(cairo_clip):Object {}
+                                                Function(cairo_clip_preserve):Object {}
+                                                Function(cairo_clip_extents):Object {}
+                                                Function(cairo_in_clip):Object {}
+                                                Function(cairo_reset_clip):Object {}
+                                                Function(cairo_rectangle_list_destroy):Object {}
+                                                Function(cairo_copy_clip_rectangle_list):Object {}
+                                                Function(cairo_fill):Object {}
+                                                Function(cairo_fill_preserve):Object {}
+                                                Function(cairo_fill_extents):Object {}
+                                                Function(cairo_in_fill):Object {}
+                                                Function(cairo_mask):Object {}
+                                                Function(cairo_mask_surface):Object {}
+                                                Function(cairo_paint):Object {}
+                                                Function(cairo_paint_with_alpha):Object {}
+                                                Function(cairo_stroke):Object {}
+                                                Function(cairo_stroke_preserve):Object {}
+                                                Function(cairo_stroke_extents):Object {}
+                                                Function(cairo_in_stroke):Object {}
+                                                Function(cairo_copy_page):Object {}
+                                                Function(cairo_show_page):Object {}
+                                                Function(cairo_get_reference_count):Object {}
+                                                Function(cairo_set_user_data):Object {}
+                                                Function(cairo_get_user_data):Object {}
+                                                Enum(cairo_antialias_t):Object {
+                                                      CAIRO_ANTIALIAS_DEFAULT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_NONE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_GRAY (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_SUBPIXEL (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_FAST (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_GOOD (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_ANTIALIAS_BEST (Zend\Ext\Models\ConstantGenerator);
+                                                }
+                                                Enum(cairo_fill_rule_t):Object {
+                                                      CAIRO_FILL_RULE_WINDING (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_FILL_RULE_EVEN_ODD (Zend\Ext\Models\ConstantGenerator);
+                                                }
+                                                Enum(cairo_line_cap_t):Object {
+                                                      CAIRO_LINE_CAP_BUTT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_LINE_CAP_ROUND (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_LINE_CAP_SQUARE (Zend\Ext\Models\ConstantGenerator);
+                                                }
+                                                Enum(cairo_line_join_t):Object {
+                                                      CAIRO_LINE_JOIN_MITER (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_LINE_JOIN_ROUND (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_LINE_JOIN_BEVEL (Zend\Ext\Models\ConstantGenerator);
+                                                }
+                                                Enum(cairo_operator_t):Object {
+                                                      CAIRO_OPERATOR_CLEAR (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_SOURCE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_OVER (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_IN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_OUT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_ATOP (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DEST (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DEST_OVER (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DEST_IN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DEST_OUT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DEST_ATOP (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_XOR (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_ADD (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_SATURATE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_MULTIPLY (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_SCREEN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_OVERLAY (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DARKEN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_LIGHTEN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_COLOR_DODGE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_COLOR_BURN (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_HARD_LIGHT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_SOFT_LIGHT (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_DIFFERENCE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_EXCLUSION (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_HSL_HUE (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_HSL_SATURATION (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_HSL_COLOR (Zend\Ext\Models\ConstantGenerator);
+                                                      CAIRO_OPERATOR_HSL_LUMINOSITY (Zend\Ext\Models\ConstantGenerator);
+                                                }
+                                                Struct(cairo_rectangle_t):Object {
+                                                      x (double);
+                                                      y (double);
+                                                      width (double);
+                                                      height (double);
+                                                }
+                                                Struct(cairo_rectangle_list_t):Object {
+                                                      status (cairo_status_t);
+                                                      rectangles (cairo_rectangle_t);
+                                                      num_rectangles (int);
+                                                }
+                                          ]
+                                    }
+                                    File(cairo-paths.xml):Object {
+                                          children => [
+                                                Struct(cairo_path_t):Object{}
+                                                Enum(cairo_path_data_type_t):Object{}
+                                                Union(cairo_path_data_t):Object{}
+                                                Function(cairo_copy_path):Object{}
+                                          ]
+                                    }
+                                    File(transformations.xml):Object {
+                                          children => [
+                                                Function(cairo_translate) {}
+                                          ]
+                                    }
+                              ]
+                        }
+                  ]
+            }
+      ]
+}
+
+
+
 Package(Gtkml):Object {
       description => "Gtk Markup Language"
       subpackage=>[
@@ -41,6 +208,18 @@ Package(Gtkml):Object {
                                     Struct:Object(Rectangle) {}
                               ]
                         }
+                        //File(Transformations.xml) {}
+                        Function(cairo_translate){}
+                        Function(cairo_scale){}
+                        Function(cairo_rotate){}
+                        Function(cairo_transform){}
+                        Function(cairo_set_matrix){}
+                        Function(cairo_get_matrix){}
+                        Function(cairo_identity_matrix){}
+                        Function(cairo_device_to_user){}
+
+                        Struct(Device):Object {
+                        }
                         Class(Path):Object {
                               Instance =>
                               VirtualTable =>
@@ -56,7 +235,7 @@ Package(Gtkml):Object {
                         Object(ErrorHandling.c) {
                               children => [
                                     Enum(Status){}
-                                    Function(get_status_message){}
+                                    Function(cairo_status_to_string){}
                               ]
                         }
                   ]

@@ -4,6 +4,7 @@ namespace Zend\Ext\Services;
 
 use Zend\Ext\Services\SourceCode;
 use Zend\Ext\Services\CodeGenerator;
+use Zend\Ext\Models\PackageGenerator;
 
 class DocBook
 {
@@ -31,6 +32,15 @@ class DocBook
     public function getSourceCode($name):SourceCode
     {
         return $this->sourceCode[$name];
+    }
+
+    /**
+     * @return PackageGenerator
+     */
+    public function getPackage()
+    {
+        echo __METHOD__ . " Not implemented\n";
+        return null;
     }
 
     /**
