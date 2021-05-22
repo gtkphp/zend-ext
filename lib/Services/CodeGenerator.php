@@ -22,9 +22,7 @@ use Zend\Ext\Services\SourceCode\Glib as GlibSourceCode;
 use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
 use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
 //use Zend\Ext\Views\C\Source\ClassDto;
-use Zend\Ext\Views\EnumDto;
-use Zend\Ext\Views\ConstantDto;
-use Zend\Ext\Views\C\UnionDto;
+
 use Zend\Ext\Views\C\Source\MethodDto;
 //use Zend\Ext\Views\C\ParameterDto;
 use Zend\Ext\Views\C\PropertyDto;
@@ -35,6 +33,10 @@ use Zend\Ext\Views\ClassDto;
 use Zend\Ext\Views\StructDto;
 use Zend\Ext\Views\MemberDto;
 use Zend\Ext\Views\ParameterDto;
+use Zend\Ext\Views\EnumDto;
+use Zend\Ext\Views\ConstantDto;
+use Zend\Ext\Views\UnionDto;
+use Zend\Ext\Views\VarDto;
 
 use Zend\ExtGtk\Implementation;
 
@@ -215,6 +217,24 @@ class CodeGenerator
         return $constantDto;
     }
     
+    function createUnionDto(UnionGenerator $union):UnionDto {
+        $unionDto = new UnionDto;
+        $unionDto->name = $union->getName();
+        $unionDto->description = $this->getRenderer()->commentHelper($union->getDescription(), '');
+        $unionDto->shortDescription = $this->getRenderer()->commentHelper($union->getShortDescription(), '');
+
+        foreach($union->members as $var) {
+            $member = $this->createMemberDto($var);
+            $unionDto->members[$member->name] = $member;
+        }
+
+        //$enumDto->constants[] = ;
+        $unionDto->requires = $this->getRequires($union);
+        $unionDto->dependencies[] = $this->getFilename($unionDto->name);
+
+        return $unionDto;
+    }
+
     function createEnumDto(EnumGenerator $enum):EnumDto {
         $enumDto = new EnumDto;
         $enumDto->name = $enum->getName();
@@ -333,6 +353,10 @@ class CodeGenerator
             $rootDto->objects[$object->getName()] = $enumDto;
             $objectDto = $enumDto;
         } else if ($object instanceof UnionGenerator) {
+            $unionDto = $this->createUnionDto($object);
+            $unionDto->shortName = $this->getShortName($object, $packageDto->name);
+            $rootDto->objects[$object->getName()] = $unionDto;
+            $objectDto = $unionDto;
         } else if ($object instanceof FunctionGenerator) {
         } else if ($object instanceof ConstantGenerator) {
         } else {
@@ -364,7 +388,7 @@ class CodeGenerator
                     foreach ($file->children as $object) {
                         //if (! $object instanceof StructGenerator) continue;
                         //if (! $object instanceof EnumGenerator) continue;
-                        if ($object instanceof UnionGenerator) continue;
+                        //if ($object instanceof UnionGenerator) continue;
                         if ($object instanceof FunctionGenerator) continue;
                         $objectDto = $this->createObjectDto($object);
                         $objectDto->package = $subpackageDto;
@@ -414,13 +438,16 @@ class CodeGenerator
         $rootDto = $this->getPackageDto($package);
 
         foreach ($rootDto->objects as $objectDto) {
+
             if (
-                'cairo_path_t'!=$objectDto->name
+                'cairo_path_data_t'!=$objectDto->name
+            //&&  'cairo_path_t'!=$objectDto->name
             //&& 'cairo_matrix_t'!=$objectDto->name
-            && 'cairo_t'!=$objectDto->name
+            //&& 'cairo_t'!=$objectDto->name
             ) {
                 continue;
             }
+            echo '=>' . $objectDto->name . PHP_EOL;
 
 // TODO les fonction related a cairo_status_t
 // TODO /home/dev/Projets/zend-ext/lib/Services/CodeGenerator.php:368

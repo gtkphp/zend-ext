@@ -113,7 +113,7 @@ class CairoPath extends Implementation {
         $output .= 'php_cairo_path_data_t_create_header(cairo_path_data_t *data, zval *rv)';
         
         if ($declaration)
-            return $output . ';';
+            return $output . ';'.PHP_EOL;
 
         echo $output;
         ?>
@@ -125,6 +125,7 @@ class CairoPath extends Implementation {
     
         ZVAL_OBJ(rv, zobj);
 }
+
 <?php
         return '';
     }
@@ -134,7 +135,7 @@ class CairoPath extends Implementation {
         $output .= 'php_cairo_path_data_t_create_point(cairo_path_data_t *data, zval *rv)';
         
         if ($declaration)
-            return $output . ';';
+            return $output . ';'.PHP_EOL;
 
 
         echo $output;
@@ -147,6 +148,7 @@ class CairoPath extends Implementation {
     
         ZVAL_OBJ(rv, zobj);
 }
+
 <?php
         return '';
     }
@@ -157,7 +159,7 @@ class CairoPath extends Implementation {
         $output .= 'php_cairo_path_data_t_new(cairo_path_t *path)';
         
         if ($declaration)
-            return $output . ';';
+            return $output . ';'.PHP_EOL;
 
 
         echo $output;
@@ -207,6 +209,7 @@ class CairoPath extends Implementation {
         zend_string_release(member_str);
         return rv;
 }
+
 <?php
         return '';
     }

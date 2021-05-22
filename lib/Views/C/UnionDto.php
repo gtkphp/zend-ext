@@ -1,6 +1,6 @@
 <?php
 
-namespace Zend\Ext\Views\C;
+namespace Zend\Ext\Views;
 
 class UnionDto {
     public $name;

@@ -14,7 +14,7 @@ use Zend\Ext\Models\ObjectGenerator;
 class UnionGenerator extends ObjectGenerator
 {
     /**
-     * @var MemberGenerator[] Array of VarGenerator
+     * @var VarGenerator[] Array of VarGenerator
      */
     public $members = [];
 

@@ -2,10 +2,9 @@
 
 namespace Zend\Ext\Views;
 
-use Zend\Ext\Views\VarDto;
 use Zend\Ext\Views\ObjectDto;
 
-class EnumDto extends ObjectDto {
+class UnionDto extends ObjectDto {
     public $requires=array();
     public $dependencies=array();
     public $package=null;

@@ -6,6 +6,8 @@ php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval
     php_<?php echo $name_function ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
     zend_string *member_str = member->value.str;
 
+    // <?php echo $this->type ?>
+    
     struct Php<?php echo $this->camelcaseHelper($this->name) ?>Property *cmd = php_<?php echo $name_function ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
 <?php

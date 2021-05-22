@@ -14,6 +14,7 @@ use Zend\Ext\Views\C\Source\ClassDto;
 use Zend\Ext\Views\C\Source\MethodDto;
 use Zend\Ext\Views\StructDto;
 use Zend\Ext\Views\EnumDto;
+use Zend\Ext\Views\UnionDto;
 use Zend\Stdlib\Response;
 use Zend\View\Model\ViewModel;
 use Zend\View\Renderer\PhpRenderer;
@@ -41,6 +42,9 @@ class GlibGenerator extends CodeGenerator
         if ($dto instanceof EnumDto) {
             return $this->getViewModelEnum($dto);
         }
+        if ($dto instanceof UnionDto) {
+            return $this->getViewModelUnion($dto);
+        }
         /*
         $licenseModel = new ViewModel(array('author' => 'No Name'));
         $licenseModel->setVariable('date', '31/12/1999');
@@ -52,6 +56,25 @@ class GlibGenerator extends CodeGenerator
 
         return $model;
         */
+    }
+    
+    function getViewModelUnion($dto):ViewModel
+    {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', date("m/d/y"));
+        $licenseModel->setVariable('php_version', Implementation::$version);
+        $licenseModel->setTemplate('license.phtml');
+
+        $marksModel = new ViewModel();
+        $marksModel->setTemplate('vim-marks.phtml');
+
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
+        $model->addChild($licenseModel, 'license');
+        $model->addChild($marksModel, 'vimMarks');
+        $model->setTemplate('file.phtml');
+        
+        return $model;
     }
 
     function getViewModelEnum($dto):ViewModel

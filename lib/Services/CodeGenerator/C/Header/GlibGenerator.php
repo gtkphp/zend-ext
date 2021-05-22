@@ -11,7 +11,8 @@ use Zend\Ext\Views\C\ClassDto;
 use Zend\Ext\Views\C\VTableDto;
 use Zend\Ext\Views\C\MethodDto;
 use Zend\Ext\Views\C\ParameterDto;
-use Zend\Ext\Views\C\EnumDto;
+use Zend\Ext\Views\EnumDto;
+use Zend\Ext\Views\UnionDto;
 use Zend\Ext\Views\StructDto;
 
 use Zend\Filter\FilterChain;
@@ -53,6 +54,9 @@ class GlibGenerator extends CodeGenerator
         if ($dto instanceof EnumDto) {
             return $this->getViewModelEnum($dto);
         }
+        if ($dto instanceof UnionDto) {
+            return $this->getViewModelUnion($dto);
+        }
         return null;
     }
 
@@ -76,6 +80,24 @@ class GlibGenerator extends CodeGenerator
         return $model;
     }
 
+    function getViewModelUnion($dto):ViewModel
+    {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', '31/12/1999');
+        $licenseModel->setTemplate('license.phtml');
+
+        $classModel = new ViewModel((array)$dto);
+        $classModel->setTemplate('union.phtml');
+
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
+        $model->addChild($licenseModel, 'license');
+        $model->addChild($classModel, 'class');
+        $model->setTemplate('file.phtml');
+
+        return $model;
+    }
+
     function getViewModelEnum($dto):ViewModel
     {
         $licenseModel = new ViewModel(array('author' => 'No Name'));
@@ -85,7 +107,8 @@ class GlibGenerator extends CodeGenerator
         $classModel = new ViewModel((array)$dto);
         $classModel->setTemplate('enum.phtml');
 
-        $model = parent::getViewModel((array)$dto);
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
         $model->addChild($licenseModel, 'license');
         $model->addChild($classModel, 'class');
         $model->setTemplate('file.phtml');
