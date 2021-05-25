@@ -1,6 +1,7 @@
 <?php
 
 $name_function = $this->nameclassHelper($this->name);
+$name_function = strtolower($name_function);
 $name_macro = strtoupper($name_function);
 $has_members = count($this->members);
 

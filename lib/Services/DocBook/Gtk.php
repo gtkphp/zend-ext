@@ -355,6 +355,7 @@ class Gtk extends DocBook
                             }
                         }
                         /**/
+
                     }
                 }
             }
@@ -403,7 +404,7 @@ class Gtk extends DocBook
             }
             $this->major_name = $name;
 
-            $class = null;
+            $class = [];
             $methods = [];
 
             foreach($xml->refsect1 as $refsect1) {
@@ -462,6 +463,7 @@ class Gtk extends DocBook
             // cairo_translate(cr);
             // 
             // we can create the Class because all reference are not defined yet.
+
         }
         // $package->addBoxed($class);
         // $package->addFunction($class);
@@ -705,9 +707,8 @@ class Gtk extends DocBook
             }
         }
         
-        $is_class = false;
         $struct_names = [];
-        $class_name = null;
+        $class_names = [];
         foreach($nodes as $node) {
             $role = (string)$node['role'];
             $struct_name = (string)$node->indexterm[0]->primary;
@@ -715,8 +716,7 @@ class Gtk extends DocBook
                 case 'struct':
                     $struct_names[$struct_name] = $struct_name;
                     if ('Class'==substr($struct_name, -5)) {
-                        $class_name = substr($struct_name, 0, -5);
-                        $is_class = true;
+                        $class_names[] = substr($struct_name, 0, -5);
                     }
                     $this->loadStruct($node);
                     break;
@@ -747,12 +747,10 @@ class Gtk extends DocBook
                     break;
             }
         }
-        $classGenerator = null;
-
 
         if (isset($generator->children[$this->major_name])) {
             $master = $generator->children[$this->major_name];
-            $generator->setMasterObject($master);// FileGenerator
+            $generator->setMasterObject($master);// $generator == FileGenerator
             $master->isClassified = true;
             foreach($generator->children as $child) {
                 // promot to class if vtable exist
@@ -765,8 +763,42 @@ class Gtk extends DocBook
             }
         }
 
+        foreach ($class_names as $class_name) {
+            $this->createClass($class_name);
+            // unsete $struct['Class']
+            // set $class
+
+        }
+
         $this->current_generator = $package;
-        return $classGenerator;
+        return $class_names;
+    }
+
+
+    protected function createClass(string $name) {
+        $generator = $this->current_generator;// FileGenerator
+        $package = $generator->getOwnPackage();// PackageGenerator
+        //$struct = $package->createStruct($name);
+        /**
+         * @var StructGenerator
+         */
+        $struct = $generator->children[$name];
+        /**
+         * @var StructGenerator
+         */
+        $vtable = $generator->children[$name.'Class'];
+        unset($generator->children[$name]);
+        unset($generator->children[$name.'Class']);
+        
+        /**
+         * @var ClassGenerator
+         */
+        $class = $package->createClass($name);
+        $class->setDescription('TODO');
+        $class->setShortDescription('TODO 2');
+        $class->setInstance($struct);
+        $class->setVTable($vtable);
+        $generator->children[$name] = $class;
     }
 
     protected function getSeeAlso(SimpleXMLElement $xml){

@@ -23,11 +23,6 @@ class StructGenerator extends ObjectGenerator
         $this->name = $name;
         return $this;
     }
-    public function setType(string $type): StructGenerator
-    {
-        // $type == 'struct'
-        return $this;
-    }
 
     public function setMembers(array $members): StructGenerator
     {
@@ -60,7 +55,7 @@ class StructGenerator extends ObjectGenerator
     static public function Create($data):StructGenerator {
         $name = $data['name'];
         if(!empty($name) && $name[0]='_') $name = substr($name, 1);
-        $this_union = new StructGenerator($name);
+        $struct = new StructGenerator($name);
         $members = array();
         foreach($data['members'] as $member_name=>$member) {
             switch ($member['type']) {
@@ -74,8 +69,8 @@ class StructGenerator extends ObjectGenerator
                     break;
             }
         }
-        $this_union->members = $members;
-        return $this_union;
+        $struct->members = $members;
+        return $struct;
     }
 
 }

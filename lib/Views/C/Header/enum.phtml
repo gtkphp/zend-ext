@@ -1,6 +1,7 @@
 <?php
 
 $name_function = $this->nameclassHelper($this->name);
+$name_function = strtolower($name_function);
 $name_macro = strtoupper($name_function);
 $has_members = count($this->members);
 
@@ -25,7 +26,9 @@ zend_class_entry*
 php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
 
 <?php
-echo $this->implementation->writeFunctions(true);
+if ($this->implementation) {
+    echo $this->implementation->writeFunctions(true);
+}
 ?>
 
 <?php foreach($this->methods as $method): ?>

@@ -21,6 +21,10 @@ foreach($this->members as $property) {
     
     echo '        ';
     echo 'case '.$const.':'.PHP_EOL;
+    echo '            ';
+    echo 'ZVAL_COPY(rv, &intern->'.$name.');'.PHP_EOL;
+
+    /*
     $type = str_replace('*', '', $property->type);
     $type = trim($type);
     switch ($type) {
@@ -47,6 +51,9 @@ foreach($this->members as $property) {
             //echo '???'.$type.PHP_EOL;
             break;
     }
+    echo '            ';
+    */
+
     echo '            ';
     echo 'break;'.PHP_EOL;
 }

@@ -25,10 +25,7 @@ class ObjectHelper extends AbstractHelper
          */
         $view = $this->getView();
 
-        if ($objectDto instanceof ClassDto) {
-            $output = get_class($objectDto);
-
-        } else if ($objectDto instanceof EnumDto) {
+        if ($objectDto instanceof EnumDto) {
             $package_name = $objectDto->package->package->name;
             $impl = Implementation::Factory($package_name)->get($objectDto->name);
 
@@ -43,6 +40,14 @@ class ObjectHelper extends AbstractHelper
             $model = new ViewModel((array)$objectDto);
             $model->setVariable('implementation', $impl);
             $model->setTemplate('union.phtml');
+            $output = $view->render($model);
+        } else if ($objectDto instanceof ClassDto) {
+            $package_name = $objectDto->package->package->name;
+            $impl = Implementation::Factory($package_name)->get($objectDto->name);
+
+            $model = new ViewModel((array)$objectDto);
+            $model->setVariable('implementation', $impl);
+            $model->setTemplate('class.phtml');
             $output = $view->render($model);
         } else if ($objectDto instanceof StructDto) {
             $package_name = $objectDto->package->package->name;

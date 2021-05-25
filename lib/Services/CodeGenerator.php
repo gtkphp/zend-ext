@@ -191,12 +191,14 @@ class CodeGenerator
         return $packageDto;
     }
     
-    function createClassDto(StructGenerator $struct):ClassDto {
-        $structDto = new ClassDto;
-        $structDto->name = $struct->getName();
-        $structDto->description = $struct->getDescription();
-        $structDto->shortDescription = $struct->getShortDescription();
-        return $structDto;
+    function createClassDto(ClassGenerator $class):ClassDto {
+        $classDto = new ClassDto;
+        $classDto->name = $class->getName();
+        $classDto->description = $class->getDescription();
+        $classDto->shortDescription = $class->getShortDescription();
+        $classDto->instance = $this->createStructDto($class->getInstance());
+        $classDto->vtable = $this->createStructDto($class->getVTable());
+        return $classDto;
     }
     
     function createMemberDto(VarGenerator $member):MemberDto {
@@ -205,7 +207,13 @@ class CodeGenerator
         $memberDto->description = $this->getRenderer()->commentHelper($member->getDescription(), '');
         //$memberDto->type = $member->getType()->getName();
         $memberDto->type = $this->getRenderer()->typeHelper($member->getType());
-
+        if ($member->getType()->isPrototype()) {
+            $memberDto->is_prototype = true;
+            $memberDto->prototype = $member->getType()->getPrototype();
+        }
+        /*if ('show'==$member->getName()) {
+            var_dump($member);
+        }*/
         return $memberDto;
     }
     
@@ -336,7 +344,12 @@ class CodeGenerator
         $packageDto = $this->current_package_dto;
         $subpackageDto = $this->current_subpackage_dto;
         $objectDto = null;
-        if ($object instanceof StructGenerator) {
+        if ($object instanceof ClassGenerator) {
+            $classDto = $this->createClassDto($object);
+            $classDto->shortName = $this->getShortName($object, $packageDto->name);
+            $rootDto->objects[$object->getName()] = $classDto;
+            $objectDto = $classDto;
+        } else if ($object instanceof StructGenerator) {
             $structDto = $this->createStructDto($object);
             //$structDto->package = $subpackageDto;
             $structDto->shortName = $this->getShortName($object, $packageDto->name);
@@ -386,8 +399,8 @@ class CodeGenerator
                 $this->current_subpackage_dto = $subpackageDto;
                 foreach ($subpackage->children as $file) {
                     foreach ($file->children as $object) {
-                        //if (! $object instanceof StructGenerator) continue;
-                        //if (! $object instanceof EnumGenerator) continue;
+                        //if ($object instanceof StructGenerator) continue;
+                        //if ($object instanceof EnumGenerator) continue;
                         //if ($object instanceof UnionGenerator) continue;
                         if ($object instanceof FunctionGenerator) continue;
                         $objectDto = $this->createObjectDto($object);
@@ -396,7 +409,6 @@ class CodeGenerator
                 }
             }
         }
-
         return $rootDto;
     }
 
@@ -439,8 +451,11 @@ class CodeGenerator
 
         foreach ($rootDto->objects as $objectDto) {
 
+            /*
             if (
-                'cairo_path_data_t'!=$objectDto->name
+                  'cairo_matrix_t'!=$objectDto->name
+            //&&  'cairo_rectangle_t'!=$objectDto->name
+            //&&  'cairo_path_data_t'!=$objectDto->name
             //&&  'cairo_path_t'!=$objectDto->name
             //&& 'cairo_matrix_t'!=$objectDto->name
             //&& 'cairo_t'!=$objectDto->name
@@ -448,6 +463,13 @@ class CodeGenerator
                 continue;
             }
             echo '=>' . $objectDto->name . PHP_EOL;
+            */
+            if (
+                'GtkWidget'!=$objectDto->name
+          ) {
+              continue;
+          }
+
 
 // TODO les fonction related a cairo_status_t
 // TODO /home/dev/Projets/zend-ext/lib/Services/CodeGenerator.php:368

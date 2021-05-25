@@ -1,6 +1,7 @@
 <?php
 
 $name_function = $this->nameclassHelper($this->name);
+$name_function = strtolower($name_function);
 $name_macro = strtoupper($name_function);
 $has_members = count($this->members);
 
@@ -48,11 +49,14 @@ extern zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
 
 typedef struct _php_<?php echo $name_function ?> php_<?php echo $name_function ?>;
 struct _php_<?php echo $name_function ?> {
-<?php //echo '    '.$this->name.' *ptr;'.PHP_EOL ?>
 <?php
+if (empty($this->members)) {
+    echo '    '.$this->name.' *ptr;'.PHP_EOL;
+} else {
     foreach($this->members as $property) {
-        echo '    zval '.$property->name.';'.PHP_EOL;
+        echo '    zval '.$property->name.';// of '.$property->type.PHP_EOL;
     }
+}
 ?>
 
     zend_object std;

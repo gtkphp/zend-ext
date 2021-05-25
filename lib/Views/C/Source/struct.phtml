@@ -1,6 +1,7 @@
 <?php
 
 $name_function = $this->nameclassHelper($this->name);
+$name_function = strtolower($name_function);
 $name_macro = strtoupper($name_function);
 $has_members = count($this->members);
 
@@ -65,7 +66,15 @@ php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
     zend_object_std_init(&intern->std, class_type);
     object_properties_init(&intern->std, class_type);
 
-    intern->ptr = NULL;
+<?php
+if (empty($this->members)) {
+    echo '    intern->ptr = NULL;'.PHP_EOL;
+} else {
+    foreach($this->members as $property) {
+        echo '    ZVAL_NULL(&intern->'.$property->name.');'.PHP_EOL;
+    }
+}
+?>
 
     intern->std.handlers = &php_<?php echo $name_function ?>_handlers;
 
@@ -86,9 +95,18 @@ php_<?php echo $name_function ?>_free_object(zend_object *object)
 {
     php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(object);
 
-    if (intern->ptr!=NULL) {
-        efree(intern->ptr);
+<?php
+if (empty($this->members)) {
+    echo '    if (intern->ptr) {'.PHP_EOL;
+    echo $this->implementation->zend_extends('free_object');
+    echo '        intern->ptr = NULL;'.PHP_EOL;
+    echo '    }'.PHP_EOL;
+} else {
+    foreach($this->members as $property) {
+        echo '    zval_ptr_dtor(&intern->'.$property->name.');'.PHP_EOL;
     }
+}
+?>
 
     zend_object_std_dtor(&intern->std);
 }

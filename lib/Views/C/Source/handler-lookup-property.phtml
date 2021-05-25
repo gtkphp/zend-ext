@@ -129,3 +129,44 @@ foreach ($this->members as $property) {
 
 
 <?php echo $this->lookupHelper($this); ?>
+
+
+static zval *
+php_<?php echo $name_function ?>_get_property_ptr_ptr(zval *object, zval *member, int type, void **cache_slot) {
+    php_<?php echo $name_function ?> *obj = ZVAL_GET_<?php echo $name_macro ?>(object);
+    zend_string *member_str = member->value.str;
+    char *str = member_str->val;
+    zval *retval = NULL;
+
+
+    struct Php<?php echo $this->camelcaseHelper($this->name) ?>Property *cmd = php_<?php echo $name_function ?>_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+<?php
+
+foreach($this->members as $property) {
+
+    $name = strtoupper($property->name);
+    $name = str_replace('-', '_', $name);
+    $const = 'PHP_'. $name_macro .'_'.$name;
+    $name = strtolower($name);
+    
+    echo '        ';
+    echo 'case '.$const.':'.PHP_EOL;
+    echo '            ';
+    echo 'return &intern->'.$name.';'.PHP_EOL;
+    echo '            ';
+    echo 'break;'.PHP_EOL;
+}
+?>
+        default:
+            zend_internal_type_error(1, "Internal bug,");
+            break;
+        }
+    } else {
+        // property not found
+    }
+
+
+    return retval;
+}

@@ -91,7 +91,7 @@ class ClassGenerator extends ObjectGenerator
      * The virtual table
      * @var StructGenerator
      */
-    protected $virtual;
+    protected $vtable;
 
     /**
      * @var TraitUsageGenerator Object to encapsulate trait usage logic
@@ -768,7 +768,7 @@ class ClassGenerator extends ObjectGenerator
      */
     public function getVTable(): ?StructGenerator
     {
-        return $this->virtual;
+        return $this->vtable;
     }
 
     /**
@@ -776,7 +776,7 @@ class ClassGenerator extends ObjectGenerator
      */
     public function setVTable(StructGenerator $vtable):ClassGenerator
     {
-        $this->virtual = $vtable;
+        $this->vtable = $vtable;
         return $this;
     }
 

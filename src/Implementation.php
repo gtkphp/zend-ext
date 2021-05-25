@@ -89,7 +89,7 @@ class Implementation {
                     echo 'Unknown "' . $name . '" implementation override.' . PHP_EOL;
                     $called[$name]=true;
                 }
-                return new Implementation();
+                return new EmptyImplementation();
                 break;
         }
     }
@@ -134,4 +134,11 @@ class Implementation {
     }
     
     
+}
+
+class EmptyImplementation {
+    public function get(string $name)
+    {
+        return new Implementation();
+    }
 }

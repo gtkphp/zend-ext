@@ -299,16 +299,15 @@ class PackageGeneratorTest extends TestCase
         $sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/glib/glib-decl.txt');
 
         $sourceCode->loadTypes('/home/dev/Projects/cairo/doc/public/cairo-decl.txt');// depend on glib-decl.txt
-        /*
+        /**/
         $sourceCode->loadTypes('/home/dev/Projects/glib-build-doc/docs/reference/gobject/gobject-decl.txt');// depend on glib-decl.txt
         $sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gdk/gdk3-decl.txt');// depend on cairo-decl.txt
         $sourceCode->loadTypes('/home/dev/Projects/gtk-build-doc/docs/reference/gtk/gtk3-decl.txt');
-        */
+        /**/
 
         // PHP Manual > Function Reference > GUI Extensions > GTK+
         $clone_dir = __DIR__.'/../tmp/';
         $clone_dir = '/home/dev/Projects/';
-        $clone_dir = '/home/dev/Projets/';
         $docBook = new GtkDocBook(__DIR__.'/../data/gtkphp.xml', $clone_dir);
         $docBook->blacklist = array('cairo-version.xml', 'cairo-quartz-fonts.xml');
         // map struct name

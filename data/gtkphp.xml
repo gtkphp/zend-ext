@@ -29,7 +29,7 @@
     <xi:include href="doc/public/cairo-docs.xml"/>
   </part>
 
-  <!--part id="gtk">
+  <part id="gtk">
     <title>Gtk+</title>
     <partinfo>
       <releaseinfo>
@@ -47,6 +47,6 @@
       </indexterm>
     </partinfo>
     <xi:include href="docs/reference/gtk/gtk-docs.sgml"/>
-  </part-->
+  </part>
 
 </book>

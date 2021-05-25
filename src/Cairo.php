@@ -44,6 +44,12 @@ class CairoCairo extends Implementation{
         return $output;
     }
 
+    function zend_extends_free_object() {
+        $output  = '';
+        $output .= '        cairo_destroy(intern->ptr);'.PHP_EOL;
+        return $output;
+    }
+
     //function zend_override_get_debug_info();
     function zend_override_get_debug_info() {
         $output  = '';
