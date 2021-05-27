@@ -54,7 +54,6 @@ class TypeHelper extends AbstractHelper
     {
         $output = '';
         $name = $type->getName();
-        //echo 'type.name: ', $name, PHP_EOL;
         //echo '     type: ', $type->getPrimitiveType(), PHP_EOL;
         // check if void,
         // check if internal php type primitive
@@ -68,7 +67,7 @@ class TypeHelper extends AbstractHelper
         } else {
             // check if is an known type
             $package = $type->getOwnPackage();
-            $list_objects = $package->getListTypeObject();
+            $list_objects = $package->getListTypeStruct();
             if (isset($list_objects[$name])) {
                 $ns = $package->getName();
                 $type_ns = $this->getView()->namespaceHelper($name);

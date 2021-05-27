@@ -106,6 +106,16 @@ class Implementation {
         return $output;
     }
     // remplace l'appel d'un fonction
+    public function writeDefine(bool $declaration=false) {
+        $output = '';
+        $methods = get_class_methods ($this);
+        foreach ($methods as $method) {
+            if ('define_'==substr($method, 0, 7)) {
+                $output .= $this->$method($declaration);
+            }
+        }
+        return $output;
+    }
 
     // remplace une fonction( ex: get_debug_info)
     public function zend_override($name) {

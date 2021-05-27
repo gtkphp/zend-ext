@@ -1,6 +1,9 @@
 Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
+TODO: 
+diff -b ~/Projects/gtkphp/php-src/ext/gtk/php_cairo/path.c ~/Projets/zend-ext/output/php_cairo/path.c
+
 # Model
 
 Package(gtkml):Object {

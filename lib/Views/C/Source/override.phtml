@@ -1,0 +1,102 @@
+
+
+// for each parent...
+static GtkWidgetClass php_<?php echo $name_function ?>_klass = {G_TYPE_INVALID};
+
+<?php
+    $this_ns = $this->namespaceHelper($this->name, 1);
+    $this_no = str_replace($this_ns.'_', '', $this->nameclassHelper($this->name, 1));
+
+    $nameFunction = strtolower($this_ns.'_'.$this_no);
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
+
+        echo '// override '.$parent->name.' methods'.PHP_EOL;
+        echo '// -----------------------------------------------------------------------'.PHP_EOL;
+        //foreach($vtable->methods as $virtual) {
+        foreach($vtable->members as $virtual) {
+            if (! $virtual->is_prototype) {
+                continue;
+            }
+            if('show'!=$virtual->name) {
+                continue;
+            }
+            $signature = $virtual->prototype['signature'];
+
+            echo '/** '.PHP_EOL;
+            echo ' * '.$virtual->description . ' => ' . $virtual->type . PHP_EOL;
+            echo ' */ '.PHP_EOL;
+            echo 'static '.$signature['return']['type'].PHP_EOL;
+            echo 'php_'.$nameFunction.'_override_'.$no.'_'.$virtual->name.'(';
+            $glue = '';
+            foreach($signature['parameters'] as $parameter) {
+                $pass = isset($parameter['pass']) ? $parameter['pass'] : '';
+                echo $glue.$parameter['type'].' '.$pass.$parameter['name'];
+                $glue = ', ';
+            }
+            echo '){'.PHP_EOL;
+            echo '    //TODO: DECL_MACRO();'. PHP_EOL;
+
+            echo '    //TODO: Implement'. PHP_EOL;
+            echo '}'. PHP_EOL;
+        }
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
+    }
+
+
+?>
+
+static void
+php_<?php echo $name_function ?>_class_init_override() {
+<?php
+        echo '    ';
+        echo $this->name.'Class *'. $this->abbr .'_klass = g_type_class_peek('.$this_ns.'_TYPE_'. $this_no.');'.PHP_EOL;
+
+        $parent = $this->parent;
+        while($parent) {
+            echo '    ';
+            echo $parent->name.'Class *'. $parent->abbr.'_klass = ';
+            $ns = $this->namespaceHelper($parent->name, 1);
+            $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, 1));
+            echo $ns.'_TYPE_'.$no.'('.$this->abbr.'_klass);'.PHP_EOL;
+
+            $parent= $parent->parent;
+        }
+?>
+
+
+    if (NULL==G_TYPE_FROM_CLASS(&php_<?php echo $name_function ?>_klass)) {
+        memcpy(&php_<?php echo $name_function ?>_klass, <?php echo $this->abbr ?>_klass, sizeof(<?php echo $this->vtable->name ?>));
+        G_TYPE_FROM_CLASS(&php_<?php echo $name_function ?>_klass) = <?php echo $this_ns . '_TYPE_' . $this_no; ?>;
+
+<?php
+
+    $parent = $this;
+    while($parent) {
+        $vtable = $parent->vtable;
+        $ns = $this->namespaceHelper($parent->name, -1);
+        $no = str_replace($ns.'_', '', $this->nameclassHelper($parent->name, -1));
+
+        foreach($vtable->members as $virtual) {
+            if (! $virtual->is_prototype) {
+                continue;// add static var in class
+            }
+            if('show'!=$virtual->name) {
+                continue;
+            }
+            echo '        ';
+            echo $no.'_klass->'.$virtual->name.' = php_'.$name_function.'_override_'.$no.'_'.$virtual->name.';'. PHP_EOL;
+        }
+        echo PHP_EOL;
+        
+        $parent= $parent->parent;
+    }
+
+?>
+    }
+}

@@ -42,6 +42,7 @@ extern zend_module_entry gtk_module_entry;
 zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
 zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
+<?php echo $this->implementation->writeDefine(); ?>
 
 /*----------------------------------------------------------------------+
  | Internal                                                             |
@@ -66,7 +67,7 @@ php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
     zend_object_std_init(&intern->std, class_type);
     object_properties_init(&intern->std, class_type);
 
-    intern->union_type = PHP_<?php echo $name_macro ?>_UNKNOWN;
+    intern->union_type = 0;//PHP_<?php echo $name_macro ?>_UNKNOWN
 <?php foreach($this->members as $member): ?>
     ZVAL_NULL(&intern-><?php echo $member->name ?>);
 <?php endforeach; ?>
@@ -111,6 +112,7 @@ php_<?php echo $name_function ?>_free_object(zend_object *object)
 <?php   include("handler-lookup-property.phtml") ?>
 <?php   include("handler-read_property.phtml") ?>
 <?php   include("handler-write_property.phtml") ?>
+<?php   include("handler-get_property.phtml") ?>
 <?php endif; ?>
 
 
@@ -130,6 +132,7 @@ php_<?php echo $name_function ?>_get_handlers()
 <?php if($has_members): ?>
     php_<?php echo $name_function ?>_handlers.read_property = php_<?php echo $name_function ?>_read_property;
     php_<?php echo $name_function ?>_handlers.write_property = php_<?php echo $name_function ?>_write_property;
+    php_<?php echo $name_function ?>_handlers.get_property_ptr_ptr = php_<?php echo $name_function ?>_get_property_ptr_ptr;
 <?php endif; ?>
 
 <?php if ($this->implementation->enable_debug): ?>

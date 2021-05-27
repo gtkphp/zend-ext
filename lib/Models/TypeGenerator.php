@@ -116,6 +116,8 @@ class TypeGenerator extends AbstractGenerator
         'double'              => self::PRIMITIVE_DOUBLE,
         'char'                => self::PRIMITIVE_CHAR,
         'unsigned int'        => self::PRIMITIVE_INT,
+        'unsigned long'       => self::PRIMITIVE_INT,
+        'long'                => self::PRIMITIVE_INT,
         
     ];
 

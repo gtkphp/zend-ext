@@ -14,7 +14,7 @@ class CallHelper extends AbstractHelper
 {
     protected function isObject($type, $package) {
         $name = $type->getName();
-        $objects = $package->getListTypeObject();
+        $objects = $package->getPackage()->getListTypeStruct();
         return isset($objects[$name]);
     }
     protected function isEnum($type, $package) {
@@ -27,8 +27,6 @@ class CallHelper extends AbstractHelper
     {
         $parameters = $method->getParameters();
         $extra = '';
-        $enums = $method->getOwnPackage()->getListTypeEnum();
-
 
         $output = '';
 
@@ -37,6 +35,7 @@ class CallHelper extends AbstractHelper
             $self =  current($parameters);
         }
         //$output .= '    ' . $parameterTypeName . ' *' . $parameter->getName().' = php_' . $parameter->getName().'==NULL ? NULL : php_' . $parameter->getName().'->ptr;'.PHP_EOL;
+        /*
         if ($self && $this->isObject($self->getType(), $method->getOwnPackage())) {
             // TODO use PHP_GTK_ASSERT($self->getName(), $method->getName());
             $output .= '    if (NULL=='.$self->getName().') {'.PHP_EOL;
@@ -44,6 +43,7 @@ class CallHelper extends AbstractHelper
             $output .= '        return;'.PHP_EOL;
             $output .= '    }'.PHP_EOL;
         }
+        */
 
         //$impl = new Implementation::Factory($method->getOwnPackage()->getName());
         $impl = Implementation::Factory($method->getOwnPackage()->getOwnPackage()->getName());

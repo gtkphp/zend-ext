@@ -273,10 +273,20 @@ class CodeGenerator
         }
 
         $max_length = 0;
-        foreach($struct->relateds as $related) {
-            if ($related instanceof FunctionGenerator) {
-                $structDto->methods[] = $this->createFunctionDto($related);
-                $max_length = max($max_length, strlen($related->getName()));
+        if (true) {
+            $fileGenerator = $struct->getParentGenerator();
+            foreach($fileGenerator->children as $related) {
+                if ($related instanceof FunctionGenerator) {
+                    $structDto->methods[] = $this->createFunctionDto($related);
+                    $max_length = max($max_length, strlen($related->getName()));
+                }
+            }
+        } else {
+            foreach($struct->relateds as $related) {
+                if ($related instanceof FunctionGenerator) {
+                    $structDto->methods[] = $this->createFunctionDto($related);
+                    $max_length = max($max_length, strlen($related->getName()));
+                }
             }
         }
         foreach($structDto->methods as $method) {
@@ -451,10 +461,12 @@ class CodeGenerator
 
         foreach ($rootDto->objects as $objectDto) {
 
-            /*
+            
             if (
-                  'cairo_matrix_t'!=$objectDto->name
+                  'cairo_path_t'!=$objectDto->name
             //&&  'cairo_rectangle_t'!=$objectDto->name
+            //&&  'cairo_glyph_t'!=$objectDto->name
+            //&&  'cairo_path_data_type_t'!=$objectDto->name
             //&&  'cairo_path_data_t'!=$objectDto->name
             //&&  'cairo_path_t'!=$objectDto->name
             //&& 'cairo_matrix_t'!=$objectDto->name
@@ -463,12 +475,13 @@ class CodeGenerator
                 continue;
             }
             echo '=>' . $objectDto->name . PHP_EOL;
-            */
+            
+        /*
             if (
                 'GtkWidget'!=$objectDto->name
           ) {
               continue;
-          }
+          }*/
 
 
 // TODO les fonction related a cairo_status_t

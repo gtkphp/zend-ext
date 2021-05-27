@@ -857,6 +857,7 @@ class Gtk extends DocBook
         }
 
         $struct = $package->createStruct($name);
+        $struct->setParentGenerator($generator);
         $this->current_generator = $struct;
         $generator->children[$name] = $struct;
 

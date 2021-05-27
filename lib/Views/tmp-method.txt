@@ -9,6 +9,7 @@
 #include <zend_interfaces.h>
 #include <ext/standard/info.h>
 
+
 <?php
 foreach($this->includeFiles as $include) {
 echo '#include '.$include.PHP_EOL;
@@ -16,7 +17,6 @@ echo '#include '.$include.PHP_EOL;
 ?>
 
 #include "<?php echo $this->headerFile ?>"
-
 <?php
 foreach($this->dependencies as $dependencie) {
 echo '#include "'.$dependencie.'"'.PHP_EOL;
@@ -416,8 +416,8 @@ php_<?php echo $this->nameFunction ?>_class_init(zend_class_entry *container_ce,
 if ($relationship instanceof Zend\Ext\Views\C\EnumDto) {
     foreach($relationship->constants as $constant) {
         echo '    ';
-        echo 'zend_register_long_constant("'.$constant['name'].'", sizeof("'.$constant['name'].'")-1,'.PHP_EOL;
-        echo '        '.$constant['name'].', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);'.PHP_EOL;
+        echo 'zend_register_long_constant("'.$constant->getName().'", sizeof("'.$constant->getName().'")-1,'.PHP_EOL;
+        echo '        '.$constant->getName().', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);'.PHP_EOL;
     }
     echo PHP_EOL;
 }
@@ -501,7 +501,7 @@ PHP_FUNCTION(<?php echo $name ?>)
 {
 <?php echo $method->args.PHP_EOL; ?>
 <?php echo $method->call.PHP_EOL; ?>
-<?php echo $method->return.PHP_EOL; ?>
+<?php //echo $method->return.PHP_EOL; ?>
 }/* }}} */
 
 <?php endforeach; ?>

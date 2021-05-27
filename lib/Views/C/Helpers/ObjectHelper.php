@@ -31,6 +31,7 @@ class ObjectHelper extends AbstractHelper
 
             $model = new ViewModel((array)$objectDto);
             $model->setVariable('implementation', $impl);
+            $model->setVariable('type', 'enum');
             $model->setTemplate('enum.phtml');
             $output = $view->render($model);
         } else if ($objectDto instanceof UnionDto) {
@@ -39,6 +40,7 @@ class ObjectHelper extends AbstractHelper
 
             $model = new ViewModel((array)$objectDto);
             $model->setVariable('implementation', $impl);
+            $model->setVariable('type', 'union');
             $model->setTemplate('union.phtml');
             $output = $view->render($model);
         } else if ($objectDto instanceof ClassDto) {
@@ -47,6 +49,7 @@ class ObjectHelper extends AbstractHelper
 
             $model = new ViewModel((array)$objectDto);
             $model->setVariable('implementation', $impl);
+            $model->setVariable('type', 'class');
             $model->setTemplate('class.phtml');
             $output = $view->render($model);
         } else if ($objectDto instanceof StructDto) {
@@ -55,6 +58,7 @@ class ObjectHelper extends AbstractHelper
 
             $model = new ViewModel((array)$objectDto);
             $model->setVariable('implementation', $impl);
+            $model->setVariable('type', 'struct');
             $model->setTemplate('struct.phtml');
             $output = $view->render($model);
         } else {

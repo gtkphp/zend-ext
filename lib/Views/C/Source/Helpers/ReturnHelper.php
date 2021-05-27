@@ -11,6 +11,17 @@ use Zend\Ext\Models\TypeGenerator;
 
 class ReturnHelper extends AbstractHelper
 {
+    protected function isObject($type, $package) {
+        $name = $type->getName();
+        $objects = $package->getPackage()->getListTypeStruct();
+        return isset($objects[$name]);
+    }
+    protected function isEnum($type, $package) {
+        $name = $type->getName();
+        $objects = $package->getPackage()->getListTypeEnum();
+        return isset($objects[$name]);
+    }
+
     public function __invoke(MethodGenerator $method)
     {
         $output = '';
@@ -60,11 +71,27 @@ class ReturnHelper extends AbstractHelper
                 $enums = $package->getListTypeEnum();
 
                 //$output .= get_class($enums[$type_name]);
-                if (isset($enums[$type_name])) {
+                if ('cairo_bool_t'==$type_name) {
+                    $output .= '    if (ret) {'.PHP_EOL;
+                    $output .= '        RETURN_TRUE;'.PHP_EOL;
+                    $output .= '    } else {'.PHP_EOL;
+                    $output .= '        RETURN_FALSE;'.PHP_EOL;
+                    $output .= '    }';
+                } else if (isset($enums[$type_name])) {
                     $output .= '    RETURN_LONG(ret);';
                 } else {
+                    $methodType = $method->getParameterReturn()->getType();
+                    $t = $methodType->getName();
+                    $f = $method->getName();
+
                     $output .= '    RETURN_OBJ(z_ret);';
-                    //$output .= '//    RETURN_VAL(ret);'.$type->getName();
+                    /*
+                    $output .= '    zend_object *z_ret = php_'.$t.'_create_object(php_'.$t.'_class_entry);'.PHP_EOL;
+                    $output .= '    php_'.$t.' *php_ret = ZOBJ_TO_PHP_'.strtoupper($t).'(z_ret);'.PHP_EOL;
+                    $output .= '    php_ret->ptr = ret;'.PHP_EOL;
+                    $output .= PHP_EOL;
+                    $output .= '    RETURN_OBJ(z_ret);';
+                    */
                 }
                 break;
         }

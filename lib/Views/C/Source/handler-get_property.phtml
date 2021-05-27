@@ -1,13 +1,21 @@
+<?php $output = $this->implementation->zend_override('get_property_ptr_ptr'); if($output): ?>
 
-/* {{{ php_<?php echo $name_function ?>_write_property */
-static void
-php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval *value, void **cache_slot)
-{
-    php_<?php echo $name_function ?> *intern = ZVAL_GET_PHP_<?php echo $this->nameclassHelper($this->name, 1) ?>(object);
+<?php echo $output; ?>
+
+<?php else: ?>
+
+<?php
+$param = $this->implementation->param;
+$get_param = $this->implementation->get_param;
+?>
+/* {{{ php_<?php echo $name_function ?>_get_property_ptr_ptr */
+static zval *
+php_<?php echo $name_function ?>_get_property_ptr_ptr(zval *object, zval *member, int type, void **cache_slot) {
+    php_<?php echo $name_function ?>  *intern = <?php echo $get_param ?><?php echo $name_macro ?>(object);
     zend_string *member_str = member->value.str;
+    char *str = member_str->val;
+    zval *retval = NULL;
 
-    // <?php echo $this->type ?>
-    
     struct Php<?php echo $this->camelcaseHelper($this->name) ?>Property *cmd = php_<?php echo $name_function ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
         switch(cmd->code) {
@@ -21,16 +29,16 @@ php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval
         $output .= $tab . '    case PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).':'.PHP_EOL;
         switch($this->type) {
         case 'union':
-            $output .= $tab . '        if(PHP_'.$name_macro.'_'.strtoupper($property->name).'==obj->union_type) {'.PHP_EOL;
-            $output .= $tab . '            return &obj->'.$property->name.';'.PHP_EOL;
+            $output .= $tab . '        if(PHP_'.$name_macro.'_'.strtoupper($property->name).'==intern->union_type) {'.PHP_EOL;
+            $output .= $tab . '            return &intern->'.$property->name.';'.PHP_EOL;
             $output .= $tab . '        } else {'.PHP_EOL;
             $output .= $tab . '            g_print("Type error : Expecting \'%s\' but you try to acces to \'%s\'\n",';
-                $output .= 'php_cairo_path_data_t_properties[obj->union_type-1].name, ';
+                $output .= 'php_cairo_path_data_t_properties[intern->union_type-1].name, ';
                 $output .= 'php_cairo_path_data_t_properties[PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).'-1].name);'.PHP_EOL;
             $output .= $tab . '        }'.PHP_EOL;
             break;
         default:
-            $output .= $tab . '        cmd->setter(intern, value, member_str->val, &intern->'.$property->name.');'.PHP_EOL;
+            $output .= $tab . '        return &intern->'.$property->name.';'.PHP_EOL;
             break;
         }
 
@@ -40,7 +48,10 @@ php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval
 ?>
         }
     } else {
-        // property not found
+        // Error 
     }
-}
-/* }}} */
+
+    return retval;
+}/* }}} */
+
+<?php endif; ?>

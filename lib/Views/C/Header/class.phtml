@@ -12,6 +12,7 @@ $has_members = count($this->members);
 #define PHP_<?php echo $name_macro ?>(ptr)           ((php_<?php echo $name_function ?>*)(ptr))
 #define PHP_<?php echo $name_macro ?>_CLASS          php_<?php echo $name_function ?>_class_entry
 #define PHP_<?php echo $name_macro ?>_OFFSET         (sizeof(php_<?php echo $name_function ?>) - sizeof(zend_object))
+#define PHP_<?php echo $name_macro ?>_PTR(zobj)      (zobj)->ptr
 
 #define ZOBJ_IS_PHP_<?php echo $name_macro ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $name_function ?>_class_entry)
 #define ZOBJ_TO_PHP_<?php echo $name_macro ?>(std)   PHP_<?php echo $name_macro ?>( ((void*)(std))-PHP_<?php echo $name_macro ?>_OFFSET )

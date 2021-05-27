@@ -91,7 +91,7 @@ class ArgHelper extends AbstractHelper
                         $extra .= ' = ';
                         $extra .= 'z'.$parameter->getName().'->value.lval;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_LONG(ZEND_SEND_BY_VAL, '.$parameter->getName().')'. PHP_EOL;
+                        $output .= '        Z_PARAM_LONG('.$parameter->getName().')'. PHP_EOL;
                     }
                     break;
                 case TypeGenerator::PRIMITIVE_CHAR:
@@ -101,7 +101,7 @@ class ArgHelper extends AbstractHelper
                         $extra .= ' = ';
                         $extra .= 'z'.$parameter->getName().'->value.str.val;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_STRING(ZEND_SEND_BY_VAL, '.$parameter->getName().', '.$parameter->getName().'_len)'. PHP_EOL;
+                        $output .= '        Z_PARAM_STRING('.$parameter->getName().', '.$parameter->getName().'_len)'. PHP_EOL;
                     }
                     break;
                 default:
@@ -132,7 +132,8 @@ class ArgHelper extends AbstractHelper
     
                             $extra .= '    ' . $parameterTypeName . ' *' . $parameter->getName();
                             $extra .= ' = ';
-                            $extra .= ' php_'. $parameter->getName() .' ? php_'.$parameter->getName().'->ptr : NULL;'.PHP_EOL;
+                            $extra .= ' php_'. $parameter->getName() .' ? ';
+                            $extra .= 'PHP_'.strtoupper($parameterTypeName).'_PTR(php_'.$parameter->getName().') : NULL;'.PHP_EOL;
 
                         }
                     }

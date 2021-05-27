@@ -65,7 +65,7 @@ class TypeHelper extends AbstractHelper
         } else {
             // check if is an known type
             $package = $type->getOwnPackage();
-            $list_objects = $package->getListTypeObject();
+            $list_objects = $package->getListTypeStruct();
             if (isset($list_objects[$name])) {
                 $ns = $package->getName();
                 $type_ns = $this->getView()->namespaceHelper($name);

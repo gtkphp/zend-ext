@@ -42,6 +42,51 @@ extern zend_module_entry gtk_module_entry;
 zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
 zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
+<?php echo $this->implementation->writeDefine(); ?>
+
+<?php
+if (!empty($this->members)) {
+
+    echo '#define PHP_' . $name_macro . '_COPY(src, dest) \\'.PHP_EOL;
+    foreach($this->members as $property) {
+        switch($property->type) {
+            case 'double':
+                echo '    dest.'.$property->name.' = Z_DVAL(src->'.$property->name.'); \\'.PHP_EOL;
+                break;
+            case 'zend_long':
+            case 'long':
+            case 'int':
+                    echo '    dest.'.$property->name.' = Z_LVAL(src->'.$property->name.'); \\'.PHP_EOL;
+                break;
+            default:
+                echo '    dest.'.$property->name.' = Z_?'.$property->type.'?(src->'.$property->name.'); \\'.PHP_EOL;
+                break;
+        }
+    }
+    echo PHP_EOL;
+
+    echo '#define PHP_' . $name_macro . '_SET(dest, src) \\'.PHP_EOL;
+    foreach($this->members as $property) {
+        switch($property->type) {
+            case 'double':
+                echo '    ZVAL_DOUBLE(&dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
+                break;
+            case 'zend_long':
+            case 'long':
+            case 'int':
+                echo '    ZVAL_LONG(&dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
+                break;
+            default:
+                echo '    ZVAL_?'.$property->type.'?(dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
+                break;
+        }
+    }
+    echo PHP_EOL;
+
+}
+
+?>
+
 
 /*----------------------------------------------------------------------+
  | Internal                                                             |
@@ -71,7 +116,19 @@ if (empty($this->members)) {
     echo '    intern->ptr = NULL;'.PHP_EOL;
 } else {
     foreach($this->members as $property) {
-        echo '    ZVAL_NULL(&intern->'.$property->name.');'.PHP_EOL;
+        switch($property->type) {
+            case 'double':
+                echo '    ZVAL_DOUBLE(&intern->'.$property->name.', 0.0);'.PHP_EOL;
+                break;
+            case 'zend_long':
+            case 'long':
+            case 'int':
+                echo '    ZVAL_LONG(&intern->'.$property->name.', 0);'.PHP_EOL;
+                break;
+            default:
+                echo '    ZVAL_???(intern->'.$property->name.', src.'.$property->name.');'.PHP_EOL;
+                break;
+        }
     }
 }
 ?>
@@ -103,7 +160,16 @@ if (empty($this->members)) {
     echo '    }'.PHP_EOL;
 } else {
     foreach($this->members as $property) {
-        echo '    zval_ptr_dtor(&intern->'.$property->name.');'.PHP_EOL;
+        switch($property->type) {
+            case 'double':
+            case 'zend_long':
+            case 'long':
+            case 'int':
+                break;
+            default:
+                echo '    zval_ptr_dtor(&intern->'.$property->name.');'.PHP_EOL;
+                break;
+        }
     }
 }
 ?>
@@ -116,6 +182,7 @@ if (empty($this->members)) {
 <?php   include("handler-lookup-property.phtml") ?>
 <?php   include("handler-read_property.phtml") ?>
 <?php   include("handler-write_property.phtml") ?>
+<?php   include("handler-get_property.phtml") ?>
 <?php endif; ?>
 
 
@@ -135,6 +202,7 @@ php_<?php echo $name_function ?>_get_handlers()
 <?php if($has_members): ?>
     php_<?php echo $name_function ?>_handlers.read_property = php_<?php echo $name_function ?>_read_property;
     php_<?php echo $name_function ?>_handlers.write_property = php_<?php echo $name_function ?>_write_property;
+    php_<?php echo $name_function ?>_handlers.get_property_ptr_ptr = php_<?php echo $name_function ?>_get_property_ptr_ptr;
 <?php endif; ?>
 
 <?php if ($this->implementation->enable_debug): ?>
