@@ -511,7 +511,7 @@ class Gtk extends DocBook
     protected function getDescription(SimpleXMLElement $xml){
     }
 
-    protected function getAnnotations(SimpleXMLElement $xml){
+    /*protected function getAnnotations(SimpleXMLElement $xml){
         $annotations=[];
         $nodes = $xml->xpath("emphasis/acronym");
         foreach($nodes as $node) {
@@ -522,8 +522,28 @@ class Gtk extends DocBook
             }
         }
         return $annotations;
-    }
+    }*/
 
+    protected function getAnnotations(SimpleXMLElement $entry) {
+        $annotations=[];
+        $emphasis = $entry->emphasis;
+        $str = strip_tags($emphasis->asXml());
+        $parts = explode ('][', $str);
+        $parts = str_replace (array(']', '['), '', $parts);
+        foreach($parts as $part) {
+            $elements = explode (' ', $part);
+            $acronym = $elements[0];
+            $annotation = AnnotationGenerator::Factory($acronym);// array && element-type && ...
+            if ($annotation) {
+                if (isset($elements[1])) {
+                    $annotation->setParam($elements[1]);
+                }
+                $annotations[] = $annotation;
+            }
+        }
+        return $annotations;
+    }
+    
     protected function getFunctionsDetails(SimpleXMLElement $xml){
         $generator = $this->current_generator;//FileGenerator
         $package = $generator->getPackage();
@@ -914,11 +934,9 @@ class Gtk extends DocBook
                         $description = $entry->para->asXml();
                         break;
                     case 'struct_member_annotations':
-                        $annotations = (string)$entry;
-                        if (!empty($annotations)) {
-                            //$property = $this->loadStructMemberAnnoations($row, $class);
-                            //$properies[] = $property;
-                            echo 'Unimplemented annotation'.PHP_EOL;
+                        $emphasis = $entry->emphasis;
+                        if (!empty($emphasis)) {
+                            $annotations = $this->getAnnotations($entry);
                         }
                         break;
                     default:
@@ -943,6 +961,7 @@ class Gtk extends DocBook
             }
             $var->setShortDescription($description);
             $var->setDescription($description);
+            $var->setAnnotations($annotations);
             $members[$name] = $var;
         }
         $this->current_generator->setMembers($members);
@@ -967,7 +986,7 @@ class Gtk extends DocBook
         }
         */
     }
-    
+
     protected function loadEnum($refsect2) {
         $generator = $this->current_generator;
         //$package = $generator->getPackage();
@@ -976,6 +995,7 @@ class Gtk extends DocBook
         $name = (string)$refsect2->indexterm[0]->primary;
         echo "    Enum \e[2;35m".$name."\e[0m".PHP_EOL;
         $enum = $package->createEnum($name);
+        $enum->setParentGenerator($generator);
         $this->current_generator = $enum;
         $generator->children[$name] = $enum;
 

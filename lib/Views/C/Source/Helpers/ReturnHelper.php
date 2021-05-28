@@ -57,13 +57,13 @@ class ReturnHelper extends AbstractHelper
                 break;
             case TypeGenerator::PRIMITIVE_DOUBLE:
             case TypeGenerator::PRIMITIVE_FLOAT:
-                $output .= '    RETURN_DOUBLE(z_ret);';
+                $output .= '    RETURN_DOUBLE(ret);';
                 break;
             case TypeGenerator::PRIMITIVE_INT:
-                $output .= '    RETURN_LONG(z_ret);';
+                $output .= '    RETURN_LONG(ret);';
                 break;
             case TypeGenerator::PRIMITIVE_CHAR:
-                $output .= '    RETURN_STRING(z_ret);';
+                $output .= '    RETURN_STRING(ret);';
                 break;
             default:
                 $type_name = $method->getParameterReturn()->getType()->getName();

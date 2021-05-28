@@ -18,4 +18,10 @@ class MemberDto extends ObjectDto {
     //public $pass='';
     //public $modifier='';
     //public $qualifier='';
+
+    public $is_array=false;
+    //public $length='';
+    //public $fixed_size=0;
+    //public $zero_terminated=false;
+    //public $element_type='';
 }

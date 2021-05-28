@@ -16,7 +16,7 @@ class ArgHelper extends AbstractHelper
 
         $parameters = $method->getParameters();
         $extra = '';
-        $enums = $method->getOwnPackage()->getListTypeEnum();
+        $enums = $method->getOwnPackage()->getPackage()->getListTypeEnum();
 
 
         $output = '';
@@ -130,11 +130,12 @@ class ArgHelper extends AbstractHelper
                             $extra .= 'ZVAL_GET_PHP_'. strtoupper($parameterTypeName);
                             $extra .= '(z'. $parameter->getName() .'): '.$lazy.';'.PHP_EOL;
     
-                            $extra .= '    ' . $parameterTypeName . ' *' . $parameter->getName();
-                            $extra .= ' = ';
-                            $extra .= ' php_'. $parameter->getName() .' ? ';
-                            $extra .= 'PHP_'.strtoupper($parameterTypeName).'_PTR(php_'.$parameter->getName().') : NULL;'.PHP_EOL;
-
+                            $extra .= '    ';
+                            //$extra .= '    ' . $parameterTypeName . ' *' . $parameter->getName();
+                            //$extra .= ' = ';
+                            //$extra .= ' php_'. $parameter->getName() .' ? ';
+                            //$extra .= 'PHP_'.strtoupper($parameterTypeName).'_PTR(php_'.$parameter->getName().') : NULL;'.PHP_EOL;
+                            $extra .= 'DECL_PHP_'.strtoupper($parameterTypeName).'('.$parameter->getName().');'.PHP_EOL;
                         }
                     }
                     break;

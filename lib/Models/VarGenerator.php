@@ -18,6 +18,11 @@ class VarGenerator extends ObjectGenerator
      */
     public $type;
 
+    /**
+     * @var array of AnnotationGenerator
+     */
+    protected $annotations = [];
+
     public function setType(TypeGenerator $type):VarGenerator {
         $this->type = $type;
         $this->type->setParentGenerator($this);
@@ -26,6 +31,24 @@ class VarGenerator extends ObjectGenerator
 
     public function getType():TypeGenerator {
         return $this->type;
+    }
+
+    public function setAnnotations(array $annotations) {
+        $this->annotations = $annotations;
+        return $this;
+    }
+
+    public function getAnnotations():array {
+        return $this->annotations;
+    }
+    
+    public function isArray():bool {
+        foreach($this->annotations as $annotation) {
+            if ($annotation->getType() == AnnotationGenerator::ANNOTATION_ARRAY) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static public function Create($data):VarGenerator {

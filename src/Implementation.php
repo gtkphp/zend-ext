@@ -142,7 +142,12 @@ class Implementation {
         }
         return $output;
     }
-    
+
+    function zend_update_property($name) {
+        $output  = '';
+        return $output;
+    }
+
     
 }
 

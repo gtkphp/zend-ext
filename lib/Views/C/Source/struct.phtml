@@ -44,48 +44,36 @@ zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
 <?php echo $this->implementation->writeDefine(); ?>
 
+<?php if (empty($this->members)): ?>
+#define DECL_PHP_<?php echo $name_macro ?>(name) \
+    <?php echo $name_function ?> name; \
+    PHP_<?php echo $name_macro ?>_COPY(php_##name, &name);
+
+#define PASS &
+<?php else: ?>
+#define DECL_PHP_CAIRO_MATRIX_T(name) \
+    cairo_matrix_t *name = php_#name ? PHP_CAIRO_MATRIX_T_PTR(php_#matrix) : NULL;
+    
+#define PASS 
+<?php endif; ?>
+
+<?php if($has_members): ?>
+enum _php_<?php echo $name_function ?>_properties {
 <?php
-if (!empty($this->members)) {
-
-    echo '#define PHP_' . $name_macro . '_COPY(src, dest) \\'.PHP_EOL;
-    foreach($this->members as $property) {
-        switch($property->type) {
-            case 'double':
-                echo '    dest.'.$property->name.' = Z_DVAL(src->'.$property->name.'); \\'.PHP_EOL;
-                break;
-            case 'zend_long':
-            case 'long':
-            case 'int':
-                    echo '    dest.'.$property->name.' = Z_LVAL(src->'.$property->name.'); \\'.PHP_EOL;
-                break;
-            default:
-                echo '    dest.'.$property->name.' = Z_?'.$property->type.'?(src->'.$property->name.'); \\'.PHP_EOL;
-                break;
-        }
-    }
-    echo PHP_EOL;
-
-    echo '#define PHP_' . $name_macro . '_SET(dest, src) \\'.PHP_EOL;
-    foreach($this->members as $property) {
-        switch($property->type) {
-            case 'double':
-                echo '    ZVAL_DOUBLE(&dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
-                break;
-            case 'zend_long':
-            case 'long':
-            case 'int':
-                echo '    ZVAL_LONG(&dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
-                break;
-            default:
-                echo '    ZVAL_?'.$property->type.'?(dest->'.$property->name.', src.'.$property->name.'); \\'.PHP_EOL;
-                break;
-        }
-    }
-    echo PHP_EOL;
-
+$i=1;
+$glue = '    ';
+foreach ($this->members as $property) {
+    $name = strtoupper($property->name);
+    $name = str_replace('-', '_', $name);
+    echo $glue . 'PHP_'. $name_macro .'_'.$name.' = '. $i++ ;
+    $glue = ','.PHP_EOL.'    ';
 }
-
 ?>
+
+};
+//typedef enum php_<?php echo $name_function ?>_properties php_<?php echo $name_function ?>_properties;
+<?php endif; ?>
+
 
 
 /*----------------------------------------------------------------------+
@@ -115,21 +103,34 @@ php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
 if (empty($this->members)) {
     echo '    intern->ptr = NULL;'.PHP_EOL;
 } else {
+    $decl = '';
+    $impl = '';
     foreach($this->members as $property) {
         switch($property->type) {
             case 'double':
-                echo '    ZVAL_DOUBLE(&intern->'.$property->name.', 0.0);'.PHP_EOL;
+                $impl .= '    ZVAL_DOUBLE(&intern->'.$property->name.', 0.0);'.PHP_EOL;
                 break;
             case 'zend_long':
             case 'long':
             case 'int':
-                echo '    ZVAL_LONG(&intern->'.$property->name.', 0);'.PHP_EOL;
+                $impl .= '    ZVAL_LONG(&intern->'.$property->name.', 0);'.PHP_EOL;
                 break;
             default:
-                echo '    ZVAL_???(intern->'.$property->name.', src.'.$property->name.');'.PHP_EOL;
+                if ($property->is_array) {
+                    $decl .= '    zend_array *z'.$property->name.';'.PHP_EOL;
+                    $decl .= '    ALLOC_HASHTABLE(z'.$property->name.');'.PHP_EOL;
+                    //TODO if ZVAL_PTR_DTOR ?
+                    $decl .= '    zend_hash_init(z'.$property->name.', 1, NULL, ZVAL_PTR_DTOR, 1);'.PHP_EOL;
+                    $impl .= '    ZVAL_ARR(&intern->'.$property->name.', z'.$property->name.');'.PHP_EOL;
+                } else {
+                    $impl .= '    ZVAL_???(intern->'.$property->name.', src.'.$property->name.');'.PHP_EOL;
+                }
                 break;
         }
     }
+    echo $decl;
+    echo PHP_EOL;
+    echo $impl;
 }
 ?>
 
@@ -165,9 +166,19 @@ if (empty($this->members)) {
             case 'zend_long':
             case 'long':
             case 'int':
+                echo '    Z_TRY_DELREF(intern->'.$property->name.');'.PHP_EOL;
                 break;
             default:
-                echo '    zval_ptr_dtor(&intern->'.$property->name.');'.PHP_EOL;
+                if ($property->is_array) {
+                    echo '    Z_DELREF_P(&intern->'.$property->name.');'.PHP_EOL;
+                    echo '    if (intern->'.$property->name.'.value.arr->gc.refcount==0) {'.PHP_EOL;
+                    echo '        zend_hash_destroy(intern->'.$property->name.'.value.arr);'.PHP_EOL;
+                    echo '        FREE_HASHTABLE(intern->'.$property->name.'.value.arr);'.PHP_EOL;
+                    echo '    }'.PHP_EOL;
+                } else {
+                    echo '    zval_ptr_dtor(&intern->'.$property->name.');'.PHP_EOL;
+                }
+
                 break;
         }
     }
@@ -249,10 +260,6 @@ PHP_METHOD(<?php echo $name_function ?>, __construct)
     zend_object *zobj = Z_OBJ_P(getThis());
     php_<?php echo $name_function ?> *self = ZOBJ_TO_PHP_<?php echo $name_macro ?>(zobj);
 
-    // $this->implementation->zend_extends('__construct');
-    // zend_extends___construct()
-    // else :
-    self->ptr = emalloc(sizeof(<?php echo $name_function ?>));
 
 }
 /* }}} */

@@ -1,5 +1,5 @@
 
-/* {{{ gtk_read_property */
+/* {{{ php_<?php echo $name_function ?>_read_property */
 static zval*
 php_<?php echo $name_function ?>_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
 {
@@ -19,10 +19,31 @@ foreach($this->members as $property) {
     $const = 'PHP_'. $name_macro .'_'.$name;
     $name = strtolower($name);
     
+    $tab = '    ';
     echo '        ';
     echo 'case '.$const.':'.PHP_EOL;
-    echo '            ';
-    echo 'ZVAL_COPY(rv, &intern->'.$name.');'.PHP_EOL;
+    switch($this->type) {
+    case 'union':
+        echo $tab . '        if(PHP_'.$name_macro.'_'.strtoupper($property->name).'==intern->union_type) {'.PHP_EOL;
+        echo $this->implementation->zend_update_property($property->name);
+        echo '                ';
+        echo 'ZVAL_COPY(rv, &intern->'.$name.');'.PHP_EOL;
+        echo '                ';
+        echo 'return rv;'.PHP_EOL;
+        echo $tab . '        } else {'.PHP_EOL;
+            echo $tab . '            g_print("Type error : Expecting \'%s\' but you try to acces to \'%s\'\n",';
+            echo 'php_'.$name_function.'_properties[intern->union_type-1].name, ';
+            echo 'php_'.$name_function.'_properties[PHP_'.$name_macro.'_'.strtoupper($property->name).'-1].name);'.PHP_EOL;
+        echo $tab . '        }'.PHP_EOL;
+        break;
+    default:
+        echo $this->implementation->zend_update_property($name);
+        echo '            ';
+        echo 'ZVAL_COPY(rv, &intern->'.$name.');'.PHP_EOL;
+        echo '            ';
+        echo 'return rv;'.PHP_EOL;
+        break;
+    }
 
     /*
     $type = str_replace('*', '', $property->type);

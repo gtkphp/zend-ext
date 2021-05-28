@@ -48,6 +48,21 @@ class GlibGenerator extends CodeGenerator
 
     function getViewModel($dto):ViewModel
     {
+        $licenseModel = new ViewModel(array('author' => 'No Name'));
+        $licenseModel->setVariable('date', date("m/d/y"));
+        $licenseModel->setVariable('php_version', Implementation::$version);
+        $licenseModel->setTemplate('license.phtml');
+
+        $marksModel = new ViewModel();
+        $marksModel->setTemplate('vim-marks.phtml');
+
+        $model = parent::getViewModel(array());
+        $model->setVariable('objects', array($dto));
+        $model->addChild($licenseModel, 'license');
+        $model->addChild($marksModel, 'vimMarks');
+        $model->setTemplate('file.phtml');
+
+        /*
         if ($dto instanceof StructDto) {
             return $this->getViewModelStruct($dto);
         }
@@ -57,7 +72,9 @@ class GlibGenerator extends CodeGenerator
         if ($dto instanceof UnionDto) {
             return $this->getViewModelUnion($dto);
         }
-        return null;
+        */
+
+        return $model;
     }
 
     function getViewModelStruct($dto):ViewModel

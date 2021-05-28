@@ -26,22 +26,25 @@ php_<?php echo $name_function ?>_get_property_ptr_ptr(zval *object, zval *member
         $output = '';
         $type = trim($property->type);
 
-        $output .= $tab . '    case PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).':'.PHP_EOL;
+        $output .= $tab . '    case PHP_'.$name_macro.'_'.strtoupper($property->name).':'.PHP_EOL;
         switch($this->type) {
         case 'union':
             $output .= $tab . '        if(PHP_'.$name_macro.'_'.strtoupper($property->name).'==intern->union_type) {'.PHP_EOL;
+            $output .= $this->implementation->zend_update_property($property->name);
             $output .= $tab . '            return &intern->'.$property->name.';'.PHP_EOL;
             $output .= $tab . '        } else {'.PHP_EOL;
             $output .= $tab . '            g_print("Type error : Expecting \'%s\' but you try to acces to \'%s\'\n",';
-                $output .= 'php_cairo_path_data_t_properties[intern->union_type-1].name, ';
-                $output .= 'php_cairo_path_data_t_properties[PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).'-1].name);'.PHP_EOL;
+                $output .= 'php_'.$name_function.'_properties[intern->union_type-1].name, ';
+                $output .= 'php_'.$name_function.'_properties[PHP_'.$name_macro.'_'.strtoupper($property->name).'-1].name);'.PHP_EOL;
             $output .= $tab . '        }'.PHP_EOL;
             break;
         default:
+            $output .= $this->implementation->zend_update_property($property->name);
             $output .= $tab . '        return &intern->'.$property->name.';'.PHP_EOL;
             break;
         }
-
+        //$output .= $tab . '    break;'.PHP_EOL;
+    
         echo $output;//.'    //'.$type.PHP_EOL;
     }
 

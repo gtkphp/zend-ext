@@ -207,6 +207,7 @@ class CodeGenerator
         $memberDto->description = $this->getRenderer()->commentHelper($member->getDescription(), '');
         //$memberDto->type = $member->getType()->getName();
         $memberDto->type = $this->getRenderer()->typeHelper($member->getType());
+        $memberDto->is_array = $member->isArray();
         if ($member->getType()->isPrototype()) {
             $memberDto->is_prototype = true;
             $memberDto->prototype = $member->getType()->getPrototype();
@@ -254,6 +255,25 @@ class CodeGenerator
             $enumDto->constants[] = $constantDto;
         }
 
+        $max_length = 0;
+        $fileGenerator = $enum->getParentGenerator();
+        $master_name = '';
+        $master = $fileGenerator->getMatserObject();
+        if ($master) {
+            $master_name = $master->getName();
+        }
+        if ($enum->getName()==$master_name) {
+            foreach($fileGenerator->children as $related) {
+                if ($related instanceof FunctionGenerator) {
+                    $enumDto->methods[] = $this->createFunctionDto($related);
+                    $max_length = max($max_length, strlen($related->getName()));
+                }
+            }
+            foreach($enumDto->methods as $method) {
+                $method->pad = str_repeat(' ', $max_length-strlen($method->name));
+            }
+        }
+
         //$enumDto->constants[] = ;
         $enumDto->requires = $this->getRequires($enum);
         $enumDto->dependencies[] = $this->getFilename($enumDto->name);
@@ -273,7 +293,13 @@ class CodeGenerator
         }
 
         $max_length = 0;
-        if (true) {
+        $fileGenerator = $struct->getParentGenerator();
+        $master_name = '';
+        $master = $fileGenerator->getMatserObject();
+        if ($master) {
+            $master_name = $master->getName();
+        }
+        if ($struct->getName()==$master_name) {
             $fileGenerator = $struct->getParentGenerator();
             foreach($fileGenerator->children as $related) {
                 if ($related instanceof FunctionGenerator) {
@@ -281,17 +307,18 @@ class CodeGenerator
                     $max_length = max($max_length, strlen($related->getName()));
                 }
             }
-        } else {
+            foreach($structDto->methods as $method) {
+                $method->pad = str_repeat(' ', $max_length-strlen($method->name));
+            }
+    
+        }/* else {
             foreach($struct->relateds as $related) {
                 if ($related instanceof FunctionGenerator) {
                     $structDto->methods[] = $this->createFunctionDto($related);
                     $max_length = max($max_length, strlen($related->getName()));
                 }
             }
-        }
-        foreach($structDto->methods as $method) {
-            $method->pad = str_repeat(' ', $max_length-strlen($method->name));
-        }
+        }*/
 
         foreach($struct->dependencies as $dependecy=>$unused) {
             $structDto->dependencies[] = $this->getFilename($dependecy);
@@ -465,6 +492,7 @@ class CodeGenerator
             if (
                   'cairo_path_t'!=$objectDto->name
             //&&  'cairo_rectangle_t'!=$objectDto->name
+            //&&  'cairo_status_t'!=$objectDto->name
             //&&  'cairo_glyph_t'!=$objectDto->name
             //&&  'cairo_path_data_type_t'!=$objectDto->name
             //&&  'cairo_path_data_t'!=$objectDto->name

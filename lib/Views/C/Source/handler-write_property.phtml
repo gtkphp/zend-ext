@@ -18,21 +18,17 @@ php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval
         $output = '';
         $type = trim($property->type);
 
-        $output .= $tab . '    case PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).':'.PHP_EOL;
+        $output .= $tab . '    case PHP_'.$name_macro.'_'.strtoupper($property->name).':'.PHP_EOL;
         switch($this->type) {
         case 'union':
-            $output .= $tab . '        if(PHP_'.$name_macro.'_'.strtoupper($property->name).'==obj->union_type) {'.PHP_EOL;
-            $output .= $tab . '            return &obj->'.$property->name.';'.PHP_EOL;
-            $output .= $tab . '        } else {'.PHP_EOL;
-            $output .= $tab . '            g_print("Type error : Expecting \'%s\' but you try to acces to \'%s\'\n",';
-                $output .= 'php_cairo_path_data_t_properties[obj->union_type-1].name, ';
-                $output .= 'php_cairo_path_data_t_properties[PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).'-1].name);'.PHP_EOL;
-            $output .= $tab . '        }'.PHP_EOL;
+            $output .= $tab . '        cmd->setter(intern, value, member_str->val, &intern->'.$property->name.');'.PHP_EOL;
+            $output .= $tab . '        intern->union_type = PHP_CAIRO_PATH_DATA_T_'.strtoupper($property->name).';'.PHP_EOL;
             break;
         default:
             $output .= $tab . '        cmd->setter(intern, value, member_str->val, &intern->'.$property->name.');'.PHP_EOL;
             break;
         }
+        $output .= $tab . '    break;'.PHP_EOL;
 
         echo $output;//.'    //'.$type.PHP_EOL;
     }

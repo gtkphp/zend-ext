@@ -44,6 +44,23 @@ zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
 <?php echo $this->implementation->writeDefine(); ?>
 
+<?php if($has_members): ?>
+enum _php_<?php echo $name_function ?>_properties {
+<?php
+$i=1;
+$glue = '    ';
+foreach ($this->members as $property) {
+    $name = strtoupper($property->name);
+    $name = str_replace('-', '_', $name);
+    echo $glue . 'PHP_'. $name_macro .'_'.$name.' = '. $i++ ;
+    $glue = ','.PHP_EOL.'    ';
+}
+?>
+
+};
+//typedef enum php_<?php echo $name_function ?>_properties php_<?php echo $name_function ?>_properties;
+<?php endif; ?>
+
 /*----------------------------------------------------------------------+
  | Internal                                                             |
  +----------------------------------------------------------------------*/

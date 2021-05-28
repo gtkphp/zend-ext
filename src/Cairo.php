@@ -132,7 +132,33 @@ class CairoCairo extends Implementation{
 }
 
 class CairoPath extends Implementation {
-    
+
+    function zend_update_property($name) {
+        $output  = '';
+        switch($name) {
+            case 'num_data':
+                $output .= '            ';
+                $output .= 'php_cairo_path_t_update_num_data(intern);'.PHP_EOL;
+                break;
+        }
+
+        return $output;
+    }
+    function zend_extends_setter_php_cairo_path_data_t()
+    {
+        $output  = '';
+        
+        $output .= '    if(IS_ARRAY==Z_TYPE_P(value)) {'.PHP_EOL;
+        $output .= '        Z_DELREF_P(dest);'.PHP_EOL;
+        $output .= '        if (dest->value.arr->gc.refcount==0) {'.PHP_EOL;
+        $output .= '            zend_hash_destroy(dest->value.arr);'.PHP_EOL;
+        $output .= '            FREE_HASHTABLE(dest->value.arr);'.PHP_EOL;
+        $output .= '        }'.PHP_EOL;
+        $output .= '    }'.PHP_EOL;
+
+        return $output;
+    }
+
     function cairo_path_destroy() {
         $output = '';
         $output  = '    cairo_path_destroy(path);'.PHP_EOL;
@@ -240,7 +266,7 @@ class CairoPath extends Implementation {
             php_cairo_path_data_t *path_data = ZVAL_GET_PHP_CAIRO_PATH_DATA_T(value);
             // isset header|point
             //zval *ret = std_hnd->read_property(value, &member_point, IS_OBJECT, &cache_slot, &rv);
-            if (path_data->union_type==PHP_CAIRO_PATH_DATA_T_HEADER) {
+            if (path_data->union_type==1/*PHP_CAIRO_PATH_DATA_T_HEADER*/) {
                 zval *zheader = &path_data->header;
                 ztype = std_hnd->read_property(zheader, &member_type, IS_LONG, NULL, NULL);
                 zlength = std_hnd->read_property(zheader, &member_length, IS_LONG, NULL, NULL);
@@ -299,6 +325,33 @@ class CairoPath extends Implementation {
 <?php
     return '';
     }
+
+    public function php_cairo_path_t_update_num_data($declaration=false) {
+        $output  = 'void'.PHP_EOL;
+        $output .= 'php_cairo_path_t_update_num_data(php_cairo_path_t *intern)';
+        
+        if ($declaration)
+            return $output . ';'.PHP_EOL;
+
+        echo $output;
+?>
+{
+    if (IS_ARRAY==Z_TYPE(intern->data)) {
+        ZVAL_SET_LONG(&intern->num_data, zend_array_count(intern->data.value.arr));
+    } else if (IS_REFERENCE==Z_TYPE(intern->data)) {
+        if (IS_ARRAY==Z_TYPE(intern->data.value.ref->val)) {
+            ZVAL_SET_LONG(&intern->num_data, zend_array_count(intern->data.value.ref->val.value.arr));
+        } else {
+            g_print("Expecting array for data\n");
+        }
+    } else {
+        g_print("Expecting array for data\n");
+    }
+}
+<?php
+        return '';
+    }
+
 }
 
 class CairoPathData extends Implementation {
@@ -412,6 +465,21 @@ class CairoPathData extends Implementation {
         return '';
     }
 
+    public function zend_extends_setter_mixed()
+    {
+        $output  = '';
+
+        $output .= '    switch (intern->union_type) {'.PHP_EOL;
+        $output .= '        case PHP_CAIRO_PATH_DATA_T_HEADER:'.PHP_EOL;
+        $output .= '            zval_delref_p(&intern->header);'.PHP_EOL;
+        $output .= '            break;'.PHP_EOL;
+        $output .= '        case PHP_CAIRO_PATH_DATA_T_POINT:'.PHP_EOL;
+        $output .= '            zval_delref_p(&intern->point);'.PHP_EOL;
+        $output .= '            break;'.PHP_EOL;
+        $output .= '    }'.PHP_EOL;
+
+        return $output;
+    }
 }
 
 class CairoSurface extends Implementation {
@@ -438,4 +506,148 @@ class CairoMatrix extends Implementation {
         $output .= '}'.PHP_EOL;
         return $output;
     }
+
+    public function define_macro($declaration=false) {
+?>
+
+#define ZVAL_DOUBLE_COPY(src, dest) \
+    if (IS_DOUBLE==Z_TYPE_P(src)) {\
+        dest = Z_DVAL_P(src);\
+    } else if(IS_REFERENCE==Z_TYPE_P(src)) {\
+        if(IS_DOUBLE==Z_TYPE((src)->value.ref->val)) {\
+            dest = Z_DVAL((src)->value.ref->val);\
+        } \
+    } else {\
+    }
+
+#define ZVAL_DOUBLE_SET(dest, src) \
+    if (IS_DOUBLE==Z_TYPE_P(dest)) {\
+        ZVAL_DOUBLE(dest, src);\
+    } else if(IS_REFERENCE==Z_TYPE_P(dest)) {\
+        (dest)->value.ref->val.value.dval = src;\
+    } else {\
+    }
+
+#define PHP_CAIRO_MATRIX_T_COPY(src, dest) \
+    ZVAL_DOUBLE_COPY(&src->xx, (dest)->xx) \
+    ZVAL_DOUBLE_COPY(&src->yx, (dest)->yx) \
+    ZVAL_DOUBLE_COPY(&src->xy, (dest)->xy) \
+    ZVAL_DOUBLE_COPY(&src->yy, (dest)->yy) \
+    ZVAL_DOUBLE_COPY(&src->x0, (dest)->x0) \
+    ZVAL_DOUBLE_COPY(&src->y0, (dest)->y0) \
+
+#define PHP_CAIRO_MATRIX_T_SET(dest, src) \
+    ZVAL_DOUBLE_SET(&(dest)->xx, (src)->xx) \
+    ZVAL_DOUBLE_SET(&(dest)->yx, (src)->yx) \
+    ZVAL_DOUBLE_SET(&(dest)->xy, (src)->xy) \
+    ZVAL_DOUBLE_SET(&(dest)->yy, (src)->yy) \
+    ZVAL_DOUBLE_SET(&(dest)->x0, (src)->x0) \
+    ZVAL_DOUBLE_SET(&(dest)->y0, (src)->y0) \
+
+
+<?php
+        return '';
+    }
+
+    function cairo_matrix_init() {
+        $output  = '';
+        $output .= '    cairo_matrix_init(&matrix, xx, yx, xy, yy, x0, y0);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_init_identity() {
+        $output  = '';
+        $output .= '    cairo_matrix_init_identity(&matrix);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_init_translate() {
+        $output  = '';
+        $output .= '    cairo_matrix_init_translate(&matrix, tx, ty);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_init_scale() {
+        $output  = '';
+        $output .= '    cairo_matrix_init_scale(&matrix, sx, sy);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_init_rotate() {
+        $output  = '';
+        $output .= '    cairo_matrix_init_rotate(&matrix, radians);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+    
+    function cairo_matrix_translate() {
+        $output  = '';
+        $output .= '    cairo_matrix_translate(&matrix, tx, ty);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_scale() {
+        $output  = '';
+        $output .= '    cairo_matrix_scale(&matrix, sx, sy);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_rotate() {
+        $output  = '';
+        $output .= '    cairo_matrix_rotate(&matrix, radians);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_invert() {
+        $output  = '';
+        $output .= '    cairo_status_t ret = cairo_matrix_invert(&matrix);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_multiply() {
+        $output  = '';
+        $output .= '    cairo_matrix_multiply(&result, &a, &b);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_result, &result);'.PHP_EOL;
+    
+        return $output;
+    }
+
+    function cairo_matrix_transform_distance() {
+        $output  = '';
+        $output .= '    cairo_matrix_transform_distance(&matrix, &dx, &dy);'.PHP_EOL;
+        $output .= '    ZVAL_DOUBLE(zdx, dx);'.PHP_EOL;
+        $output .= '    ZVAL_DOUBLE(zdy, dy);'.PHP_EOL;
+
+        return $output;
+    }
+
+    function cairo_matrix_transform_point() {
+        $output  = '';
+        $output .= '    cairo_matrix_transform_point(&matrix, &x, &y);'.PHP_EOL;
+        $output .= '    ZVAL_DOUBLE(zx, x);'.PHP_EOL;
+        $output .= '    ZVAL_DOUBLE(zy, y);'.PHP_EOL;
+
+        return $output;
+    }
+    
+    
+
+    
 }

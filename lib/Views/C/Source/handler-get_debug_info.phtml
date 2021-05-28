@@ -13,7 +13,7 @@ $get_param = $this->implementation->get_param;
 static HashTable*
 php_<?php echo $name_function ?>_get_debug_info(<?php echo $param ?>, int *is_temp)
 {
-    php_<?php echo $name_function ?>  *obj = <?php echo $get_param ?><?php echo $name_macro ?>(object);
+    php_<?php echo $name_function ?>  *intern = <?php echo $get_param ?><?php echo $name_macro ?>(object);
     HashTable   *debug_info,
     *std_props;
 
@@ -27,32 +27,34 @@ php_<?php echo $name_function ?>_get_debug_info(<?php echo $param ?>, int *is_te
     if ('union'==$this->type) {
         $tab = '    ';
         echo '    ';
-        echo 'switch (obj->union_type) {'.PHP_EOL;
+        echo 'switch (intern->union_type) {'.PHP_EOL;
     }
 
     // what is override ?
     foreach($this->members as $property) {
-        $extra  = '';
-        $output  = $tab . '    ';
+        $extra   = '';
+        $output  = '';
+        $output .= $this->implementation->zend_update_property($property->name);
+        $output .= $tab . '    ';
         $output .= 'zval z'.$property->name.'; ';
         $type = trim($property->type);
         switch ($type) {
             case 'int':
             case 'zend_long':
-                //$output  .= 'ZVAL_LONG(&z'.$property->name.', Z_LVAL(obj->'.$property->name.'));'.PHP_EOL;
-                $output  .= 'ZVAL_COPY(&z'.$property->name.', &obj->'.$property->name.');'.PHP_EOL;
+                //$output  .= 'ZVAL_LONG(&z'.$property->name.', Z_LVAL(intern->'.$property->name.'));'.PHP_EOL;
+                $output  .= 'ZVAL_COPY(&z'.$property->name.', &intern->'.$property->name.');'.PHP_EOL;
                 break;
             case 'float':
             case 'double':
                 //$output  .= 'ZVAL_DOUBLE(&z'.$property->name.', Z_DVAL(obj->'.$property->name.'));'.PHP_EOL;
-                $output  .= 'ZVAL_COPY(&z'.$property->name.', &obj->'.$property->name.');'.PHP_EOL;
+                $output  .= 'ZVAL_COPY(&z'.$property->name.', &intern->'.$property->name.');'.PHP_EOL;
                 break;
             case 'zval':
-                $output  .= 'if (obj->ptr->'.$property->name.'==NULL) ZVAL_NULL(&z'.$property->name.'); else ZVAL_COPY(&z'.$property->name.', obj->ptr->'.$property->name.')';
-                //echo 'ZVAL_COPY(&z'.$name.', obj->ptr->'.$name.');'.PHP_EOL;
+                $output  .= 'if (intern->ptr->'.$property->name.'==NULL) ZVAL_NULL(&z'.$property->name.'); else ZVAL_COPY(&z'.$property->name.', intern->ptr->'.$property->name.')';
+                //echo 'ZVAL_COPY(&z'.$name.', intern->ptr->'.$name.');'.PHP_EOL;
                 break;
             default:
-                $output  .= 'ZVAL_COPY(&z'.$property->name.', &obj->'.$property->name.');'.PHP_EOL;
+                $output  .= 'ZVAL_COPY(&z'.$property->name.', &intern->'.$property->name.');'.PHP_EOL;
             /*
                 $output .= PHP_EOL;
                 $output .= $tab . '    zval member_'.$property->name.'; ZVAL_STRING(&member_'.$property->name.', "'.$property->name.'");'.PHP_EOL;

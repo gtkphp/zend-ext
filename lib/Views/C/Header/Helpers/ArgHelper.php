@@ -14,7 +14,7 @@ class ArgHelper extends AbstractHelper
     public function __invoke(MethodGenerator $method)
     {
         $parameters = $method->getParameters();
-        $enums = $method->getOwnPackage()->getListTypeEnum();
+        $enums = $method->getOwnPackage()->getPackage()->getListTypeEnum();
 
         $send_by = 'ZEND_SEND_BY_VAL';
         $is_deref = $method->getParameterReturn()->isDeref();
