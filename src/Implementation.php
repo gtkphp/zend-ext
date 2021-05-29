@@ -116,6 +116,17 @@ class Implementation {
         }
         return $output;
     }
+    public function writeMacro(bool $declaration=false) {
+        $output = '';
+        $methods = get_class_methods ($this);
+        foreach ($methods as $method) {
+            if ('macro_'==substr($method, 0, 6)) {
+                $output .= $this->$method($declaration);
+            }
+        }
+        return $output;
+    }
+    
 
     // remplace une fonction( ex: get_debug_info)
     public function zend_override($name) {

@@ -25,7 +25,7 @@ class TypeHelper extends AbstractHelper
     protected static $internalPhpTypes = [
         TypeGenerator::PRIMITIVE_VOID   =>'void',
         TypeGenerator::PRIMITIVE_BOOL   =>'bool',
-        TypeGenerator::PRIMITIVE_CHAR   =>'string',
+        TypeGenerator::PRIMITIVE_CHAR   =>'char',
         TypeGenerator::PRIMITIVE_SHORT  =>'int',
         TypeGenerator::PRIMITIVE_INT    =>'int',
         TypeGenerator::PRIMITIVE_FLOAT  =>'double',
@@ -75,7 +75,7 @@ class TypeHelper extends AbstractHelper
                 return 'php_'.$name;
             }
 
-            $output = 'mixed';//'php_'.$type->getName();;
+            $output = $type->getName();// 'mixed';//'php_'.
         }
         return $output;
     }

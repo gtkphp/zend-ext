@@ -667,6 +667,13 @@ class Gtk extends DocBook
             $parameter_return->setDescription($description);
             $return_type = $package->createType($signature['signature']['return']['type']);
             $parameter_return->setType($return_type);
+            if (isset($signature['signature']['return']['pass'])) {
+                $parameter_return->setPass($signature['signature']['return']['pass']);
+            }
+            if (isset($signature['signature']['return']['qualifier'])) {
+                $parameter_return->setQualifier($signature['signature']['return']['qualifier']);
+            }
+            // TODO: modifier( unsigned)
 
             $method->setParameterReturn($parameter_return);
 

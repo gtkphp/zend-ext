@@ -39,23 +39,12 @@ extern HashTable         classes;
 extern zend_module_entry gtk_module_entry;
 
 
-zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+zend_class_entry     *php_<?php echo $name_function ?>_class_entry;// struct
 zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
 <?php echo $this->implementation->writeDefine(); ?>
 
-<?php if (empty($this->members)): ?>
-#define DECL_PHP_<?php echo $name_macro ?>(name) \
-    <?php echo $name_function ?> name; \
-    PHP_<?php echo $name_macro ?>_COPY(php_##name, &name);
 
-#define PASS &
-<?php else: ?>
-#define DECL_PHP_CAIRO_MATRIX_T(name) \
-    cairo_matrix_t *name = php_#name ? PHP_CAIRO_MATRIX_T_PTR(php_#matrix) : NULL;
-    
-#define PASS 
-<?php endif; ?>
 
 <?php if($has_members): ?>
 enum _php_<?php echo $name_function ?>_properties {
@@ -143,7 +132,7 @@ if (empty($this->members)) {
 
 static void
 php_<?php echo $name_function ?>_dtor_object(zend_object *obj) {
-    php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(obj);
+    //php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(obj);
 
 }
 
@@ -257,8 +246,8 @@ echo $this->implementation->writeFunctions(false);
  /* {{{ <?php echo $name_function ?>::__construct() */
 PHP_METHOD(<?php echo $name_function ?>, __construct)
 {
-    zend_object *zobj = Z_OBJ_P(getThis());
-    php_<?php echo $name_function ?> *self = ZOBJ_TO_PHP_<?php echo $name_macro ?>(zobj);
+    //zend_object *zobj = Z_OBJ_P(getThis());
+    //php_<?php echo $name_function ?> *self = ZOBJ_TO_PHP_<?php echo $name_macro ?>(zobj);
 
 
 }

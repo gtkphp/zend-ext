@@ -98,12 +98,20 @@ class CallHelper extends AbstractHelper
 
         } else {
             $methodType = $method->getParameterReturn()->getType();
+            $pass = $method->getParameterReturn()->getPass();
+            $qualifier = $method->getParameterReturn()->getQualifier();
+            // TODO: modifier
+
             $t = $methodType->getName();
             $f = $method->getName();
             if ($this->isObject($methodType, $method->getOwnPackage())) {
                 $output .= '    '.$methodType->getName().' *ret = '.$f .'(';
             } else {
-                $output .= '    '.$methodType->getName().' ret = '.$f .'(';
+                $decl = (empty($qualifier)?'':$qualifier.' ')
+                      . $this->getView()->typeHelper($methodType)
+                      . (empty($pass)?' ':' '.$pass)
+                      ;
+                $output .= '    '.$decl.'ret = '.$f .'(';
             }
             $glue='';
             foreach($method->getParameters() as $parameter) {

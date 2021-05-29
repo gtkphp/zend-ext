@@ -39,7 +39,7 @@ extern HashTable         classes;
 extern zend_module_entry gtk_module_entry;
 
 
-zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+zend_class_entry     *php_<?php echo $name_function ?>_class_entry;// union
 zend_object_handlers  php_<?php echo $name_function ?>_handlers;
 
 <?php echo $this->implementation->writeDefine(); ?>

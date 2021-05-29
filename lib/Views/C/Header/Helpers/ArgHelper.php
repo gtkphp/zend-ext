@@ -25,21 +25,27 @@ class ArgHelper extends AbstractHelper
         $output .= 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$method->getName().', 0, '.$send_by.', '.count($parameters).')'. PHP_EOL;
         foreach($parameters as $parameter) {
 
+            $allow_null = '0';
             $send_by = 'ZEND_SEND_BY_VAL';
             $is_deref = $parameter->isDeref();
-            if ($is_deref)
+            if ($is_deref) {
                 $send_by = 'ZEND_SEND_BY_REF';
+                $is_in = $parameter->isIn();
+                if (!$is_in) {
+                    $allow_null = '1';
+                }
+            }
     
             //$output .= $parameter->getType()->getName() . ', '. $parameter->getType()->getPrimitiveType().PHP_EOL;
             switch ($parameter->getType()->getPrimitiveType()) {
                 case TypeGenerator::PRIMITIVE_DOUBLE:
-                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
                     break;
                 case TypeGenerator::PRIMITIVE_INT:
-                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_LONG, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_LONG, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
                     break;
                 case TypeGenerator::PRIMITIVE_CHAR:
-                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_STRING, 0)'. PHP_EOL;// 0 = allow_null
+                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_STRING, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
                     break;
                 default:
                     if (isset($enums[$parameter->getType()->getName()])) {

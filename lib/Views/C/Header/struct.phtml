@@ -12,7 +12,6 @@ $has_members = count($this->members);
 #define PHP_<?php echo $name_macro ?>(ptr)           ((php_<?php echo $name_function ?>*)(ptr))
 #define PHP_<?php echo $name_macro ?>_CLASS          php_<?php echo $name_function ?>_class_entry
 #define PHP_<?php echo $name_macro ?>_OFFSET         (sizeof(php_<?php echo $name_function ?>) - sizeof(zend_object))
-#define PHP_<?php echo $name_macro ?>_PTR(ptr)       php_<?php echo $name_function ?>_get_ptr(ptr)
 
 #define ZOBJ_IS_PHP_<?php echo $name_macro ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $name_function ?>_class_entry)
 #define ZOBJ_TO_PHP_<?php echo $name_macro ?>(std)   PHP_<?php echo $name_macro ?>( ((void*)(std))-PHP_<?php echo $name_macro ?>_OFFSET )
@@ -30,6 +29,26 @@ $has_members = count($this->members);
             GC_REFCOUNT(&o->std)++;                 \
         }                                           \
     } while (0)
+
+<?php echo $this->implementation->writeMacro(); ?>
+
+<?php if (empty($this->members)): ?>
+#define PHP_<?php echo $name_macro ?>_PTR(intern)       (intern)->ptr
+
+#define DECL_PHP_<?php echo $name_macro ?>(name) \
+    <?php echo $name_function ?> *name = php_##name ? PHP_<?php echo $name_macro ?>_PTR(php_##name) : NULL;
+
+<?php else: ?>
+#define PHP_<?php echo $name_macro ?>_PTR(intern)       php_<?php echo $name_function ?>_get_ptr(intern)
+
+#define DECL_PHP_<?php echo $name_macro ?>(name) \
+    <?php echo $name_function ?> __##name; \
+    <?php echo $name_function ?> *name = &__##name; \
+    PHP_<?php echo $name_macro ?>_COPY(php_##name, name);
+
+<?php endif; ?>
+
+
 
 #define PHP_<?php echo $name_macro ?>_FE() \
 <?php foreach($this->methods as $method): ?>

@@ -133,6 +133,19 @@ class CairoCairo extends Implementation{
 
 class CairoPath extends Implementation {
 
+    public function macro_copy_set($declaration=false) {
+?>
+
+#define PHP_CAIRO_PATH_T_COPY(intern, dest) \
+    dest = PHP_CAIRO_PATH_T_PTR(intern);
+
+#define PHP_CAIRO_PATH_T_SET(dest, src)
+
+
+<?php
+        return '';
+    }
+        
     function zend_update_property($name) {
         $output  = '';
         switch($name) {
@@ -507,42 +520,24 @@ class CairoMatrix extends Implementation {
         return $output;
     }
 
-    public function define_macro($declaration=false) {
+    public function macro_copy_set($declaration=false) {
 ?>
 
-#define ZVAL_DOUBLE_COPY(src, dest) \
-    if (IS_DOUBLE==Z_TYPE_P(src)) {\
-        dest = Z_DVAL_P(src);\
-    } else if(IS_REFERENCE==Z_TYPE_P(src)) {\
-        if(IS_DOUBLE==Z_TYPE((src)->value.ref->val)) {\
-            dest = Z_DVAL((src)->value.ref->val);\
-        } \
-    } else {\
-    }
-
-#define ZVAL_DOUBLE_SET(dest, src) \
-    if (IS_DOUBLE==Z_TYPE_P(dest)) {\
-        ZVAL_DOUBLE(dest, src);\
-    } else if(IS_REFERENCE==Z_TYPE_P(dest)) {\
-        (dest)->value.ref->val.value.dval = src;\
-    } else {\
-    }
-
 #define PHP_CAIRO_MATRIX_T_COPY(src, dest) \
-    ZVAL_DOUBLE_COPY(&src->xx, (dest)->xx) \
-    ZVAL_DOUBLE_COPY(&src->yx, (dest)->yx) \
-    ZVAL_DOUBLE_COPY(&src->xy, (dest)->xy) \
-    ZVAL_DOUBLE_COPY(&src->yy, (dest)->yy) \
-    ZVAL_DOUBLE_COPY(&src->x0, (dest)->x0) \
-    ZVAL_DOUBLE_COPY(&src->y0, (dest)->y0) \
+    ZVAL_GET_DOUBLE(&src->xx, (dest)->xx) \
+    ZVAL_GET_DOUBLE(&src->yx, (dest)->yx) \
+    ZVAL_GET_DOUBLE(&src->xy, (dest)->xy) \
+    ZVAL_GET_DOUBLE(&src->yy, (dest)->yy) \
+    ZVAL_GET_DOUBLE(&src->x0, (dest)->x0) \
+    ZVAL_GET_DOUBLE(&src->y0, (dest)->y0)
 
 #define PHP_CAIRO_MATRIX_T_SET(dest, src) \
-    ZVAL_DOUBLE_SET(&(dest)->xx, (src)->xx) \
-    ZVAL_DOUBLE_SET(&(dest)->yx, (src)->yx) \
-    ZVAL_DOUBLE_SET(&(dest)->xy, (src)->xy) \
-    ZVAL_DOUBLE_SET(&(dest)->yy, (src)->yy) \
-    ZVAL_DOUBLE_SET(&(dest)->x0, (src)->x0) \
-    ZVAL_DOUBLE_SET(&(dest)->y0, (src)->y0) \
+    ZVAL_SET_DOUBLE(&(dest)->xx, (src)->xx) \
+    ZVAL_SET_DOUBLE(&(dest)->yx, (src)->yx) \
+    ZVAL_SET_DOUBLE(&(dest)->xy, (src)->xy) \
+    ZVAL_SET_DOUBLE(&(dest)->yy, (src)->yy) \
+    ZVAL_SET_DOUBLE(&(dest)->x0, (src)->x0) \
+    ZVAL_SET_DOUBLE(&(dest)->y0, (src)->y0)
 
 
 <?php
@@ -551,87 +546,87 @@ class CairoMatrix extends Implementation {
 
     function cairo_matrix_init() {
         $output  = '';
-        $output .= '    cairo_matrix_init(&matrix, xx, yx, xy, yy, x0, y0);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_init(matrix, xx, yx, xy, yy, x0, y0);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_init_identity() {
         $output  = '';
-        $output .= '    cairo_matrix_init_identity(&matrix);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_init_identity(matrix);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_init_translate() {
         $output  = '';
-        $output .= '    cairo_matrix_init_translate(&matrix, tx, ty);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_init_translate(matrix, tx, ty);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_init_scale() {
         $output  = '';
-        $output .= '    cairo_matrix_init_scale(&matrix, sx, sy);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_init_scale(matrix, sx, sy);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_init_rotate() {
         $output  = '';
-        $output .= '    cairo_matrix_init_rotate(&matrix, radians);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_init_rotate(matrix, radians);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
     
     function cairo_matrix_translate() {
         $output  = '';
-        $output .= '    cairo_matrix_translate(&matrix, tx, ty);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_translate(matrix, tx, ty);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_scale() {
         $output  = '';
-        $output .= '    cairo_matrix_scale(&matrix, sx, sy);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_scale(matrix, sx, sy);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_rotate() {
         $output  = '';
-        $output .= '    cairo_matrix_rotate(&matrix, radians);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_matrix_rotate(matrix, radians);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_invert() {
         $output  = '';
-        $output .= '    cairo_status_t ret = cairo_matrix_invert(&matrix);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, &matrix);'.PHP_EOL;
+        $output .= '    cairo_status_t ret = cairo_matrix_invert(matrix);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_matrix, matrix);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_multiply() {
         $output  = '';
-        $output .= '    cairo_matrix_multiply(&result, &a, &b);'.PHP_EOL;
-        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_result, &result);'.PHP_EOL;
+        $output .= '    cairo_matrix_multiply(result, a, b);'.PHP_EOL;
+        $output .= '    PHP_CAIRO_MATRIX_T_SET(php_result, result);'.PHP_EOL;
     
         return $output;
     }
 
     function cairo_matrix_transform_distance() {
         $output  = '';
-        $output .= '    cairo_matrix_transform_distance(&matrix, &dx, &dy);'.PHP_EOL;
+        $output .= '    cairo_matrix_transform_distance(matrix, &dx, &dy);'.PHP_EOL;
         $output .= '    ZVAL_DOUBLE(zdx, dx);'.PHP_EOL;
         $output .= '    ZVAL_DOUBLE(zdy, dy);'.PHP_EOL;
 
@@ -640,7 +635,7 @@ class CairoMatrix extends Implementation {
 
     function cairo_matrix_transform_point() {
         $output  = '';
-        $output .= '    cairo_matrix_transform_point(&matrix, &x, &y);'.PHP_EOL;
+        $output .= '    cairo_matrix_transform_point(matrix, &x, &y);'.PHP_EOL;
         $output .= '    ZVAL_DOUBLE(zx, x);'.PHP_EOL;
         $output .= '    ZVAL_DOUBLE(zy, y);'.PHP_EOL;
 

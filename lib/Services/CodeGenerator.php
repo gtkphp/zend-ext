@@ -473,9 +473,7 @@ class CodeGenerator
         return $types;
     }
 
-
     // -------------------------------------------------------------------
-
 
     /**
      * @param string $dir
@@ -487,7 +485,6 @@ class CodeGenerator
         $rootDto = $this->getPackageDto($package);
 
         foreach ($rootDto->objects as $objectDto) {
-
             
             if (
                   'cairo_path_t'!=$objectDto->name
@@ -505,11 +502,11 @@ class CodeGenerator
             echo '=>' . $objectDto->name . PHP_EOL;
             
         /*
-            if (
+        if (
                 'GtkWidget'!=$objectDto->name
           ) {
               continue;
-          }*/
+        }*/
 
 
 // TODO les fonction related a cairo_status_t

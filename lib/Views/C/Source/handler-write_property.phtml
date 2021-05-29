@@ -8,7 +8,7 @@ php_<?php echo $name_function ?>_write_property(zval *object, zval *member, zval
 
     // <?php echo $this->type ?>
     
-    struct Php<?php echo $this->camelcaseHelper($this->name) ?>Property *cmd = php_<?php echo $name_function ?>_properties_lookup(member_str->val, member_str->len);
+    const struct Php<?php echo $this->camelcaseHelper($this->name) ?>Property *cmd = php_<?php echo $name_function ?>_properties_lookup(member_str->val, member_str->len);
     if (cmd) {
         switch(cmd->code) {
 <?php

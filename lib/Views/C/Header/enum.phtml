@@ -8,6 +8,8 @@ $has_members = count($this->members);
 ?>#ifndef PHP_<?php echo $name_macro ?>_H
 #define PHP_<?php echo $name_macro ?>_H
 
+<?php echo $this->implementation->writeMacro(); ?>
+
 #define PHP_<?php echo $name_macro ?>_FE() \
 <?php foreach($this->methods as $method): ?>
     PHP_GTK_FE(<?php echo $method->name ?>,<?php echo $method->pad ?> arginfo_<?php echo $method->name ?>) \

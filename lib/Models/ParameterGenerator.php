@@ -143,6 +143,28 @@ class ParameterGenerator extends AbstractGenerator
         return $this->pass;
     }
 
+    public function setQualifier($qualifier)
+    {
+        $this->qualifier = $qualifier;
+        return $this;
+    }
+
+    public function getQualifier()
+    {
+        return $this->qualifier;
+    }
+
+    public function setModifier($modifier)
+    {
+        $this->modifier = $modifier;
+        return $this;
+    }
+
+    public function getModifier()
+    {
+        return $this->modifier;
+    }
+
     /**
      * @param array of AnnotationGenerator
      */
@@ -173,5 +195,12 @@ class ParameterGenerator extends AbstractGenerator
                   | $this->hasAnnotation(AnnotationGenerator::ANNOTATION_INOUT);
         return $is_redef;
     }
+
+    public function isIn():bool
+    {
+        $is_in = ! $this->hasAnnotation(AnnotationGenerator::ANNOTATION_OUT);
+        return $is_in;
+    }
+    
     
 }
