@@ -511,23 +511,9 @@ class Gtk extends DocBook
     protected function getDescription(SimpleXMLElement $xml){
     }
 
-    /*protected function getAnnotations(SimpleXMLElement $xml){
-        $annotations=[];
-        $nodes = $xml->xpath("emphasis/acronym");
-        foreach($nodes as $node) {
-            $acronym = (string)$node;
-            $annotation = AnnotationGenerator::Factory($acronym);
-            if ($annotation) {
-                $annotations[] = $annotation;
-            }
-        }
-        return $annotations;
-    }*/
-
     protected function getAnnotations(SimpleXMLElement $entry) {
         $annotations=[];
-        $emphasis = $entry->emphasis;
-        $str = strip_tags($emphasis->asXml());
+        $str = strip_tags($entry->asXml());
         $parts = explode ('][', $str);
         $parts = str_replace (array(']', '['), '', $parts);
         foreach($parts as $part) {
@@ -592,6 +578,7 @@ class Gtk extends DocBook
                     }
                     $parameter = $package->createParameter($param['name']);
                     $parameter->setType($package->createType($param['type']));
+                    //TODO: set pass, qualifier, modifier
                     $method->setParameter($parameter);
                 }
             }
@@ -599,18 +586,35 @@ class Gtk extends DocBook
             // Description :
             $description = '';
             $short_description = '';
+            $warning_description = '';
+            $tags = [];
             foreach($node->children() as $child) {
                 if ('para'==$child->getName()) {
-                    $description .= $child->asXML();
-                    if (null==$short_description)
-                        $short_description .= $child->asXML();
+                    if (isset($child['role'])) {
+                        switch ((string)$child['role']) {
+                            case 'since':
+                                $tags['since'] = (string)$child->link;
+                                break;
+                        }
+                    } else {
+                        $description .= $child->asXML();
+                        if (null==$short_description)
+                            $short_description .= $child->asXML();
+                    }
                 }
-                if ('refsect3'==$child->getName())
-                    break;
+                if ('warning'==$child->getName()) 
+                    $warning_description = $child->asXML();
             }
             $method->setDescription($description);
             $method->setShortDescription($short_description);
-
+            if (isset($tags['since']))
+                $method->setTagSince($tags['since']);
+            /*
+            if (isset($tags['deprecated']))
+                $method->setTagDeprecated($tags['deprecated']);
+            if (isset($tags['stability']))
+                $method->setTagStability($tags['stability']);
+            */
 
             // Parameters :
             $node_parameters = $node->xpath("refsect3[@id='$function_id.parameters']");
@@ -1007,14 +1011,42 @@ class Gtk extends DocBook
         $generator->children[$name] = $enum;
 
         $id = (string)$refsect2['role'];
+        
+        // Description :
         $description = '';
-        foreach($refsect2->children() as $node) {
-            if ('para'==$node->nodeName)
-                $description .= $node->asXML();
-            if ('refsect3'==$node->nodeName)
-                break;
+        $short_description = '';
+        $warning_description = '';
+        $parse_tags = false;
+        $tags = [];
+        foreach($refsect2->children() as $child) {
+            if ('para'==$child->getName()) {
+                if (isset($child['role']) && $parse_tags) {
+                    switch ((string)$child['role']) {
+                        case 'since':
+                            $tags['since'] = (string)$child->link;
+                            break;
+                    }
+                } else {
+                    $description .= $child->asXML();
+                    if (null==$short_description)
+                        $short_description .= $child->asXML();
+                }
+            }
+            if ('refsect3'==$child->getName())
+                $parse_tags = true;
+            if ('warning'==$child->getName()) 
+                $warning_description = $child->asXML();
         }
         $enum->setDescription($description);
+        $enum->setShortDescription($short_description);
+        if (isset($tags['since']))
+            $enum->setTagSince($tags['since']);
+        /*
+        if (isset($tags['deprecated']))
+            $method->setTagDeprecated($tags['deprecated']);
+        if (isset($tags['stability']))
+            $method->setTagStability($tags['stability']);
+        */
 
         //echo '      '.$id.':'.PHP_EOL;// "struct_members"
         foreach($refsect2->refsect3 as $refsect3) {
@@ -1108,11 +1140,11 @@ class Gtk extends DocBook
     protected function loadEnumConstants(SimpleXMLElement $refsect3)
     {
         $members = array();
+        $member_annotations = [];
         $rows = $refsect3->informaltable->tgroup->tbody->row;
         foreach($rows as $row) {
             $name = '';
             $description = '';
-            $annotations = [];
             foreach($row->entry as $entry) {
                 $role = (string)$entry['role'];
                 switch ($role) {
@@ -1123,11 +1155,7 @@ class Gtk extends DocBook
                         $description = $entry->children()->asXml();
                         break;
                     case 'enum_member_annotations':
-                        $annotations = (string)$entry;
-                        if (!empty($annotations)) {
-                            //$property = $this->loadEnumConstantAnnoations($row, $class);
-                            echo 'Unimplemented enum annotation'.PHP_EOL;
-                        }
+                        $member_annotations = $this->getAnnotations($entry);
                         break;
                     default:
                         if (!in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
@@ -1136,9 +1164,10 @@ class Gtk extends DocBook
                         break;
                 }
             }
-
+    
             $constant = $this->package->createConstant($name, $this->current_generator);
             $constant->setDescription($description);
+            $constant->setAnnotations($member_annotations);
             $constants[$name] = $constant;
         }
         if (in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {

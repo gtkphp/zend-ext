@@ -29,13 +29,6 @@ use function wordwrap;
 // my_object_class_init(const GObject &object)
 class FunctionGenerator extends ObjectGenerator
 {
-    /**
-     * @var TypeGenerator
-     */
-    //protected $type;// int, char, ...
-    //protected $qualifier;// const, volatile
-    //protected $modifier;// unsigned, short,..
-    //protected $pass='';// | '&' | '*' | '**' ...
 
     protected $isStatic = FALSE;
     protected $isVirtual = FALSE;

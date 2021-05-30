@@ -41,6 +41,9 @@ class AnnotationGenerator extends AbstractGenerator
     const ANNOTATION_TRANSFER_FULL = 0x16;
     const ANNOTATION_TRANSFER_NONE = 0x17;
     const ANNOTATION_TYPE = 0x18;
+
+    const ANNOTATION_SINCE = 0x19;
+
     /**
      * One of constant ANNOTATION_XXX
      * @var int $type
@@ -77,6 +80,8 @@ class AnnotationGenerator extends AbstractGenerator
             //case 'transfer full':        $type = self::ANNOTATION_TRANSFER_FULL; break;
             //case 'transfer none':        $type = self::ANNOTATION_TRANSFER_NONE; break;
             case 'type':                 $type = self::ANNOTATION_TYPE; break;
+
+            case 'since':                $type = self::ANNOTATION_SINCE; break;
             case '' :                    $type = 0; break;
             default:
                 echo 'Unexpected annotion acronym "'.$acronym.'"'.PHP_EOL;
@@ -106,11 +111,16 @@ class AnnotationGenerator extends AbstractGenerator
         if (count($parts)==2) {
             $this->attributes[$parts[0]] = $parts[1];
         } else if(count($parts)==1) {
-            $this->attributes[$parts[0]] = $parts[0];
+            $this->attributes[''] = $parts[0];
         } else {
             echo "Unexpected annotation attribute format\n";
         }
     }
+    public function getParam(string $attr='')
+    {
+        return $this->attributes[$attr];
+    }
+    
     public function hasAttribute(string $name):bool {
         return isset($this->attributes[$name]);
     }

@@ -10,7 +10,7 @@ foreach ($this->members as $property) {
 
 foreach ($properties as $property=>$type):
     $property_name = strtolower($property);
-    $property_name = str_replace('-', '_', $property_name);
+    $property_name = str_replace(array('-', '@', '#'), ['_', '', '_'], $property_name);
     $type=$property;
 ?>
 
@@ -107,7 +107,8 @@ $glue = '    ';
 foreach ($this->members as $property) {
     $name = strtoupper($property->name);
     $name = str_replace('-', '_', $name);
-    $setter = 'php_'.$name_function.'_setter_'.strtolower($property->type/*$name*/);
+    $property_type = str_replace(array('-', '@', '#'), ['_', '', '_'], $property->type);
+    $setter = 'php_'.$name_function.'_setter_'.strtolower($property_type/*$name*/);
     echo $glue . '{"'.$property->name.'", PHP_'. $name_macro .'_'.$name.', '.$setter.'}';
     $glue = ','.PHP_EOL.'    ';
 }

@@ -174,7 +174,7 @@ class PackageGenerator extends ObjectGenerator
     
     public function createConstant(string $name, AbstractGenerator $parent): ConstantGenerator {
         $constant = new ConstantGenerator($name);
-        $constant->setParentGenerator($this, $parent);
+        $constant->setParentGenerator($parent);
         $constant->setOwnPackage($this);
 
         //$this->list_type_enum[$name] = $enum;

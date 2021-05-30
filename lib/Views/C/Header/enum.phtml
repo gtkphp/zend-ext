@@ -11,9 +11,15 @@ $has_members = count($this->members);
 <?php echo $this->implementation->writeMacro(); ?>
 
 #define PHP_<?php echo $name_macro ?>_FE() \
-<?php foreach($this->methods as $method): ?>
+<?php $allow=false; $previous = $this->since; ?>
+<?php foreach($this->methods as $name=>$method): ?>
+<?php if ($allow && $method->since!=$previous): ?>#endif<?php echo PHP_EOL; endif; ?>
+<?php if ($method->since > $this->since && $method->since!=$previous): ?>#if <?php echo $ns ?>_VERSION >= <?php $allow=true; echo $method->since.'\\'.PHP_EOL; endif; ?>
+<?php $previous = $method->since; ?>
     PHP_GTK_FE(<?php echo $method->name ?>,<?php echo $method->pad ?> arginfo_<?php echo $method->name ?>) \
 <?php endforeach; ?>
+<?php if ($allow): ?>#endif \<?php echo PHP_EOL; endif; ?>
+
 
 #define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
     php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
@@ -33,10 +39,16 @@ if ($this->implementation) {
 }
 ?>
 
-<?php foreach($this->methods as $method): ?>
+<?php $allow=false; $previous = $this->since; ?>
+<?php foreach($this->methods as $name=>$method): ?>
+<?php if ($allow && $method->since!=$previous): ?>#endif<?php echo PHP_EOL; endif; ?>
+<?php if ($method->since > $this->since && $method->since!=$previous): ?>#if <?php echo $ns ?>_VERSION >= <?php $allow=true; echo $method->since.PHP_EOL; endif; ?>
+<?php $previous = $method->since; ?>
 <?php echo $method->args; ?>
 PHP_FUNCTION(<?php echo $method->name ?>);
 
 <?php endforeach; ?>
+<?php if ($allow): ?>#endif<?php echo PHP_EOL; endif; ?>
+
 
 #endif	/* PHP_<?php echo $name_macro ?>_H */

@@ -7,7 +7,10 @@ class MethodDto {
     public $type;
     public $pad;
     public $parameters;
-    public $generator;
+    public $generator;//???
+    public $description;
     public $short_description;
+
+    public $since;
 
 }

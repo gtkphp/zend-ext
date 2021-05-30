@@ -1,6 +1,11 @@
 Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
+TODO: generalize "// Description :"
+TODO: Version #if CAIRO_VERSIO >= 11600 (getTagSince '1.16' to int)
+TODO: Since, Deprecate, Stability
+TODO: Comment surcharger les fonctions PHP_FUNCTION(__construct)
+       zif_cairo_path_data_t___construct
 TODO: Refactor src/Implementation
                src/Implementation/Cairo/Path.php
 TODO: 

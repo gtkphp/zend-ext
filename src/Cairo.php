@@ -294,26 +294,22 @@ class CairoPath extends Implementation {
                 points[0+count][0] = zx->value.dval;
                 points[0+count][1] = zy->value.dval;
                 count++;
-
-                switch (type) {
-                case CAIRO_PATH_MOVE_TO:
-                    cairo_move_to(cr, points[0][0], points[0][1]);
-                    break;
-                case CAIRO_PATH_LINE_TO:
-                    cairo_line_to(cr, points[0][0], points[0][1]);
-                    break;
-                case CAIRO_PATH_CLOSE_PATH:
-                    cairo_close_path(cr);
-                    break;
-                case CAIRO_PATH_CURVE_TO:
-                    if (count==3) {
-                        cairo_curve_to(cr, points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1]);
-                    }
-                    break;
-                default:
-                    break;
-                }
-
+            }
+            switch (type) {
+            case CAIRO_PATH_MOVE_TO:
+                if (count==1) cairo_move_to(cr, points[0][0], points[0][1]);
+                break;
+            case CAIRO_PATH_LINE_TO:
+                if (count==1) cairo_line_to(cr, points[0][0], points[0][1]);
+                break;
+            case CAIRO_PATH_CLOSE_PATH:
+                if (count==0) cairo_close_path(cr);
+                break;
+            case CAIRO_PATH_CURVE_TO:
+                if (count==3) cairo_curve_to(cr, points[0][0], points[0][1], points[1][0], points[1][1], points[2][0], points[2][1]);
+                break;
+            default:
+                break;
             }
         } else {
             g_print("Unexpected zval, isn't cairo_path_data_t");
@@ -478,7 +474,7 @@ class CairoPathData extends Implementation {
         return '';
     }
 
-    public function zend_extends_setter_mixed()
+    public function zend_extends_setter_anonymous_0()
     {
         $output  = '';
 
@@ -493,6 +489,11 @@ class CairoPathData extends Implementation {
 
         return $output;
     }
+    public function zend_extends_setter_anonymous_1()
+    {
+        return $this->zend_extends_setter_anonymous_0();
+    }
+    
 }
 
 class CairoSurface extends Implementation {
