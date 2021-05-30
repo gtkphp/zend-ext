@@ -1155,7 +1155,10 @@ class Gtk extends DocBook
                         $description = $entry->children()->asXml();
                         break;
                     case 'enum_member_annotations':
-                        $member_annotations = $this->getAnnotations($entry);
+                        //$member_annotations = $this->getAnnotations($entry);
+                        {
+                        
+                        }
                         break;
                     default:
                         if (!in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
@@ -1167,7 +1170,12 @@ class Gtk extends DocBook
     
             $constant = $this->package->createConstant($name, $this->current_generator);
             $constant->setDescription($description);
-            $constant->setAnnotations($member_annotations);
+            if (preg_match('#\(Since\s+(\d+\.\d+)\)#', $description, $matches)) {
+                $annotation_since = AnnotationGenerator::Factory('since');
+                $annotation_since->setParam($matches[1]);
+                $member_annotations = array($annotation_since);
+                $constant->setAnnotations($member_annotations);
+            }
             $constants[$name] = $constant;
         }
         if (in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
