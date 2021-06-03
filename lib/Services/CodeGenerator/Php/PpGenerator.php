@@ -15,10 +15,10 @@ use Zend\View\Strategy\PhpRendererStrategy;
 use Zend\View\View;
 use Zend\Ext\Views\HelperPluginManager;
 
-use Zend\Ext\Views\C\Source\ClassDto;
-use Zend\Ext\Views\C\Source\MethodDto;
-use Zend\Ext\Views\C\EnumDto;
-use Zend\Ext\Views\C\ParameterDto;
+use Zend\Ext\Views\ClassDto;
+use Zend\Ext\Views\MethodDto;
+use Zend\Ext\Views\EnumDto;
+use Zend\Ext\Views\ParameterDto;
 
 
 class PpGenerator extends CodeGenerator

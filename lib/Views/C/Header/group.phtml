@@ -1,26 +1,17 @@
 <?php
 
-$ns = strtoupper($this->namespaceHelper($this->name));
 $name_function = $this->nameclassHelper($this->name);
 $name_function = strtolower($name_function);
 $name_macro = strtoupper($name_function);
-$has_members = count($this->members);
 
 ?>#ifndef PHP_<?php echo $name_macro ?>_H
 #define PHP_<?php echo $name_macro ?>_H
 
-<?php echo $this->implementation->writeMacro(); ?>
 
 #define PHP_<?php echo $name_macro ?>_FE() \
-<?php $allow=false; $previous = $this->since; ?>
-<?php foreach($this->methods as $name=>$method): ?>
-<?php if ($allow && $method->since!=$previous): ?>#endif<?php echo PHP_EOL; endif; ?>
-<?php if ($method->since > $this->since && $method->since!=$previous): ?>#if <?php echo $ns ?>_VERSION >= <?php $allow=true; echo $method->since.'\\'.PHP_EOL; endif; ?>
-<?php $previous = $method->since; ?>
+<?php foreach($this->methods as $method): ?>
     PHP_GTK_FE(<?php echo $method->name ?>,<?php echo $method->pad ?> arginfo_<?php echo $method->name ?>) \
 <?php endforeach; ?>
-<?php if ($allow): ?>#endif \<?php echo PHP_EOL; endif; ?>
-
 
 #define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
     php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
@@ -31,6 +22,7 @@ $has_members = count($this->members);
 #define PHP_<?php echo $name_macro ?>_RSHUTDOWN_FUNCTION() {\
 }
 
+
 zend_class_entry*
 php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
 
@@ -40,16 +32,15 @@ if ($this->implementation) {
 }
 ?>
 
-<?php $allow=false; $previous = $this->since; ?>
-<?php foreach($this->methods as $name=>$method): ?>
-<?php if ($allow && $method->since!=$previous): ?>#endif<?php echo PHP_EOL; endif; ?>
-<?php if ($method->since > $this->since && $method->since!=$previous): ?>#if <?php echo $ns ?>_VERSION >= <?php $allow=true; echo $method->since.PHP_EOL; endif; ?>
-<?php $previous = $method->since; ?>
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $name_function ?>___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(<?php echo $name_function ?>, __construct);
+
+<?php foreach($this->methods as $method): ?>
 <?php echo $method->args; ?>
 PHP_FUNCTION(<?php echo $method->name ?>);
 
 <?php endforeach; ?>
-<?php if ($allow): ?>#endif<?php echo PHP_EOL; endif; ?>
-
 
 #endif	/* PHP_<?php echo $name_macro ?>_H */

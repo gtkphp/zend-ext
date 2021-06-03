@@ -12,6 +12,5 @@ class EnumDto {
     public $dir;
     public $fileName;
 
-    public $since;
 
 }

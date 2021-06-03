@@ -23,12 +23,13 @@ use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
 use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
 //use Zend\Ext\Views\C\Source\ClassDto;
 
-use Zend\Ext\Views\C\Source\MethodDto;
+use Zend\Ext\Views\MethodDto;
 //use Zend\Ext\Views\C\ParameterDto;
-use Zend\Ext\Views\C\PropertyDto;
+//use Zend\Ext\Views\C\PropertyDto;
 use Zend\Ext\Views\ObjectDto;
 
 use Zend\Ext\Views\PackageDto;
+use Zend\Ext\Views\GroupDto;
 use Zend\Ext\Views\ClassDto;
 use Zend\Ext\Views\StructDto;
 use Zend\Ext\Views\MemberDto;
@@ -287,26 +288,26 @@ class CodeGenerator
         return $enumDto;
     }
 
-    function createStructDto(StructGenerator $function):StructDto {
+    function createStructDto(StructGenerator $struct):StructDto {
         $methodDto = new StructDto;
-        $methodDto->name = $function->getName();
-        $methodDto->description = $this->getRenderer()->commentHelper($function->getDescription(), '');
-        $methodDto->shortDescription = $this->getRenderer()->commentHelper($function->getShortDescription(), '');
+        $methodDto->name = $struct->getName();
+        $methodDto->description = $this->getRenderer()->commentHelper($struct->getDescription(), '');
+        $methodDto->shortDescription = $this->getRenderer()->commentHelper($struct->getShortDescription(), '');
 
-        foreach($function->members as $var) {
+        foreach($struct->members as $var) {
             $member = $this->createMemberDto($var);
             $methodDto->members[$member->name] = $member;
         }
 
         $max_length = 0;
-        $fileGenerator = $function->getParentGenerator();
+        $fileGenerator = $struct->getParentGenerator();
         $master_name = '';
         $master = $fileGenerator->getMatserObject();
         if ($master) {
             $master_name = $master->getName();
         }
-        if ($function->getName()==$master_name) {
-            $fileGenerator = $function->getParentGenerator();
+        if ($struct->getName()==$master_name) {
+            $fileGenerator = $struct->getParentGenerator();
             foreach($fileGenerator->children as $related) {
                 if ($related instanceof FunctionGenerator) {
                     $methodDto->methods[] = $this->createFunctionDto($related);
@@ -317,22 +318,24 @@ class CodeGenerator
                 $method->pad = str_repeat(' ', $max_length-strlen($method->name));
             }
     
-        }/* else {
+        } else {
+            /*
             foreach($function->relateds as $related) {
                 if ($related instanceof FunctionGenerator) {
                     $methodDto->methods[] = $this->createFunctionDto($related);
                     $max_length = max($max_length, strlen($related->getName()));
                 }
             }
-        }*/
+            */
+        }
 
-        foreach($function->dependencies as $dependecy=>$unused) {
+        foreach($struct->dependencies as $dependecy=>$unused) {
             $methodDto->dependencies[] = $this->getFilename($dependecy);
         }
         $methodDto->dependencies[] = null;
         $methodDto->dependencies[] = $this->getFilename($methodDto->name);
 
-        $methodDto->requires = $this->getRequires($function);
+        $methodDto->requires = $this->getRequires($struct);
 
 
         return $methodDto;
@@ -377,8 +380,8 @@ class CodeGenerator
     function createFunctionDto(FunctionGenerator $function):MethodDto {
         $methodDto = new MethodDto;
         $methodDto->name = $function->getName();
-        $methodDto->description = $function->getDescription();
-        $methodDto->shortDescription = $function->getShortDescription();
+        $methodDto->description = $this->getRenderer()->commentHelper($function->getDescription());
+        $methodDto->shortDescription = $this->getRenderer()->commentHelper($function->getShortDescription());
         $methodDto->docblock = $this->getRenderer()->docBlockHelper($function);
         $methodDto->args = $this->getRenderer()->argHelper($function);
         $methodDto->call = $this->getRenderer()->callHelper($function);
@@ -391,7 +394,7 @@ class CodeGenerator
             $param = new ParameterDto;
             $param->name = $parameter->getName();
             $param->type = $parameter->getType()->getName();
-            $param->description = $parameter->getType()->getName();
+            $param->description = $this->getRenderer()->commentHelper($parameter->getDescription());
             $methodDto->parameters[$param->name] = $param;
         }
         return $methodDto;
@@ -408,20 +411,22 @@ class CodeGenerator
             $rootDto->objects[$object->getName()] = $classDto;
             $objectDto = $classDto;
         } else if ($object instanceof StructGenerator) {
-            $methodDto = $this->createStructDto($object);
+            $structDto = $this->createStructDto($object);
             //$methodDto->package = $subpackageDto;
-            $methodDto->shortName = $this->getShortName($object, $packageDto->name);
+            $structDto->shortName = $this->getShortName($object, $packageDto->name);
             //print_r($methodDto);
-            $rootDto->objects[$object->getName()] = $methodDto;
+            $rootDto->objects[$object->getName()] = $structDto;
+            $subpackageDto->objects[$object->getName()] = $structDto;
             //$packageDto->objects[$object->getName()] = $methodDto;
             //$subpackageDto->objects[$object->getName()] = $methodDto;
             //$rootDto->master_objects[$object->getName()] = $methodDto;
             //$packageDto->master_objects[$object->getName()] = $methodDto;
-            $objectDto = $methodDto;
+            $objectDto = $structDto;
         } else if ($object instanceof EnumGenerator) {
             $enumDto = $this->createEnumDto($object);
             $enumDto->shortName = $this->getShortName($object, $packageDto->name);
             $rootDto->objects[$object->getName()] = $enumDto;
+            $subpackageDto->objects[$object->getName()] = $enumDto;
             $objectDto = $enumDto;
         } else if ($object instanceof UnionGenerator) {
             $unionDto = $this->createUnionDto($object);
@@ -450,17 +455,26 @@ class CodeGenerator
         foreach ($root->subpackage as $package) {
             $packageDto = $this->createPackageDto($package);
             $packageDto->package = $rootDto;
+            $rootDto->subpackage[] = $packageDto;
             $this->current_package_dto = $packageDto;
             foreach ($package->subpackage as $subpackage) {
                 $subpackageDto = $this->createPackageDto($subpackage);
                 $subpackageDto->package = $packageDto;
+                $packageDto->subpackage[] = $subpackageDto;
                 $this->current_subpackage_dto = $subpackageDto;
                 foreach ($subpackage->children as $file) {
                     foreach ($file->children as $object) {
                         //if ($object instanceof StructGenerator) continue;
                         //if ($object instanceof EnumGenerator) continue;
                         //if ($object instanceof UnionGenerator) continue;
-                        if ($object instanceof FunctionGenerator) continue;
+                        if ($object instanceof FunctionGenerator) {
+                            if ($object->isClassified) {
+                                //echo '+'.$object->getName().PHP_EOL;
+                            } else {
+                                echo '-'.$object->getName().PHP_EOL;
+                            }
+                            continue;
+                        }
                         $objectDto = $this->createObjectDto($object);
                         $objectDto->package = $subpackageDto;
                     }
@@ -505,24 +519,38 @@ class CodeGenerator
 
         $rootDto = $this->getPackageDto($package);
 
+        //foreach ($rootDto->groups as $groupDto)
         foreach ($rootDto->objects as $objectDto) {
-            if(! $objectDto instanceof EnumDto) {
+            /*if(! ($objectDto instanceof EnumDto
+            && $objectDto instanceof StructDto
+            && $objectDto instanceof UnionDto)
+            ) {
+                continue;
+            }*/
+
+            if(! ($objectDto instanceof EnumDto)
+            ) {
                 continue;
             }
 
-            if (
-                  'cairo_status_t'!=$objectDto->name
+            // TODO: generer cairo_image_surface_create()
+            // FunctionGenerator dans un FileGenerator, isClassifier,
+            // mais n'est pas dans $rootDto->objects
+
+            /*if (
+                  'cairo_surface_t'!=$objectDto->name
             //&&  'cairo_rectangle_t'!=$objectDto->name
             //&&  'cairo_status_t'!=$objectDto->name
             //&&  'cairo_glyph_t'!=$objectDto->name
             //&&  'cairo_path_data_type_t'!=$objectDto->name
             //&&  'cairo_path_data_t'!=$objectDto->name
             //&&  'cairo_path_t'!=$objectDto->name
-            //&& 'cairo_matrix_t'!=$objectDto->name
-            //&& 'cairo_t'!=$objectDto->name
+            //&&  'cairo_matrix_t'!=$objectDto->name
+            //&&  'cairo_surface_t'!=$objectDto->name
+            //&&  'cairo_t'!=$objectDto->name
             ) {
                 continue;
-            }
+            }*/
 
             echo '=>' . $objectDto->name . PHP_EOL;
             
@@ -541,6 +569,7 @@ class CodeGenerator
             $package_dir = 'php_'.$package_name;
 
             $viewModel = $this->getViewModel($objectDto);
+            if(empty($viewModel)){ echo "TODO: ".$objectDto->name."\n"; continue;}
             $output = $this->render($viewModel);
             $filename = str_replace('_', '-', $objectDto->shortName).'.'.$this->getFilenameExtension();
             $path = "$dir/$package_dir";

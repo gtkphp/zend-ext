@@ -156,6 +156,7 @@ class PackageGeneratorTest extends TestCase
         $output = '';
         //$output.= $component->getName()."(\e[1;34m".$self_type."\e[0m):Function:Object {";
         $output.= 'Function('.$component->getName()."):Object {";
+        $output.= $component->getParentGenerator()->getName();
         $output.= '}'.PHP_EOL;
         //$output.= "'".$component->getName()."' => 'cairo_pattern_t',".PHP_EOL;
         //$output.= "'".$component->getName()."' => '".$self_type."',".PHP_EOL;
@@ -172,10 +173,11 @@ class PackageGeneratorTest extends TestCase
             $output.= $this->dumObject($component->getMatserObject(), $tab+1);
         }
         if (true) {
+            $count = 0;
             $output.= $indent;
-            $output.= '  children : ['.PHP_EOL;
+            $output.= '  children('.count($component->children).') : ['.PHP_EOL;
             foreach($component->children as $objects) {
-                if ($objects->isClassified) continue;
+                if ($objects->isClassified){ $count++; continue;}
                 $output.= $indent.'    ';
                 $output.= $this->dumObject($objects, $tab+2);
             }
@@ -275,6 +277,8 @@ class PackageGeneratorTest extends TestCase
         $log_dir = APP_DIR."/log/glib-$tag";
         $tmp_dir = APP_DIR.'/tmp';
         $output_dir = APP_DIR.'/output';
+        $output_dir = '/home/dev/Projects/gtkphp/en/reference/gtk';
+
         $log = $log_dir.'/log.txt';
         
         `mkdir -p $log_dir`;
@@ -320,8 +324,14 @@ class PackageGeneratorTest extends TestCase
             'cairo-Regions'         => 'cairo_region_t',
             //'cairo-Transformations' => 'cairo_matrix_t',
             'cairo-text'            => 'cairo_glyph_t',
-            'cairo-Image-Surfaces'  => null,
+            'cairo-Image-Surfaces'  => 'cairo_format_t',
         );
+        /*
+            'Hash Tables'=>'GHashTable',
+            'Doubly-Linked Lists'=>'GList',
+            'Error Reporting'=>'GError',
+            'Arrays'=>'GArray',
+        */
         $docBook->remap_function = array(
          /* function name */        /* object name*/
             'cairo_create'          => 'cairo_t',
@@ -424,16 +434,16 @@ class PackageGeneratorTest extends TestCase
 
 
         
-        Implementation::$version = '7';
+        Implementation::$version = '8';
         $enable_test = true;
         $enable = false;
-        if ($enable_test) {
+        if ($enable) {
             // generate Source PHP Extension
             $generator = CodeGenerator::Factory('C/Source/Glib', 'GlibNotUsedPut $docBook');
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
         }
-        if ($enable_test) {
+        if ($enable) {
             // generate Header PHP Extension
             $generator = CodeGenerator::Factory('C/Header/Glib', 'Glib');
             $generator->setDocBook($docBook);
@@ -445,11 +455,12 @@ class PackageGeneratorTest extends TestCase
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
         }
-        if ($enable) {
+        if ($enable_test) {
             // generate PHP Doc
             $generator = CodeGenerator::Factory('Xml/Doc', 'Glib');
             $generator->setDocBook($docBook);
             $generator->save($output_dir);
+
         }
 
         

@@ -83,7 +83,7 @@ php_<?php echo $name_function ?>_methods[] = {
 static zend_object*
 php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
 {
-    php_<?php echo $name_function ?> *intern = ecalloc(1, sizeof(php_<?php echo $name_function ?>) + zend_object_properties_size(class_type));
+    php_<?php echo $name_function ?> *intern = <?php echo $this->allocHelper('php_'.$name_function); ?>
 
     zend_object_std_init(&intern->std, class_type);
     object_properties_init(&intern->std, class_type);

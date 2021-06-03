@@ -14,4 +14,6 @@ class PackageDto extends ObjectDto {
      */
     public $objects=[];
 
+    public $subpackage=[];
+
 }

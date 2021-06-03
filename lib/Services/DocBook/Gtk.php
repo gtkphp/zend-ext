@@ -470,6 +470,7 @@ class Gtk extends DocBook
 
         $this->current_generator = $current_generator;
     }
+    
     protected function getFunctions(SimpleXMLElement $xml):array
     {
         $id = (string)$xml['id'];
@@ -579,6 +580,10 @@ class Gtk extends DocBook
                     $parameter = $package->createParameter($param['name']);
                     $parameter->setType($package->createType($param['type']));
                     //TODO: set pass, qualifier, modifier
+                    if (isset($param['pass'])) {
+                        $parameter->setPass($param['pass']);
+                    }
+        
                     $method->setParameter($parameter);
                 }
             }
@@ -632,7 +637,7 @@ class Gtk extends DocBook
                                 $parameter_name = (string)$entry->para;
                                 break;
                             case 'parameter_description':
-                                $parameter_description = (string)$entry->asXml();
+                                $parameter_description = (string)$entry->para->asXml();
                                 break;
                             case 'parameter_annotations':
                                 $parameter_annotations = $this->getAnnotations($entry);
@@ -657,18 +662,27 @@ class Gtk extends DocBook
 
             
             // Returns :
+            $annotations_return = [];
+            /**
+             * @var ParameterGenerator $parameter_return
+             */
             $parameter_return = $package->createParameter('Returns');
             $node_parameters = $node->xpath("refsect3[@id='$function_id.returns']");
             $description = '';
             foreach($node_parameters as $node_parameter) {
-                foreach($node->children() as $node) {
+                foreach($node_parameter->children() as $node) {
                     if ('para'==$node->getName()) {
-                        $description .= $node->asXML();
+                        if (isset($node->emphasis)) {
+                            $annotations_return = $this->getAnnotations($node);
+                        } else {
+                            $description .= $node->asXML();
+                        }
                     }
                 }
             }
 
             $parameter_return->setDescription($description);
+            $parameter_return->setAnnotations($annotations_return);
             $return_type = $package->createType($signature['signature']['return']['type']);
             $parameter_return->setType($return_type);
             if (isset($signature['signature']['return']['pass'])) {
@@ -798,7 +812,6 @@ class Gtk extends DocBook
             $this->createClass($class_name);
             // unsete $struct['Class']
             // set $class
-
         }
 
         $this->current_generator = $package;
@@ -1167,7 +1180,7 @@ class Gtk extends DocBook
                         break;
                 }
             }
-    
+
             $constant = $this->package->createConstant($name, $this->current_generator);
             $constant->setDescription($description);
             if (preg_match('#\(Since\s+(\d+\.\d+)\)#', $description, $matches)) {

@@ -202,5 +202,25 @@ class ParameterGenerator extends AbstractGenerator
         return $is_in;
     }
     
-    
+    public function isTransferFull():bool {
+        foreach($this->annotations as $annotation) {
+            if ($annotation->getType() == AnnotationGenerator::ANNOTATION_TRANSFER) {
+                $param = $annotation->getParam();
+                if ('full'==$param) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public function isArray():bool {
+        foreach($this->annotations as $annotation) {
+            if ($annotation->getType() == AnnotationGenerator::ANNOTATION_ARRAY) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

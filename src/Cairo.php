@@ -45,6 +45,23 @@ class CairoCairo extends Implementation{
         $output .= '    php_cr->ptr = NULL;'.PHP_EOL;
         return $output;
     }
+    
+    /*function cairo_create() {
+        $output  = '';
+        $output .= '    cairo_t *ret = cairo_create(target);';
+        $output .= '    zend_object *z_ret = php_cairo_t_create_object(php_cairo_t_class_entry);'.PHP_EOL;
+        $output .= '    php_cairo_t *php_ret = ZOBJ_TO_PHP_CAIRO_T(z_ret);'.PHP_EOL;
+        $output .= '    php_ret->ptr = z_ret;'.PHP_EOL;
+        return $output;
+    }*/
+
+    /*function cairo_reference() {
+        $output  = '';
+        $output .= '    cairo_t *ret = cairo_reference(cr);';
+        $output .= '    zend_object *z_ret = ZVAL_GET_PHP_CAIRO_T(zcr);'.PHP_EOL;
+        return $output;
+    }*/
+    
     function cairo_append_path() {
         $output  = '    cairo_append_path(cr, path);'.PHP_EOL;
         $output .= '    cairo_path_destroy(path);'.PHP_EOL;

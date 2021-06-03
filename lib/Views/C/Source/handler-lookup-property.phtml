@@ -24,9 +24,11 @@ php_<?php echo $name_function ?>_setter_<?php echo $property_name ?>(php_<?php e
         ZVAL_SET_DOUBLE(dest, value->value.dval);
     } else {
         zend_bool strict_types = ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
-        zend_string *type = zend_zval_get_type(value);
+        <?php echo $this->zvaltypeHelper('value'); ?>
+
         if (strict_types) {
-            zend_internal_type_error(1, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type float,", type->val, name);
+            <?php echo $this->typeerrorHelper('1', '"Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\\\'. $this->name .'::$%s of type float,"', 'type_name', 'name'); ?>
+
         } else {
             int allow_errors = -1;
             zend_long lval=0;
@@ -35,20 +37,20 @@ php_<?php echo $name_function ?>_setter_<?php echo $property_name ?>(php_<?php e
                 zend_uchar z_type = is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), &lval, &dval, allow_errors);
                 if (z_type==IS_LONG) {
                     ZVAL_SET_DOUBLE(dest, (double)lval);
-                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%f) convertion,", type->val, value->value.str->val, (double)lval);
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%f) convertion,", type_name, value->value.str->val, (double)lval);
                     return;
                 } else if(z_type==IS_DOUBLE) {
                     ZVAL_SET_DOUBLE(dest, dval);
-                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%f) convertion,", type->val, value->value.str->val, dval);
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to float(%f) convertion,", type_name, value->value.str->val, dval);
                     return;
                 }
             }
             if (Z_TYPE_P(value)==IS_LONG) {
                 ZVAL_SET_DOUBLE(dest, (double)value->value.lval);
-                zend_error(E_USER_NOTICE, "Implicite int(%d) to float(%f) convertion,", value->value.lval, (double)value->value.lval);
+                zend_error(E_USER_NOTICE, "Implicite int(%d) to float(%f) convertion,", (int)value->value.lval, (double)value->value.lval);
                 return;
             }
-            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type float,", type->val, name);
+            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type float,", type_name, name);
         }
     }
 <?php elseif(trim($type)=='zend_long' || trim($type)=='int'): ?>
@@ -56,9 +58,10 @@ php_<?php echo $name_function ?>_setter_<?php echo $property_name ?>(php_<?php e
         ZVAL_SET_LONG(dest, value->value.lval);
     } else {
         zend_bool strict_types = ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
-        zend_string *type = zend_zval_get_type(value);
+        zend_string *type = <?php echo $this->zvaltypeHelper('value'); ?>
         if (strict_types) {
-            zend_internal_type_error(1, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type float,", type->val, name);
+            <?php echo $this->typeerrorHelper('1', '"Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\\\'. $this->name .'::$%s of type float,"', 'type_name', 'name'); ?>
+
         } else {
             int allow_errors = -1;
             zend_long lval=0;
@@ -67,11 +70,11 @@ php_<?php echo $name_function ?>_setter_<?php echo $property_name ?>(php_<?php e
                 zend_uchar z_type = is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), &lval, &dval, allow_errors);
                 if (z_type==IS_LONG) {
                     ZVAL_SET_LONG(dest, lval);
-                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type->val, value->value.str->val, lval);
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type_name, value->value.str->val, lval);
                     return;
                 } else if(z_type==IS_DOUBLE) {
                     ZVAL_SET_LONG(dest, (int)dval);
-                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type->val, value->value.str->val, (int)dval);
+                    zend_error(E_USER_NOTICE, "Implicite %s(%s) to int(%d) convertion,", type_name, value->value.str->val, (int)dval);
                     return;
                 }
             }
@@ -80,7 +83,7 @@ php_<?php echo $name_function ?>_setter_<?php echo $property_name ?>(php_<?php e
                 zend_error(E_USER_WARNING, "Implicite float(%f) to int(%d) convertion,", value->value.dval, (int)value->value.dval);
                 return;
             }
-            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type int,", type->val, name);
+            zend_error(E_USER_NOTICE, "Cannot assign %s to property "GTK_NS_QUOTE(GTK_NS)"\\<?php echo $this->name ?>::$%s of type int,", type_name, name);
         }
     }
 <?php elseif(trim($type)=='zval'): ?>

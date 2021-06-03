@@ -18,7 +18,11 @@ class ObjectGenerator extends AbstractGenerator
     public $children=[];
     public $relateds=[];
     public $dependencies=[];
-
+    /**
+     * @var array of AnnotationGenerator
+     */
+    protected $annotations = [];
+    
     /**
      * @var string e.g. 1.0
      */
@@ -28,6 +32,25 @@ class ObjectGenerator extends AbstractGenerator
     }
     public function getTagSince() {
         return $this->tag_since;
+    }
+
+    public function setAnnotations(array $annotations) {
+        $this->annotations = $annotations;
+        return $this;
+    }
+
+    public function getAnnotations():array {
+        return $this->annotations;
+    }
+    
+    public function hasAnnotation(int $type):bool
+    {
+        foreach($this->annotations as $annotation) {
+            if ($annotation->getType()==$type) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

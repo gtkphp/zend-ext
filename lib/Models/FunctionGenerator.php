@@ -194,5 +194,4 @@ class FunctionGenerator extends ObjectGenerator
         return $this;
     }
     
-
 }

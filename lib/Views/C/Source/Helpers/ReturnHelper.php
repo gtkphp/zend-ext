@@ -84,7 +84,22 @@ class ReturnHelper extends AbstractHelper
                     $t = $methodType->getName();
                     $f = $method->getName();
 
+                    $output .= '    zend_object *z_ret = zend_objects_new(php_'.$t.'_class_entry);'.PHP_EOL;
+                    $output .= '    php_'.$t.' *php_ret = ZOBJ_TO_PHP_'.strtoupper($t).'(z_ret);'.PHP_EOL;
+                    $output .= '    php_ret->ptr = z_ret;'.PHP_EOL;
+
                     $output .= '    RETURN_OBJ(z_ret);';
+
+                    /*
+                    $is_transfer_full = $method->getParameterReturn()->isTransferFull();
+                    if ($is_transfer_full) {
+                    } else {
+                        $output .= '    RETURN_OBJ(z_ret);';
+                    }
+                    */
+
+
+                
                     /*
                     $output .= '    zend_object *z_ret = php_'.$t.'_create_object(php_'.$t.'_class_entry);'.PHP_EOL;
                     $output .= '    php_'.$t.' *php_ret = ZOBJ_TO_PHP_'.strtoupper($t).'(z_ret);'.PHP_EOL;

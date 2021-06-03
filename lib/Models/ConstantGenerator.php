@@ -17,10 +17,6 @@ class ConstantGenerator extends ObjectGenerator
      * @var string|int
      */
     public $value;
-    /**
-     * @var array of AnnotationGenerator
-     */
-    protected $annotations = [];
 
     public function setValue($value):ConstantGenerator {
         $this->value = $value;
@@ -31,15 +27,7 @@ class ConstantGenerator extends ObjectGenerator
         return $this->value;
     }
 
-    public function setAnnotations(array $annotations) {
-        $this->annotations = $annotations;
-        return $this;
-    }
 
-    public function getAnnotations():array {
-        return $this->annotations;
-    }
-    
     public function getSince():string {
         foreach($this->annotations as $annotation) {
             if ($annotation->getType() == AnnotationGenerator::ANNOTATION_SINCE) {

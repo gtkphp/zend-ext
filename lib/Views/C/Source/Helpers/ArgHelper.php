@@ -8,6 +8,7 @@ use Zend\Ext\Models\PackageGenerator;
 use Zend\Ext\Models\MethodGenerator;
 use Zend\Ext\Models\TypeGenerator;
 use Zend\Ext\Models\AnnotationGenerator;
+use Zend\ExtGtk\Implementation;
 
 class ArgHelper extends AbstractHelper
 {
@@ -22,9 +23,10 @@ class ArgHelper extends AbstractHelper
         $output = '';
         foreach($parameters as $parameter) {
             $is_deref = $parameter->isDeref();
+            $is_array = $parameter->isArray();
             switch ($parameter->getType()->getPrimitiveType()) {
                 case TypeGenerator::PRIMITIVE_DOUBLE:
-                    if ($is_deref) {
+                    if ($is_deref || $is_array) {
                         $output .= '    zval *z'.$parameter->getName().';'. PHP_EOL;// 0 = allow_null
                     } else {
                         $output .= '    double '.$parameter->getName().';'. PHP_EOL;// 0 = allow_null
@@ -73,35 +75,45 @@ class ArgHelper extends AbstractHelper
             $is_deref = $parameter->isDeref();
 
             //$output .= $parameter->getType()->getName() . ', '. $parameter->getType()->getPrimitiveType().PHP_EOL;
+            $is_array = $parameter->isArray();
             switch ($parameter->getType()->getPrimitiveType()) {
                 case TypeGenerator::PRIMITIVE_DOUBLE:
                     if ($is_deref) {
-                        $output .= '        Z_PARAM_ZVAL_DEREF(z'.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
+                        $output .= '        '.$this->zval_deref('z'.$parameter->getName(), 0, 1). PHP_EOL;// 0 = allow_null
                         $extra .= '    double ' . $parameter->getName();
                         $extra .= ' = ';
                         $extra .= 'z'.$parameter->getName().'->value.dval;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_DOUBLE('.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
+                        if ($is_array) {
+                            $output .= '        Z_PARAM_ARRAY_EX(z'.$parameter->getName().', 1, 0);'. PHP_EOL;// 0 = allow_null
+                            $p = '*';//TODO in zend-c: $parameter->getPass();
+                            $q = $parameter->getQualifier();
+                            $extra .= '    '.$q.' double '. $p . $parameter->getName();
+                            $extra .= ' = ';
+                            $extra .= 'zval_to_array_of_double(z'.$parameter->getName().');'.PHP_EOL;
+                        } else {
+                            $output .= '        Z_PARAM_DOUBLE('.$parameter->getName().');'. PHP_EOL;// 0 = allow_null
+                        }
                     }
                     break;
                 case TypeGenerator::PRIMITIVE_INT:
                     if ($is_deref) {
-                        $output .= '        Z_PARAM_ZVAL_DEREF(z'.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
+                        $output .= '        '.$this->zval_deref('z'.$parameter->getName(), 0, 1). PHP_EOL;// 0 = allow_null
                         $extra .= '    zend_long ' . $parameter->getName();
                         $extra .= ' = ';
                         $extra .= 'z'.$parameter->getName().'->value.lval;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_LONG('.$parameter->getName().')'. PHP_EOL;
+                        $output .= '        Z_PARAM_LONG('.$parameter->getName().');'. PHP_EOL;
                     }
                     break;
                 case TypeGenerator::PRIMITIVE_CHAR:
                     if ($is_deref) {
-                        $output .= '        Z_PARAM_ZVAL_DEREF(z'.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
+                        $output .= '        '.$this->zval_deref('z'.$parameter->getName(), 0, 1). PHP_EOL;// 0 = allow_null
                         $extra .= '    char *' . $parameter->getName();
                         $extra .= ' = ';
                         $extra .= 'z'.$parameter->getName().'->value.str.val;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_STRING('.$parameter->getName().', '.$parameter->getName().'_len)'. PHP_EOL;
+                        $output .= '        Z_PARAM_STRING('.$parameter->getName().', '.$parameter->getName().'_len);'. PHP_EOL;
                     }
                     break;
                 default:
@@ -111,17 +123,17 @@ class ArgHelper extends AbstractHelper
                         $parameterTypeName = $parameter->getType()->getName();
                         $nameFunction = $this->getView()->nameclassHelper($parameterTypeName, -1);
                         if (isset($enums[$parameterTypeName])) {
-                            $output .= '        Z_PARAM_LONG(z'.$parameter->getName().')'. PHP_EOL;
+                            $output .= '        Z_PARAM_LONG(z'.$parameter->getName().');'. PHP_EOL;
 
                             $extra .= '    '.$parameterTypeName . ' '.$parameter->getName() . ' = z' . $parameter->getName() . ';'. PHP_EOL;
                         } else {
                             $is_deref = $parameter->isDeref();
                             $lazy = 'NULL';
                             if ($is_deref) {
-                                $output .= '        Z_PARAM_ZVAL_DEREF_EX(z'.$parameter->getName().', 0, 0)'. PHP_EOL;
+                                $output .= '        '.$this->zval_deref('z'.$parameter->getName(), 0, 1).PHP_EOL;
                                 $lazy = 'php_'.$parameterTypeName.'_new()';
                             } else {
-                                $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0)'. PHP_EOL;
+                                $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z'.$parameter->getName().', php_'.$nameFunction.'_class_entry, 1, 0);'. PHP_EOL;
                             }
                             $extra .= '    php_' . $parameterTypeName . ' *php_' . $parameter->getName();
                             $extra .= ' = ';
@@ -146,6 +158,21 @@ class ArgHelper extends AbstractHelper
 
         if (!empty($extra)) {
             $output .= PHP_EOL.$extra;
+        }
+
+        return $output;
+    }
+
+    protected function zval_deref($name, $check_null=0, $deref=0) {
+        $output  = '';
+
+        switch (Implementation::$version) {
+            case '7':
+                $output .= 'Z_PARAM_ZVAL_DEREF_EX('.$name.', '.$check_null.', 0);';
+                break;
+            case '8':
+                $output .= 'Z_PARAM_ZVAL_EX2('.$name.', '.$check_null.', '.$deref.', 0);';
+                break;
         }
 
         return $output;

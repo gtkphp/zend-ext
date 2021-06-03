@@ -37,9 +37,14 @@ class ArgHelper extends AbstractHelper
             }
     
             //$output .= $parameter->getType()->getName() . ', '. $parameter->getType()->getPrimitiveType().PHP_EOL;
+            $is_array = $parameter->isArray();
             switch ($parameter->getType()->getPrimitiveType()) {
                 case TypeGenerator::PRIMITIVE_DOUBLE:
-                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
+                    if($is_array) {
+                        $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_ARRAY, '.$allow_null.')'. PHP_EOL;
+                    } else {
+                        $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
+                    }
                     break;
                 case TypeGenerator::PRIMITIVE_INT:
                     $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_LONG, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
