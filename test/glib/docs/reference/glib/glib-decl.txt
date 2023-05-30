@@ -7665,7 +7665,7 @@ gint       fd, GError   **error
 </FUNCTION>
 <STRUCT>
 <NAME>utimbuf</NAME>
-struct utimbuf;			/* Don't need the real definition of struct utimbuf when just
+struct utimbuf;			/* Don't need the real definition of struct utimbuf when just*/
 </STRUCT>
 <STRUCT>
 <NAME>GWin32PrivateStat</NAME>

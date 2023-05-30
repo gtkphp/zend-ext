@@ -1,0 +1,18 @@
+<?php echo $dockBlock; ?>
+class <?php echo $name; ?>
+
+{
+<?php foreach ($fields as $field) : ?>
+<?php echo $field->dockBlock; ?>
+    public <?php echo $field->type; ?> $<?php echo $field->name; ?>;
+
+<?php endforeach; ?>
+
+<?php foreach ($methods as $method) : ?>
+<?php echo $method->dockBlock; ?>
+<?php //echo $function->attributes; ?>
+    function <?php echo $method->name ?>(<?php echo $method->arguments->info; ?>)<?php echo $method->returns; ?> {}
+
+<?php endforeach; ?>
+}
+

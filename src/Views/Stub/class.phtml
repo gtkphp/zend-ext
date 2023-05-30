@@ -1,0 +1,24 @@
+<?php switch ($type): ?>
+<?php case 'Class': ?>
+<?php echo $this->render('class-object.phtml'); ?>
+<?php break; ?>
+<?php case 'Enum': ?>
+<?php echo $this->render('class-enum.phtml'); ?>
+<?php break; ?>
+<?php case 'Union': ?>
+<?php break; ?>
+<?php case 'Interface': ?>
+<?php break; ?>
+<?php case 'Trait': ?>
+<?php break; ?>
+<?php default: ?>
+<?php echo '// type Uknown : ' . $type; ?>
+<?php break; ?>
+<?php endswitch; ?>
+
+<?php foreach($functions as $function): ?>
+<?php echo $function->dockBlock; ?>
+<?php //echo $function->attributes; ?>
+function <?php echo $function->name ?>(<?php echo $function->arguments->info; ?>)<?php echo $function->returns; ?> {}
+
+<?php endforeach; ?>

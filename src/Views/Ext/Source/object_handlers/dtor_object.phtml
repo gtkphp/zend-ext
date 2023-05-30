@@ -1,0 +1,6 @@
+/* {{{ php_<?php echo $name_function ?>_create_object */
+static void
+php_<?php echo $name_function ?>_dtor_object(zend_object *obj) {
+    php_<?php echo $name_function ?> *intern = ZOBJ_TO_PHP_<?php echo $name_macro ?>(obj);
+
+}/* }}} */

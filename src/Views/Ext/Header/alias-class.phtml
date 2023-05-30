@@ -1,0 +1,23 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef PHP_<?php echo $this->name_macro ?>_H
+#define PHP_<?php echo $this->name_macro ?>_H
+
+
+#define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
+
+#define PHP_<?php echo $name_macro ?>_MSHUTDOWN_FUNCTION() 
+
+#define PHP_<?php echo $name_macro ?>_RSHUTDOWN_FUNCTION() 
+
+extern zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+
+
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
+
+
+#endif	/* PHP_<?php echo $this->name_macro ?>_H */

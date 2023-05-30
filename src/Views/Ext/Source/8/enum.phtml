@@ -1,0 +1,64 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+<?php foreach($this->requires as $require): ?>
+<?php echo '#include <' . $require .'>' . PHP_EOL; ?>
+<?php endforeach; ?>
+
+#include "php_gtk.h"
+
+
+extern HashTable         classes;
+extern zend_module_entry gtk_module_entry;
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+ /*{{{ php_<?php echo $name_function ?>_class_init */
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+
+<?php
+    foreach ($cases as $name=>$value) {
+        echo '    zend_register_long_constant("'.$name.'", sizeof("'.$name.'")-1,', PHP_EOL;
+        echo '        '.$name.', CONST_CS | CONST_PERSISTENT, gtk_module_entry.module_number);//'.$value, PHP_EOL;
+    }
+
+?>
+
+    return NULL;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+<?php
+//echo $this->implementation->writeFunctions(false);
+?>
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/

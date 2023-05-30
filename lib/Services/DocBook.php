@@ -9,29 +9,36 @@ use Zend\Ext\Models\PackageGenerator;
 class DocBook
 {
     /**
+     * @var bool $trace
+     */
+    protected $trace = true;
+
+    /**
      * @var string $name
      */
     protected $name;
 
     /**
-     * @var array $sourceCode
+     * @var SourceCode
      */
-    protected $sourceCode = array();
+    protected $sourceCode = null;
 
     /**
      * @var array $codeGenerator
      */
     protected $codeGenerator = array();
 
+    // add function addClassifier(SourceCode $service, $name)
+
+    // rename by addSourceCode
     public function addSourceCode(SourceCode $service)
     {
-        $serviceName = $service->getName();
-        $this->sourceCode[$serviceName] = $service;
+        $this->sourceCode = $service;
     }
 
-    public function getSourceCode($name):SourceCode
+    public function getSourceCode($name=null):SourceCode
     {
-        return $this->sourceCode[$name];
+        return $this->sourceCode;
     }
 
     /**
@@ -42,9 +49,15 @@ class DocBook
         echo __METHOD__ . " Not implemented\n";
         return null;
     }
+    public function enableTrace(bool $enable) : DocBook
+    {
+        $this->trace = $enable;
+        return $this;
+    }
+
 
     /**
-     * TODO: remove
+     * TODO: remove, it's CodeGenerator who use DocBook
      * @param \Zend\Ext\Services\CodeGenerator $service
      */
     public function addCodeGenerator(CodeGenerator $service)

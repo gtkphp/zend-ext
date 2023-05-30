@@ -1,0 +1,27 @@
+/* {{{ php_<?php echo $name_function ?>_create_object */
+static zend_object*
+php_<?php echo $name_function ?>_create_object(zend_class_entry *class_type)
+{
+    php_<?php echo $name_function ?> *intern = zend_object_alloc(sizeof(php_<?php echo $name_function ?>), class_type);
+    zend_object_std_init(&intern->std, class_type);
+    object_properties_init(&intern->std, class_type);
+
+    intern->ptr = NULL;
+
+<?php
+
+/*
+if (empty($this->members)) {
+    echo '    intern->ptr = NULL;'.PHP_EOL;
+} else {
+    foreach($this->members as $property) {
+        echo '    ZVAL_NULL(&intern->'.$property->name.');'.PHP_EOL;
+    }
+}
+*/
+?>
+
+    intern->std.handlers = &php_<?php echo $name_function ?>_handlers;
+
+    return &intern->std;
+}/* }}} */

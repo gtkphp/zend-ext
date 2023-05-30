@@ -3,10 +3,12 @@
 namespace Zend\Ext\Services\DocBook;
 
 
-namespace Zend\Ext\Services\DocBook;
-
+use Exception;
 use SimpleXMLElement;
 
+use Zend\Ext\Models\AbstractGenerator;
+use Zend\Ext\Models\FileGenerator;
+use Zend\Ext\Models\GroupGenerator;
 use Zend\Ext\Models\PackageGenerator;
 use Zend\Ext\Models\TypeGenerator;
 use Zend\Ext\Models\ClassGenerator;
@@ -23,13 +25,18 @@ use Zend\Ext\Models\TagGenerator;
 use Zend\Ext\Models\AnnotationGenerator;
 
 use Zend\Ext\Services\DocBook;
+use Zend\Ext\Services\DocBook\Classifier\Cairo as CairoClassifier;
 
 
 class Gtk extends DocBook
 {
+    const ENABLE_CLASSIFICATION = false;
+
     public $blacklist = array();
     public $remap = array();
     public $remap_function=array();
+
+    public $checkout_dir=null;
 
     /**
      * @var PackageGenerator
@@ -55,9 +62,9 @@ class Gtk extends DocBook
         return $service->render($this->package);
     }*/
 
-    public function __construct(string $filename, string $tmp_dir) {
+    public function __construct(string $filename, string $checkout_dir) {
         $this->filename = $filename;
-        $this->tmp_dir = realpath($tmp_dir);
+        $this->checkout_dir = realpath($checkout_dir);
     }
     public function addIncludeDir(string $path) {
         $this->includesDir[] = $path;
@@ -70,53 +77,11 @@ class Gtk extends DocBook
             }
             $this->package = $this->loadParts($this->filename);
 
-
-            /** */
-            foreach($this->package->subpackage as $subpackage) {
-                //echo $subpackage->getName().PHP_EOL;
-                foreach($subpackage->subpackage as $package) {
-                    //echo '  '.$package->getName().PHP_EOL;
-                    foreach($package->children as $fileGenerator) {
-                        //echo '    '.$fileGenerator->getName().PHP_EOL;
-                        $types = array();
-                        foreach($fileGenerator->children as $child) {
-                            /** */
-                            if ($child instanceof FunctionGenerator) {
-                                $parameters = $child->getParameters();
-                                foreach($parameters as $parameter) {
-                                    if (!$parameter->getType()->isPrimitive()) {
-                                        $types[$parameter->getType()->getName()] = 1;
-
-                                    }
-                                }
-                                if (!$child->getParameterReturn()->getType()->isPrimitive()) {
-                                    $types[$child->getParameterReturn()->getType()->getName()] = 1;
-                                }
-                            } else {
-                                $types[$child->getName()] = 1;
-                            }
-                            /** */
-                        }
-                        $master = $fileGenerator->getMatserObject();
-                        if ($master) {
-                            $master_name = $master->getName();
-                            echo $master_name . ' : ' . PHP_EOL;
-                            unset($types['cairo_bool_t']);
-                            unset($types['cairo_user_data_key_t']);
-                            unset($types['cairo_destroy_func_t']);
-                            unset($types[$master_name]);
-                            ///print_r($types);
-   
-                            $master->dependencies = $types;
-                        } else {
-                            echo 'No master object in '.$fileGenerator->getName() . PHP_EOL;
-                        }
-                    }
-                }
-            }
-            /** */
+            //$this->classify();
 
             return $this->package;
+        } else {
+            echo 'Unssopported filter', PHP_EOL;
         }
         // TODO
     }
@@ -162,15 +127,18 @@ class Gtk extends DocBook
                         case 'partinfo':
                             $whitelist = $this->loadPartinfo($child);
                             break;
+                        //case 'book':
+                        //    $whitelist = $this->loadBook($child);
+                        //    break;
                         case 'xi:include':
                             $href = $child->getAttribute('href');
-                            if ('gtk'==$group_id) {
-                                $filepath = $this->tmp_dir.DIRECTORY_SEPARATOR
-                                . $group_id.'-build-doc'.DIRECTORY_SEPARATOR
+                            if ('cairo'==$group_id) {
+                                $filepath = $this->checkout_dir.DIRECTORY_SEPARATOR
+                                . $group_id.DIRECTORY_SEPARATOR
                                 . $href;
                             } else {
-                                $filepath = $this->tmp_dir.DIRECTORY_SEPARATOR
-                                . $group_id.DIRECTORY_SEPARATOR
+                                $filepath = $this->checkout_dir.DIRECTORY_SEPARATOR
+                                . $group_id.'-build-doc'.DIRECTORY_SEPARATOR
                                 . $href;
                             }
                             ///echo $filepath, PHP_EOL;
@@ -258,8 +226,9 @@ class Gtk extends DocBook
         $filename = $doc->documentURI;
         //var_dump($id);
 
-        //$group_package = $this->current_generator->createPackage($id);
+        /** @var PackageGenerator $group_package */
         $group_package = $this->current_generator;
+        //$group_package = $this->current_generator->createPackage($id);
 
         $xpath = new \DOMXpath($doc);
         $elements = $xpath->query("/book/title");
@@ -324,6 +293,7 @@ class Gtk extends DocBook
 
         // TODO: mettre aussi les function dans $root->children
         //echo $this->package->getName().PHP_EOL;
+        /** */
         foreach($this->package->subpackage as $subpackage) {
             //echo $subpackage->getName().PHP_EOL;
             foreach($subpackage->subpackage as $package) {
@@ -331,7 +301,7 @@ class Gtk extends DocBook
                 foreach($package->children as $fileGenerator) {
                     //echo '    '.$fileGenerator->getName().PHP_EOL;
                     foreach($fileGenerator->children as $child) {
-                        /** */
+if (self::ENABLE_CLASSIFICATION) {
                         if ($child instanceof FunctionGenerator) {
                             if (isset($this->remap_function[$child->getName()])) {
                                 $link_name = $this->remap_function[$child->getName()];
@@ -341,6 +311,10 @@ class Gtk extends DocBook
                                 $child->isClassified = true;
                                 continue;
                             }
+
+//echo "\033[101m", $child->getName(), "\033[0m\n";
+
+
                             $parameters = $child->getParameters();
                             if (count($parameters)) {
                                 $first = current($parameters);
@@ -354,12 +328,13 @@ class Gtk extends DocBook
                                 }
                             }
                         }
-                        /**/
+}
 
                     }
                 }
             }
         }
+        /**/
 
         $this->current_generator = $group_package;
     }
@@ -374,6 +349,7 @@ class Gtk extends DocBook
      */
     protected function loadRefentry($filename)
     {
+        /** @var PackageGenerator $current_generator */
         $current_generator = $this->current_generator;
 
         $id = $this->current_generator->getName();// cairo-drawing
@@ -386,11 +362,13 @@ class Gtk extends DocBook
 
         if($this->isAllowed($id, $id_ref)) {
 
+            if ($this->trace) 
             echo "\e[1;32m".'Process'."\e[0m : ".$filename . PHP_EOL;
             /**
              * @var FileGenerator $fileGenerator
              */
-            $fileGenerator = $current_generator->createFile(basename($filename));
+            $fileGenerator = $current_generator->createGroup(basename($filename));
+            $fileGenerator->refentry_id = $id_ref;
             $current_generator->children[]=$fileGenerator;
             $this->current_generator = $fileGenerator;
 
@@ -532,8 +510,11 @@ class Gtk extends DocBook
     }
     
     protected function getFunctionsDetails(SimpleXMLElement $xml){
-        $generator = $this->current_generator;//FileGenerator
+        /** @var FileGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator */
         $package = $generator->getPackage();
+        /** @var PackageGenerator */
         $module = $generator->getModulePackage();
         $methods = [];
 
@@ -543,35 +524,85 @@ class Gtk extends DocBook
             $function_id = $node['id'];
             $role = $node['role'];// 'function'
             if ('macro'==$role) {
-                echo "Skip $id.functions_details( $function_id)\n";
-                continue;
+                if ($this->trace) 
+                echo "   Macro \e[3;35m".$node->indexterm[0]->primary."\e[0m ()".PHP_EOL;
+                //echo "Skip $id.functions_details( $function_id)\n";
+                //continue;
             }
 
             $function_name = (string)$node->indexterm[0]->primary;
+            $function_kind = 'function';// in_array('function', 'prototype', 'macro');
 
-            $signature = $this->sourceCode['Glib']->getFunction($function_name);
+            $signature = $this->sourceCode->getFunction($function_name);
             if (empty($signature)) {
-                $signature = $this->sourceCode['Glib']->getProto($function_name);
-                if (!empty($signature)) {
-                    echo 'continue: '.$function_id . ', ' . $function_name. PHP_EOL;
-                    continue;
+                $signature = $this->sourceCode->getProto($function_name);
+                $function_kind = 'prototype';
+                if (empty($signature)) {
+                    $signature = $this->sourceCode->getMacro($function_name);
+                    $function_kind = 'macro';
+                    if (empty($signature) || $signature['role']!='function') {
+                        $function_kind = 'unknown';
+                        echo 'continue: '.$function_id . ', ' . $function_name. ', role="'.$signature['role'].'" Not supported <----------------------------------'.PHP_EOL;
+                        //echo 'continue: '.$function_id . ', ' . $function_name. PHP_EOL;
+                        continue;
+                    }
                 }
-                $signature = $this->sourceCode['Glib']->getMacro($function_name);
-                if (!empty($signature)) {
-                    echo 'continue: '.$function_id . ', ' . $function_name. PHP_EOL;
-                    continue;
-                }
-    
             }
-
+            
             /**
+             * @var FunctionGenerator
+             * @var PrototypeGenerator
              * @var MethodGenerator
              */
-            $method = $package->createMethod($function_name);
+            $method = null;
+            switch ($function_kind) {
+                case 'function':
+                    $method = $package->createMethod($function_name);// Redo : use createMethod
+                    break;
+                case 'prototype':
+                    $method = $package->createPrototype($function_name);
+                    break;
+                case 'macro':
+                    $method = $package->createFunction($function_name);
+                    $method->setIsMacro();
+                    break;
+                // default  : How it's possible ?
+            }
             $method->setOwnPackage($generator->getOwnPackage());
-            
-            // Hack : bad documentation
-            $signature_function = $this->sourceCode['Glib']->getFunction($function_name);
+            $method->setParentGenerator($generator);
+
+            // Hack : bad documentation, use source code to set right ordered/named parameters
+            if ($signature) {
+                foreach($signature['signature']['parameters'] as $param) {
+                    if ($param['type']=='...') {
+                        $parameter = $package->createParameter($param['type']);
+                        $method->setParameter($parameter);
+                        continue;
+                    }
+                    if (empty($param['name']) && $param['type']=='void') {
+                        // my_function(void);
+                        continue;
+                    }
+                    if (empty($param['name'])) {
+                        echo "Error : no parameter name for '$function_name' ".$param['type']."\n";
+                        continue;
+                    }
+                    $parameter = $package->createParameter($param['name']);
+                    $parameter->setType($package->createType($param['type']));
+                    //TODO: set pass, qualifier, modifier
+                    if (isset($param['pass'])) {
+                        $parameter->setPass($param['pass']);
+                    }
+                    $method->setParameter($parameter);
+                }
+            }
+            /* Trace Debug
+            if ($function_name=='cairo_read_func_t' || $function_name=='cairo_write_func_t') {
+                print_r($signature);
+            } */
+
+            /*
+            $signature_function = $this->sourceCode->getFunction($function_name);
             if ($signature_function) {
                 foreach($signature_function['signature']['parameters'] as $param) {
                     if (empty($param['name'])) {
@@ -586,13 +617,14 @@ class Gtk extends DocBook
         
                     $method->setParameter($parameter);
                 }
-            }
+            }*/
 
             // Description :
             $description = '';
             $short_description = '';
             $warning_description = '';
             $tags = [];
+            /** @var SimpleXMLElement $child */
             foreach($node->children() as $child) {
                 if ('para'==$child->getName()) {
                     if (isset($child['role'])) {
@@ -648,7 +680,7 @@ class Gtk extends DocBook
                     $parameter = $method->getParameter($parameter_name);
                     //$parameter = $package->createParameter($parameter_name);
                     if(empty($parameter)) {
-                        echo "Unexpected error parameter\n";
+                        echo "Unexpected error parameter '$function_name' $parameter_name\n";
                     } else {
                         $parameter->setDescription($parameter_description);
                         $parameter->setAnnotations($parameter_annotations);
@@ -712,9 +744,12 @@ class Gtk extends DocBook
     protected function getSignalDetails(SimpleXMLElement $xml){
 
     }
+
     protected function getOtherDetails(SimpleXMLElement $xml){
-        $generator = $this->current_generator;// FileGenerator
-        $package = $generator->getOwnPackage();// PackageGenerator
+        /** @var FileGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
+        $package = $generator->getOwnPackage();
 
         $id = (string)$xml['id'];
         //cairo-Paths.other_details
@@ -774,9 +809,27 @@ class Gtk extends DocBook
                     $this->loadUnion($node);
                     break;
                 case 'typedef':
-                    $struct = $this->sourceCode['Glib']->getProto($struct_name);
-                    $proto = $this->sourceCode['Glib']->getProto($struct['name']);
-                    $substruct = $this->sourceCode['Glib']->getStruct($struct['name']);
+                    $typedef = $this->sourceCode->getTypedef($struct_name);
+                    if ($typedef) {
+                        // dummy struct
+                        if ('struct'==$typedef['type']) {
+                            $struct_names[$struct_name] = $struct_name;
+                            $this->loadStruct($node);
+                        } /*else if ('int'==$typedef['type']) {
+                            $this->loadTypedef($node);
+                        }*/ else {
+                            $alias = $this->sourceCode->getTypedef($typedef['type']);
+                            if ('struct'==$alias['type']) {
+                                echo $struct_name.' is an Alias'.PHP_EOL;
+                            } else {
+                                echo 'Unimplemented <refsect2 role="'.$role.'" '.$struct_name.'=='.$typedef['type'].'>'.PHP_EOL;
+                            }
+                        }
+                    }
+                    /*
+                    $struct = $this->sourceCode->getProto($struct_name);
+                    $proto = $this->sourceCode->getProto($struct['name']);
+                    $substruct = $this->sourceCode->getStruct($struct['name']);
                     if (null==$proto && null==$substruct) {
                         // dummy structure
                         if ('struct'==$struct['type']) {
@@ -786,13 +839,25 @@ class Gtk extends DocBook
                             echo 'Unimplemented <refsect2 role="'.$role.'" '.$struct_name.'>'.PHP_EOL;
                         }
                     }
+                    */
                     break;
+                case 'macro':
+                    $macro = $this->sourceCode->getMacro($struct_name);
+                    if ($macro) {
+                        $this->loadMacro($node, $macro['role']);
+                    } else {
+                        echo 'Unimplemented <refsect2 role="'.$role.'">'.$struct_name.'</>'.PHP_EOL;
+                        //throw new Exception("stop");
+                    }
+                    break;
+
                 default:
-                    echo 'Unimplemented <refsect2 role="'.$role.'">'.$struct_name.'</>'.PHP_EOL;
+                    echo 'Unimplemented* <refsect2 role="'.$role.'">'.$struct_name.'</>'.PHP_EOL;
                     break;
             }
         }
-
+        
+if (self::ENABLE_CLASSIFICATION) {
         if (isset($generator->children[$this->major_name])) {
             $master = $generator->children[$this->major_name];
             $generator->setMasterObject($master);// $generator == FileGenerator
@@ -801,12 +866,13 @@ class Gtk extends DocBook
                 // promot to class if vtable exist
                 if (/*($child instanceof StructGenerator || $child instanceof UnionGenerator || $child instanceof EnumGenerator)*/ 
                     ! $child instanceof FunctionGenerator
-                &&  $this->major_name!=$child->getName()) {
-                    $master->relateds[$child->getName()] = $child;// this add Class as related
+                    &&  $this->major_name!=$child->getName()) {
+                        $master->relateds[$child->getName()] = $child;// this add Class as related
                     $child->isClassified = true;
                 }
             }
         }
+}
 
         foreach ($class_names as $class_name) {
             $this->createClass($class_name);
@@ -820,15 +886,19 @@ class Gtk extends DocBook
 
 
     protected function createClass(string $name) {
-        $generator = $this->current_generator;// FileGenerator
-        $package = $generator->getOwnPackage();// PackageGenerator
-        //$struct = $package->createStruct($name);
+        /** @var FileGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
+        $package = $generator->getOwnPackage();
+        
         /**
          * @var StructGenerator
          */
         $struct = $generator->children[$name];
+        //$struct = $package->createStruct($name);
+
         /**
-         * @var StructGenerator
+         * @var StructGenerator $vtable
          */
         $vtable = $generator->children[$name.'Class'];
         unset($generator->children[$name]);
@@ -888,15 +958,19 @@ class Gtk extends DocBook
 
     protected function loadStruct(SimpleXMLElement $refsect2):StructGenerator
     {
-        $generator = $this->current_generator;// FileGenerator
-        //$package = $generator->getModulePackage();
+        /** @var FileGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
         $package = $generator->getOwnPackage();
+        //$package = $generator->getModulePackage();
 
         $name = (string)$refsect2->indexterm[0]->primary;
 
         if ($name==$this->major_name) {
+            if ($this->trace) 
             echo "  Struct \e[1;35m".$name."\e[0m".PHP_EOL;
         } else {
+            if ($this->trace) 
             echo "  Struct \e[4;35m".$name."\e[0m".PHP_EOL;
         }
 
@@ -935,6 +1009,11 @@ class Gtk extends DocBook
     
     protected function loadStructMembers(SimpleXMLElement $refsect3)
     {
+        /** @var StructGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
+        //$package = $generator->getOwnPackage();
+
         $members = array();
         $rows = $refsect3->informaltable->tgroup->tbody->row;
         foreach($rows as $row) {
@@ -974,8 +1053,8 @@ class Gtk extends DocBook
                 $var->setType($member_type);
             } else {
                 // TODO
-                $className = $this->current_generator->getName();
-                $struct = $this->sourceCode['Glib']->getStruct($className);
+                $className = $generator->getName();
+                $struct = $this->sourceCode->getStruct($className);
                 $member_type = TypeGenerator::CreateAnonymous();
                 $member_type->setPackage($this->package);
                 $member_type->setIsPrototype(true);
@@ -988,10 +1067,10 @@ class Gtk extends DocBook
             $var->setAnnotations($annotations);
             $members[$name] = $var;
         }
-        $this->current_generator->setMembers($members);
+        $generator->setMembers($members);
 
         /*
-        $struct = $this->sourceCode['Glib']->getStruct($className);
+        $struct = $this->sourceCode->getStruct($className);
         if (empty($struct))
             echo '"', $className, '" not found in source', PHP_EOL;
         else if (!empty($struct['members'])) {
@@ -1010,13 +1089,16 @@ class Gtk extends DocBook
         }
         */
     }
-
+    
     protected function loadEnum($refsect2) {
+        /** @var FileGenerator $generator */
         $generator = $this->current_generator;
-        //$package = $generator->getPackage();
+        /** @var PackageGenerator $package */
         $package = $generator->getOwnPackage();
+        //$package = $generator->getPackage();
 
         $name = (string)$refsect2->indexterm[0]->primary;
+        if ($this->trace) 
         echo "    Enum \e[2;35m".$name."\e[0m".PHP_EOL;
         $enum = $package->createEnum($name);
         $enum->setParentGenerator($generator);
@@ -1082,7 +1164,7 @@ class Gtk extends DocBook
 
             $name = $this->current_generator->getName();
 
-            $data_union = $this->sourceCode['Glib']->getUnion($name);
+            $data_union = $this->sourceCode->getUnion($name);
             foreach($data_union['members'] as $member_name=>$member_data) {
                 $member_type = $member_data['type'];
                 switch ($member_type) {
@@ -1118,9 +1200,12 @@ class Gtk extends DocBook
     }
 
     protected function loadUnion($refsect2) {
+        
+        /** @var FileGenerator $generator */
         $generator = $this->current_generator;
-        //$package = $generator->getModulePackage();
+        /** @var PackageGenerator $package */
         $package = $generator->getOwnPackage();
+        //$package = $generator->getModulePackage();
 
         //echo get_class($this->current_generator), PHP_EOL;
         //echo '  '.$this->current_generator->getName(), PHP_EOL;
@@ -1131,6 +1216,7 @@ class Gtk extends DocBook
         
 
         $name = (string)$refsect2->indexterm[0]->primary;
+        if ($this->trace) 
         echo "   Union \e[3;35m".$name."\e[0m".PHP_EOL;
         $union = $package->createUnion($name);
         $this->current_generator = $union;
@@ -1152,6 +1238,10 @@ class Gtk extends DocBook
 
     protected function loadEnumConstants(SimpleXMLElement $refsect3)
     {
+        /** @var EnumGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
+
         $members = array();
         $member_annotations = [];
         $rows = $refsect3->informaltable->tgroup->tbody->row;
@@ -1174,14 +1264,18 @@ class Gtk extends DocBook
                         }
                         break;
                     default:
-                        if (!in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
-                            echo 'Unexpected role "'.$role.'" for enum '. $this->current_generator->getName() . PHP_EOL;
-                        }
+                        //if (!in_array($generator->getName(), array('cairo_svg_unit_t'))) {
+                            // Undocumented
+                            echo 'Undocumented role "'.$role.'" for enum '. $generator->getName() . PHP_EOL;
+                            //echo $entry->asXml(), PHP_EOL;// <entry /><entry />
+                            //echo 'ID = ', $refsect3['id'], PHP_EOL;
+                        //}
                         break;
                 }
             }
 
-            $constant = $this->package->createConstant($name, $this->current_generator);
+            /** @var ConstantGenerator */
+            $constant = $this->package->createConstant($name, $generator);
             $constant->setDescription($description);
             if (preg_match('#\(Since\s+(\d+\.\d+)\)#', $description, $matches)) {
                 $annotation_since = AnnotationGenerator::Factory('since');
@@ -1191,11 +1285,11 @@ class Gtk extends DocBook
             }
             $constants[$name] = $constant;
         }
-        if (in_array($this->current_generator->getName(), array('cairo_svg_unit_t'))) {
+        if (in_array($generator->getName(), array('cairo_svg_unit_t'))) {
             echo 'Documentation of constant enum cairo_svg_unit_t is in description'. PHP_EOL;
         }
 
-        $enum = $this->sourceCode['Glib']->getEnum($this->current_generator->getName());
+        $enum = $this->sourceCode->getEnum($generator->getName());
         if ($enum['constants']) {
             $i = 0;
             foreach($enum['constants'] as $constant) {
@@ -1208,12 +1302,111 @@ class Gtk extends DocBook
                 $i++;
             }
         } else {
-            //$enum = $this->sourceCode['Glib']->getProto($this->current_generator->getName());
-            //var_dump($enum);
-            echo '    Enum "'.$this->current_generator->getName().'"not found in sourceCode'.PHP_EOL;
+            $enum = $this->sourceCode->getProto($generator->getName());
+            //print_r($this->sourceCode->data['TYPEDEF']);
+            //print_r($this->sourceCode);
+            //print_r($enum);
+            echo '    Enum "'.$generator->getName().'"not found in sourceCode'.PHP_EOL;
         }
 
-        $this->current_generator->setConstants($constants);
+        $generator->setConstants($constants);
     }
-    
+
+    protected function loadTypedef($refsect2) {
+        $generator = $this->current_generator;
+        $package = $generator->getOwnPackage();
+        
+        $name = (string)$refsect2->indexterm[0]->primary;
+
+        /*
+        $typdef = $package->createType($name);
+        */
+        $annotations = array();
+        $tags = array();
+        $description = $this->loadDescription($refsect2, $tags);
+
+        /*
+        $typdef->setDescription($description);
+        foreach ($tags as $tag=>$value) {
+            $annotation = AnnotationGenerator::Factory($tag);
+            $annotation->setParam($value);
+            $annotations[] = $annotation;
+        }
+        $typdef->setAnnotations($annotations);
+        */
+
+
+    }
+
+    protected function loadMacro($refsect2, $kind) {
+        
+        /** @var FileGenerator $generator */
+        $generator = $this->current_generator;
+        /** @var PackageGenerator $package */
+        $package = $generator->getOwnPackage();
+        //$package = $generator->getModulePackage();
+
+        //echo get_class($this->current_generator), PHP_EOL;
+        //echo '  '.$this->current_generator->getName(), PHP_EOL;
+        //echo get_class($this->current_generator->getPackage()), PHP_EOL;
+        //echo '  '.$this->current_generator->getPackage()->getName(), PHP_EOL;
+        //echo get_class($this->current_generator->getPackage()), PHP_EOL;
+        //echo '  '.get_class($this->current_generator->getOwnPackage()), PHP_EOL;
+        
+
+        $name = (string)$refsect2->indexterm[0]->primary;
+        if ($this->trace) 
+        echo "   Macro \e[3;35m".$name."\e[0m $kind".PHP_EOL;
+        switch ($kind) {
+            case 'function':
+                $macro = $package->createMethod($name);// TODO: createFunction
+                break;
+            case 'constant':
+                $macro = $package->createConstant($name, $generator);// FileGenerator; $generator->getPackage()
+            break;
+        }
+        $this->current_generator = $macro;
+        $generator->children[$name] = $macro;
+
+        $annotations = array();
+        $tags = array();
+        $description = $this->loadDescription($refsect2, $tags);
+        $macro->setDescription($description);
+        foreach ($tags as $tag=>$value) {
+            $annotation = AnnotationGenerator::Factory($tag);
+            $annotation->setParam($value);
+            $annotations[] = $annotation;
+        }
+        $macro->setAnnotations($annotations);
+
+        $this->current_generator = $generator;
+    }
+
+    protected function loadDescription($refsect2, &$tags) {
+        $description = '';
+        $short_description = '';
+        $warning_description = '';
+
+        foreach($refsect2->children() as $child) {
+            if ('para'==$child->getName()) {
+                if (isset($child['role'])) {
+                    switch ((string)$child['role']) {
+                        case 'since':
+                            $tags['since'] = (string)$child->link;
+                            break;
+                    }
+                } else {
+                    $description .= $child->asXML();
+                    if (null==$short_description)
+                        $short_description .= $child->asXML();
+                }
+            }
+            //if ('refsect3'==$child->getName())
+            //    $parse_tags = true;
+            if ('warning'==$child->getName()) 
+                $warning_description = $child->asXML();
+        }
+        return $description;
+    }
+
 }

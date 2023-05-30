@@ -30,11 +30,22 @@ abstract class AbstractGenerator implements GeneratorInterface
     const VISIBILITY_PROTECTED = 1;
     const VISIBILITY_PUBLIC = 2;
 
+    /**
+     * Line feed to use in place of EOL
+     */
+    public const LINE_FEED = "\n";
+
     protected $author = 'Glash';
     protected $email = '5312910@php.net';
 
     protected $description = '';
     protected $short_description = '';
+
+    protected $isSourceDirty = true;
+
+    /** @var string 4 spaces by default */
+    protected $indentation = '    ';
+
 
     /**
      * The PackageGenerator of item
@@ -82,6 +93,43 @@ abstract class AbstractGenerator implements GeneratorInterface
     }
 
     /**
+     * @param  bool $isSourceDirty
+     * @return AbstractGenerator
+     */
+    public function setSourceDirty($isSourceDirty = true)
+    {
+        $this->isSourceDirty = (bool) $isSourceDirty;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSourceDirty()
+    {
+        return $this->isSourceDirty;
+    }
+
+
+    /**
+     * @param  string $indentation
+     * @return AbstractGenerator
+     */
+    public function setIndentation($indentation)
+    {
+        $this->indentation = (string) $indentation;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIndentation()
+    {
+        return $this->indentation;
+    }
+    
+    /**
      * @return string
      */
     public function getName(): string
@@ -93,7 +141,7 @@ abstract class AbstractGenerator implements GeneratorInterface
      * @param string $name
      * @return AbstractGenerator
      */
-    public function setName(string $name): AbstractGenerator
+    public function setName(string $name)
     {
         $this->name = $name;
         return $this;

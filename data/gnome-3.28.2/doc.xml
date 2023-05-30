@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE set PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+		"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "version.xml">
+<!ENTITY ast "&#8727;">
+<!ENTITY nbsp "&#160;">
+]>
+<set lang="en" id="gtk" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <title>GTK: creating graphical user interfaces.</title>
+  <setinfo>
+    <title>PHP bindings for Gtk+</title>
+    <releaseinfo>for php &version;</releaseinfo>
+  </setinfo>
+
+  <xi:include href="../../../../../cairo/doc/public/cairo-docs.xml"/>
+
+  <set>
+    <title>Glib</title>
+    <setinfo>
+      <releaseinfo>
+        <ulink url="https://github.com/freedesktop/cairo"><citetitle>1.6</citetitle></ulink>
+      </releaseinfo>
+    </setinfo>
+
+    <xi:include href="../../../../../glib-build-doc/docs/reference/glib/glib-docs.xml"/>
+    <!--book id="glib" href="../../../../../glib-build-doc/docs/reference/glib" xmlns:xi="http://www.w3.org/2003/XInclude">
+      <bookinfo>
+        <title>GLib Reference Manual</title>
+      </bookinfo>
+      <chapter id="glib-fundamentals">
+        <title>GLib Fundamentals</title>
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/types.xml"/>
+      </chapter>
+    </book-->
+
+    <xi:include href="../../../../../glib-build-doc/docs/reference/gobject/gobject-docs.xml"/>
+    <!--book id="gobject" href="../../../../../glib-build-doc/docs/reference/gobject" xmlns:xi="http://www.w3.org/2003/XInclude">
+      <bookinfo>
+        <title>GObject Reference Manual</title>
+      </bookinfo>
+      <reference label="II">
+        <title>API Reference</title>
+        <xi:include href="../../../../../glib-build-doc/docs/reference/gobject/xml/objects.xml"/>
+      </reference>
+    </book-->
+
+    <xi:include href="../../../../../glib-build-doc/docs/reference/gio/gio-docs.xml"/>
+    <!--book id="gio" href="../../../../../glib-build-doc/docs/reference/gio" xmlns:xi="http://www.w3.org/2003/XInclude">
+      <bookinfo>
+        <title>GIO Reference Manual</title>
+      </bookinfo>
+    </book-->
+
+  </set>
+
+  <!--xi:include href="../../../../../pango-build-doc/docs/pango-docs.sgml"/-->
+
+  <xi:include href="../../../../../atk-build-doc/docs/atk-docs.xml"/>
+  
+  <!--xi:include href="../../../../../gdk-pixbuf-build-doc/docs/reference/gdk-pixbuf/gdk-pixbuf.xml"/-->
+
+  <set>
+    <title>Gtk+</title>
+    <setinfo>
+      <releaseinfo>
+        <ulink url="https://github.com/GNOME/gtk"><citetitle>1.6</citetitle></ulink>
+      </releaseinfo>
+    </setinfo>
+
+    <xi:include href="../../../../../gtk-build-doc/docs/reference/gdk/gdk-docs.sgml"/>
+    <!--book id="gdk" href="../../../../../gtk-build-doc/docs/reference/gdk" xmlns:xi="http://www.w3.org/2003/XInclude">
+    </book-->
+
+    <xi:include href="../../../../../gtk-build-doc/docs/reference/gtk/gtk-docs.sgml"/>
+    <!--book id="gtk" href="../../../../../gtk-build-doc/docs/reference/gtk" xmlns:xi="http://www.w3.org/2003/XInclude">
+      <bookinfo>
+        <title>GTK+ 3 Reference Manual</title>
+        <releaseinfo>
+          This document is for the GTK+ 3 library, version &version;.
+          The latest versions can be found online at
+          <ulink role="online-location" url="https://developer.gnome.org/gtk3/">https://developer.gnome.org/gtk3/</ulink>.
+          If you are looking for the older GTK+ 2 series of libraries,
+          see <ulink role="online-location" url="https://developer.gnome.org/gtk2/">https://developer.gnome.org/gtk2/</ulink>.
+        </releaseinfo>
+      </bookinfo>
+
+      <part id="gtkobjects">
+        <title>GTK+ Widgets and Objects</title>
+        <chapter id="AbstractObjects">
+          <title>Abstract Base Classes</title>
+          <xi:include href="../../../../../gtk-build-doc/docs/reference/gtk/xml/gtkwidget.xml" />
+        </chapter>
+      </part>
+      <part  id="gtkbase">
+        <title>GTK+ Core Reference</title>
+        <xi:include href="../../../../../gtk-build-doc/docs/reference/gtk/xml/gtkenums.xml" />
+      </part>
+    </book-->
+
+
+  </set>
+
+</set>

@@ -1,0 +1,15 @@
+
+php_<?php echo $name_function ?>*
+php_<?php echo $name_function ?>_new(ptr)
+{
+    zend_object *z_object = php_<?php echo $name_function ?>_create_object(php_<?php echo $name_function ?>_class_entry);
+    php_<?php echo $name_function ?> *php_object = ZOBJ_TO_<?php echo $name_macro ?>(z_object);
+
+<?php if (isset($function_create)): ?>
+    php_object->ptr = <?php echo $function_create->info; ?>(ptr);
+<?php else: ?>
+    php_object->ptr = ptr;//cairo_create();
+<?php endif; ?>
+
+    return php_object;
+}

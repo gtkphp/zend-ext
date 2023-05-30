@@ -25,8 +25,8 @@
         "psr-4": {
             "Zend\\Ext\\": "lib/",
             "Zend\\ExtGtk\\": "src/",
-            "Zend\\C\\": "src/",
-            "Zend\\View\\": "src/"
+            "ZendExt\\Dto\\": "src/Models/",
+            "Zend\\C\\": "src/"
         }
     },
     "autoload-dev": {

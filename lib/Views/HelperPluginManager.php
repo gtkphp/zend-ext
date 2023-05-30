@@ -44,6 +44,10 @@ class HelperPluginManager extends ZendHelperPluginManager
      */
     public function get($name, array $options = null)
     {
+        
+        //echo get_class($this->getRenderer()->setResolver())." getResolver is private\n";
+        //$this->getResolver()."\n";
+
         if (! $this->has($name)) {
             if (preg_match('#[a-z0-9]Helper$#', $name, $matchs)) {
                 $class = ucfirst($name);

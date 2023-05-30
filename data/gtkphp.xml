@@ -3,39 +3,41 @@
 		"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "version.xml">
 ]>
-<book lang="en" id="gtkml" xmlns:xi="http://www.w3.org/2003/XInclude">
-<title>GTK Markup Language: </title>
+<book lang="en" id="gtk+" xmlns:xi="http://www.w3.org/2003/XInclude">
+<title>GTK: creating graphical user interfaces.</title>
   <bookinfo>
-    <title>GTK+PHP: PHP bindings for Gtk+</title>
+    <title>PHP bindings for Gtk+</title>
     <releaseinfo>for php &version;</releaseinfo>
   </bookinfo>
 
-  <part id="cairo">
+  <!--part id="cairo">
     <title>Cairo</title>
     <partinfo>
       <releaseinfo>
         <ulink url="https://github.com/freedesktop/cairo"><citetitle>1.6</citetitle></ulink>
       </releaseinfo>
-      <!--indexterm order="deny,allow" allow="all" deny="all">
+      /*
+      <indexterm order="deny,allow" allow="all" deny="all">
         <primary>cairo</primary>
         <secondary>cairo-drawing</secondary>
 
         <primary>cairo-drawing</primary>
         <secondary id="cairo_path_t">cairo-Paths</secondary>
         <secondary id="cairo_t">cairo-cairo-t</secondary>
-      </indexterm-->
+      </indexterm>
+      */
 
     </partinfo>
     <xi:include href="doc/public/cairo-docs.xml"/>
-  </part>
+  </part-->
 
-  <!--part id="gtk">
+  <part id="gtk">
     <title>Gtk+</title>
     <partinfo>
       <releaseinfo>
         <ulink url="https://github.com/GNOME/gtk"><citetitle>1.6</citetitle></ulink>
       </releaseinfo>
-      <indexterm>
+      <!--indexterm>
         <primary id="index">index</primary>
         <secondary>gtkobjects</secondary>
 
@@ -44,9 +46,11 @@
 
         <primary>AbstractObjects</primary>
         <secondary>GtkWidget</secondary>
-      </indexterm>
+      </indexterm-->
     </partinfo>
+
     <xi:include href="docs/reference/gtk/gtk-docs.sgml"/>
-  </part-->
+
+  </part>
 
 </book>

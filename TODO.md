@@ -1,6 +1,20 @@
 Est-ce que GTK+PHP vous plait ?
 Dans quel mesure GTK+PHP vous aiderais dans votre travail ?
 
+
+
+
+Make patch to fixe *.xml
+
+
+Zend\C\Engine\Error: Syntax error, unexpected TYPEDEF_NAME(show_help), expecting IDENTIFIER or '(' on line 3035 on unknown line
+
+gio-2.56.4.h:typedef void (*show_help) (GOptionContext *context, const char     *message);
+gtk-3.22.30.h:  gboolean (* show_help)           (GtkWidget          *widget,
+
+union _GDoubleIEEE754; est déclaré deux fois et inversement définie
+
+
 TODO: generalize "// Description :"
 TODO: Version #if CAIRO_VERSIO >= 11600 (getTagSince '1.16' to int)
 TODO: Since, Deprecate, Stability
@@ -10,6 +24,13 @@ TODO: Refactor src/Implementation
                src/Implementation/Cairo/Path.php
 TODO: 
 diff -b ~/Projects/gtkphp/php-src/ext/gtk/php_cairo/path.c ~/Projets/zend-ext/output/php_cairo/path.c
+
+
+TODO :
+cairo/doc/public/html/cairo-cairo-font-face-t.html
+"The font is of type Quartz (Since: 1.6, in 1.2 and 1.4 it was named CAIRO_FONT_TYPE_ATSUI)"
+Reformater la documentation avec les annotation Since
+
 
 # Model
 

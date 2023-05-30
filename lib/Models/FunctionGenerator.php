@@ -31,9 +31,12 @@ class FunctionGenerator extends ObjectGenerator
 {
 
     protected $isStatic = FALSE;
-    protected $isVirtual = FALSE;
-    protected $isOverride = FALSE;
-    protected $isCallback = FALSE;
+    protected $isVirtual = FALSE;// gtk_widget_show{GtkWidgetClass.show},  g_object_get_property{GObjectClass.get_property}
+    protected $isOverride = FALSE;// gtk_widget_get_visible (GtkWidget *this);
+    protected $isCallback = FALSE;// PrototypeGenerator ?
+    protected $isMacro = FALSE;
+    
+    
     /**
      * @var Array of ParameterGenerator
      */
@@ -60,6 +63,17 @@ class FunctionGenerator extends ObjectGenerator
     {
         return $this->isCallback;
     }
+
+    public function setIsMacro(bool $isMacro=True)
+    {
+        $this->isMacro = $isMacro;
+        return $this;
+    }
+    public function isMacro()
+    {
+        return $this->isMacro;
+    }
+    
 
 
     /**
@@ -133,6 +147,17 @@ class FunctionGenerator extends ObjectGenerator
     public function getParameter(string $name):?ParameterGenerator {
         if (isset($this->parameters[$name])) {
             return $this->parameters[$name];
+        }
+        return null;
+    }
+
+    public function getParameterAt(int $index):?ParameterGenerator {
+        $i = 0;
+        foreach($this->parameters as $parameter) {
+            if ($i == $index) {
+                return $parameter;
+            }
+            $i++;
         }
         return null;
     }

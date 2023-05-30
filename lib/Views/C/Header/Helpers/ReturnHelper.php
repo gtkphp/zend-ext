@@ -9,8 +9,8 @@ use Zend\Ext\Models\MethodGenerator;
 
 class ReturnHelper extends AbstractHelper
 {
-    public function __invoke(MethodGenerator $method)
+    public function __invoke(MethodGenerator $method=null)
     {
-        return '';
+        return __FILE__;
     }
 }

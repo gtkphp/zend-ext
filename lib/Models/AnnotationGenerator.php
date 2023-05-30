@@ -83,6 +83,10 @@ class AnnotationGenerator extends AbstractGenerator
 
             case 'since':                $type = self::ANNOTATION_SINCE; break;
             case '' :                    $type = 0; break;
+
+            /** Compatibility For old version */
+            case 'allow-none':           $type = self::ANNOTATION_NULLABLE; break;
+
             default:
                 echo 'Unexpected annotion acronym "'.$acronym.'"'.PHP_EOL;
                 break;

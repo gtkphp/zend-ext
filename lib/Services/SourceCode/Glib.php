@@ -5,37 +5,196 @@ namespace Zend\Ext\Services\SourceCode;
 use Zend\Ext\Services\SourceCode;
 use Exception;
 
+use Zend\C\Engine\Lexer;
+use Zend\C\Engine\Context;
+use Zend\C\Engine\PreProcessor;
+use Zend\C\ExpressionParser;
+use Zend\C\PhpPrinter;
 
 class Glib extends SourceCode {
 
-    function __construct($source_dir=NULL, $build_dir=NULL){
-        $this->doc_dir = 'docs/reference/glib';
-        $this->name = 'Glib';
-        parent::__construct($source_dir, $build_dir);
+
+    /**
+     * @var ExpressionParser $parser
+     */
+    private $parser = NULL;
+    /**
+     * @var Context $context
+     */
+    private $context = NULL;
+    /**
+     * @var PreProcessor $preprocessor
+     */
+    private $preprocessor = NULL;
+    /**
+     * @var PhpPrinter $printer
+     */
+    private $printer = NULL;
+
+    public $defines = array();
+
+    function __construct(){
+        $this->name = 'Glib';// Unusefull
+        $this->printer = new PhpPrinter;
+        $this->context = new Context;
+        $lexer = new Lexer;
+        $this->parser = new ExpressionParser($lexer);
+        $this->preprocessor = new PreProcessor($this->context);
+
     }
 
-    // Load the file Enum, Object, Boxed, Interface, Data structure( HashTable, GList,...)
-    // 1) make reference for it and other ...
-    // 2) make ZendCode
-    // 3) make documentation
-    function loadTypes() {
-        die("Use Services/SourceCode/Gtk.php");
-        // whitelist / blacklist
-        // Order deni all, Allow item1 item 2 ...
-        //$enums = $this->getEnums();
-        //$list_enums = array_keys($enums);
-        //print_r($list_enums);
+    function loadTypes($filename) {
+        try {
+            $tokens = $this->preprocessor->process($filename);
+            $ast = $this->parser->parse($tokens, $this->context);
+            $this->printer->print($ast, $this->array);
 
-        // glib-decl-list.txt
-        // GList, GValue, g_print(), ..., GEqualFunc, GApplication, gmodule, gmessages, gmain,
-        // <SECTION>
-        //<FILE>glist</FILE>
-        //$this->getDeclarationsList($this->build_dir.'/glib-decl-list.txt');
-        $search = array('&(v)', ' << ', '/*< ', ' >*/', '&&', '&', '->', ' < ', ' > ', '_-|> <.', '<foo bar="baz">', '</foo>');
-        $replace = array('V_REF_PASS', 'SHIFT_LEFT', '/* ', ' */', 'DOUBLE_PASS_REF', 'PASS_REF', 'SPECIAL_ARROW', ' GREATER ', ' LESSER ', 'EXCEPTIONEL', 'OPEN_TAG_FOO', 'CLOSE_TAG_FOO');
-        $this->getDeclarations($this->build_dir.'/glib-decl.txt', $search, $replace);
-
-        //$constants = $this->getConstants();
-
+            $this->defines = $this->preprocessor->getDefinitions();
+        } catch (\Exception $error) {
+            throw new \Zend\C\Engine\Error($error->getMessage());
+        }
     }
+    function evaluate() {
+        try {
+            $this->printer->evaluate($this->array);
+        } catch (\Exception $error) {
+            throw new \Exception($error->getMessage(), 500, $error);// \Zend\C\Engine\Error
+        }
+    }
+
+    function hasTypedef($name) {
+        $typedefs = $this->array['typedefs'];
+        if (isset($typedefs[$name])) {
+            return true;
+        }
+        return false;
+    }
+    
+    function getTypedef($name) {
+        $typedefs = $this->array['typedefs'];
+        
+        if (isset($typedefs[$name])) {
+            return $typedefs[$name];
+        } else {
+            echo "Typedef '$name' Not found\n";
+        }
+    }
+
+    function getFunction($name) {
+        $functions = $this->array['functions'];
+        if (isset($functions[$name])) {
+            return $functions[$name];
+        } else {
+            //echo "Function '$name' Not found\n";
+        }
+        return null;
+    }
+
+    function getStruct($name) {
+        $typedefs = $this->array['typedefs'];
+        $structs = $this->array['structs'];
+
+        if (isset($typedefs[$name])) {
+            $typedef_name = $typedefs[$name]['name'];
+            if (isset($structs[$typedef_name])) {
+                return $structs[$typedef_name];
+            } else {
+                echo "Struct '$name' Not found\n";
+            }
+        } else {
+            if (isset($structs[$name])) {
+                return $structs[$name];
+            } else {
+                echo "Struct '$name' Not found\n";
+            }
+        }
+        return Null;
+    }
+
+    function hasProto($name)
+    {
+        $functions = $this->array['user_function'];
+        if (isset($functions[$name])) {
+            return true;
+        }
+        return false;
+    }
+
+    function getProto($name)
+    {
+
+        $typedefs = $this->array['typedefs'];
+        $functions = $this->array['user_function'];
+
+        if (isset($functions[$name])) {
+            return $functions[$name];
+        } else {
+            //echo "Prototype '$name' Not found\n";
+        }
+
+        return Null;
+    }
+
+    function getMacro($name)
+    {
+        $defines = $this->defines;//$this->preprocessor->getDefinitions();
+        //print_r($defines);
+
+        // How to parse : G_WIN32_DLLMAIN_FOR_DLL_NAME
+
+        if (isset($defines[$name])) {
+            //echo $name, PHP_EOL;
+            $ast = $defines[$name];
+            $parser = new \Zend\C\MacroParser();
+            $m = $parser->parse($ast);
+            //print_r($m);
+            return $m;
+        }
+
+        return Null;
+    }
+
+    function getEnum($name) {
+        $typedefs = $this->array['typedefs'];
+        $enums = $this->array['enums'];
+
+        if (isset($typedefs[$name])) {
+            $typedef_name = $typedefs[$name]['name'];
+            if (isset($enums[$typedef_name])) {
+                return $enums[$typedef_name];
+            } else {
+                echo "Enum '$name' Not found\n";
+            }
+        } else {
+            if (isset($enums[$name])) {
+                return $enums[$name];
+            } else {
+                echo "Enum '$name' Not found\n";
+            }
+        }
+
+        return Null;
+    }
+
+    function getUnion($name) {
+        $typedefs = $this->array['typedefs'];
+        $unions = $this->array['unions'];
+
+        if (isset($typedefs[$name])) {
+            $typedef_name = $typedefs[$name]['name'];
+            if (isset($unions[$typedef_name])) {
+                return $unions[$typedef_name];
+            } else {
+                echo "Union '$name' Not found\n";
+            }
+        } else {
+            if (isset($unions[$name])) {
+                return $unions[$name];
+            } else {
+                echo "Union '$name' Not found\n";
+            }
+        }
+        return Null;
+    }
+
 }

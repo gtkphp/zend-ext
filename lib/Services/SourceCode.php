@@ -107,7 +107,7 @@ class SourceCode {
      * Check & Initialize directory
      */
     function sanityCheck() {
-        if (empty($this->name)){
+        /*if (empty($this->name)){
             throw new Exception("Zend\Ext\Service\SourceCode::\$name can not be empty");
         }
 
@@ -123,6 +123,9 @@ class SourceCode {
         if (empty($build_dir)){
             throw new Exception("No such file or directory : '$this->build_dir'");
         }
+        $this->source_dir = $source_dir;
+        $this->build_dir = $build_dir;
+        */
 
         // <root>/tmp/declaration.h
         $tmp_dir = dirname($this->tmp_file);
@@ -165,8 +168,6 @@ class SourceCode {
         }
         */
 
-        $this->source_dir = $source_dir;
-        $this->build_dir = $build_dir;
     }
 
     function addBlackList(array $data) {
@@ -219,6 +220,16 @@ class SourceCode {
         return Null;
     }
 
+    function hasProto($name) {
+        $prototypes = $this->data['TYPEDEF'];
+        if (isset($prototypes[$name])) {
+            return true;
+        } else if (isset($prototypes['_'.$name])) {
+            return true;
+        }
+        return false;
+    }
+
     function getProto($name)
     {
         $prototypes = $this->data['TYPEDEF'];
@@ -229,6 +240,24 @@ class SourceCode {
             return $prototypes['_'.$name];
         }
         return Null;
+    }
+
+    function hasTypedef($name) {
+        $typedefs = $this->array['typedefs'];
+        if (isset($typedefs[$name])) {
+            return true;
+        }
+        return false;
+    }
+    
+    function getTypedef($name) {
+        $typedefs = $this->array['typedefs'];
+        
+        if (isset($typedefs[$name])) {
+            return $typedefs[$name];
+        } else {
+            echo "Typedef '$name' Not found\n";
+        }
     }
 
     function getMacro($name)
@@ -267,6 +296,44 @@ class SourceCode {
         return Null;
     }
 
+    function loadTypes($decl) {
+        // near "struct _GMarkupParser" In glib-decl.txt : /* Called for open tags <foo bar="baz"> */
+        // in gdk3-decl.txt '/* Can be cast to window system specific'
+        $search = array('&(v)', ' << ', '/*< ', '/* <', ' >*/', '&&', '&', ' <= ', '->', ' < ', ' > ', '_-|> <.', '<foo bar="baz">', '</foo>', '<Space> does', '<Return> does', '> */', '(1L<<0)', '(1L<<1)', '/*<private>*/');
+        $replace = array('V_REF_PASS', 'SHIFT_LEFT', '/*_ ', '/* _', ' _*/', 'DOUBLE_PASS_REF', 'PASS_REF', 'GREATER_OR_EQUAL', 'SPECIAL_ARROW', ' GREATER ', ' LESSER ', 'EXCEPTIONEL', 'OPEN_TAG_FOO', 'CLOSE_TAG_FOO', '_SPACE_DOES', '_RETURN_DOES', '_ */', '_JOKE_1', '_JOKE_2', '/*_private_*/');
+        $this->getDeclarations($decl, $search, $replace);
+        //$constants = $this->getConstants();
+
+        //$this->load_MACRO();
+        //$this->load_STRUCT();
+        //$this->load_FUNCTION();
+        //$this->load_ENUM();
+        //$this->load_TYPEDEF();
+        //$this->load_USER_FUNCTION();
+        //$this->load_VARIABLE();
+        //$this->load_UNION();
+
+    }
+
+    function taskResume(&$collections) {
+        $this->doc;
+        $xpath = new DOMXPath($this->doc);
+
+        $tags = array();
+        $nodes = $xpath->query('/root/*');
+        foreach($nodes as $child) {
+            if (isset($tags[$child->nodeName])) {
+                $tags[$child->nodeName] += 1;
+            } else {
+                $tags[$child->nodeName] = 1;
+                $collections[$child->nodeName] = array();
+            }
+            $n = $xpath->query('NAME', $child);
+            $collections[$child->nodeName][$n[0]->nodeValue] = 1;
+        }
+        return $tags;
+    }
+
     function getDeclarations(string $filepath, array $search=array(), array $replace=array())
     {
         $filename = realpath($filepath);
@@ -274,6 +341,8 @@ class SourceCode {
             throw new NoSuchFileException("'$filepath' not found");
         }
         $str = file_get_contents($filename);
+        $str = str_replace('struct utimbuf when just', 'struct utimbuf when just*/', $str);
+
         $str_xml = "<root>$str</root>";
         $str_xml = str_replace($search, $replace, $str_xml);
         $this->search = $search;
@@ -281,6 +350,13 @@ class SourceCode {
 
         $this->doc = new DOMDocument();
         $this->doc->loadXML($str_xml);
+
+        $collections = array();
+        $kinds = $this->taskResume($collections);
+        print_r($kinds);
+        /*
+        print_r($collections['UNION']);
+        */
 
         $this->xpath = new DOMXPath($this->doc);
 
@@ -380,11 +456,9 @@ class SourceCode {
         echo $this->reporting['TYPEDEF']['passed'].PHP_EOL;
         echo $this->reporting['ENUM']['passed'].PHP_EOL;
         echo $this->reporting['STRUCT']['passed'].PHP_EOL;
-            echo "\tstruct GMarkupParser not processed\n";
-            echo "\tutimbuf blacklisted\n";
             echo "\tGWin32PrivateStat Doublon\n";
             echo "\tGThread Doublon\n";
-            echo "\tTotal: 84/84\n";
+            echo "\tTotal: 82/82\n";
         echo $this->reporting['MACRO']['passed'].PHP_EOL;
         echo $this->reporting['USER_FUNCTION']['passed'].PHP_EOL;
 
@@ -476,7 +550,7 @@ class SourceCode {
         }
         $this->reporting[$item]=array(
             'passed'=>$this->_passed_item.' of '. $this->_total_item
-                ." $item processed in ${pass} pass( $max_pass max).",
+                ." $item processed in $pass pass( $max_pass max).",
             'processed'=>$this->_item_processed,
             'fixed'=>$this->_item_fixed,
             'remaining'=>$this->_item_remaining,
@@ -503,9 +577,9 @@ class SourceCode {
                 $msg = $exc->getMessage();
                 $this->_item_remaining[$this->_current_item] = $msg;
                 //echo $msg.PHP_EOL;
-            } catch (\Exception $exc) {
+            }/* catch (\Exception $exc) {
                 throw new \Exception($exc->getMessage().' # for '.$this->_current_item);
-            }
+            }*/
         }
 
     }
@@ -561,7 +635,11 @@ class SourceCode {
         // TODO accepte string for $parser->parse()
         //$this->tmp_file = dirname($this->tmp_file).'/'.$name.'.h';
         file_put_contents($this->tmp_file, $c_str);
-        $tokens = $this->preprocessor->process($this->tmp_file);
+        try {
+            $tokens = $this->preprocessor->process($this->tmp_file);
+        } catch (\Exception $error) {
+            throw new \Zend\C\Engine\Error($error->getMessage());
+        }
 
         if ($this->_parse>0) {
             /*

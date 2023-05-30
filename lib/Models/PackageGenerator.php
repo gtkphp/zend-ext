@@ -11,6 +11,7 @@ namespace Zend\Ext\Models;
 
 use Zend\Ext\Models\AbstractGenerator;
 use Zend\Ext\Models\ObjectGenerator;
+use Zend\Ext\Models\GroupGenerator;
 use Zend\Ext\Models\FileGenerator;
 use Zend\Ext\Models\EnumGenerator;
 use Zend\Ext\Models\UnionGenerator;
@@ -19,6 +20,7 @@ use Zend\Ext\Models\StructGenerator;
 use Zend\Ext\Models\VarGenerator;
 use Zend\Ext\Models\ConstantGenerator;
 use Zend\Ext\Models\MethodGenerator;
+use Zend\Ext\Models\PrototypeGenerator;
 use Zend\Ext\Models\ParameterGenerator;
 use Zend\Ext\Models\TypeGenerator;
 
@@ -202,6 +204,21 @@ class PackageGenerator extends ObjectGenerator
         return $method;
     }
 
+    public function createFunction($name) {
+        $function = new FunctionGenerator($name);
+        $function->setOwnPackage($this);
+
+        //$this->symbols[$name] = $method;
+        return $function;
+    }
+    public function createPrototype($name):PrototypeGenerator {
+        $prototype = new PrototypeGenerator($name);
+        $prototype->setOwnPackage($this);
+
+        //$this->symbols[$name] = $method;
+        return $prototype;
+    }
+
     public function createParameter($name) {
         $method = new ParameterGenerator($name);
         $method->setOwnPackage($this);
@@ -226,6 +243,12 @@ class PackageGenerator extends ObjectGenerator
         $file->setParentGenerator($this);
         $file->setOwnPackage($this);
         return $file;
+    }
+    public function createGroup($name) {
+        $group = new GroupGenerator($name);
+        $group->setParentGenerator($this);
+        $group->setOwnPackage($this);
+        return $group;
     }
     
 

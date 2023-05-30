@@ -1,0 +1,73 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef PHP_<?php echo $this->name_macro ?>_H
+#define PHP_<?php echo $this->name_macro ?>_H
+
+// PHP_G_DECLARE($name_macro, $name_function)
+#define PHP_<?php echo $name_macro ?>(ptr)           ((php_<?php echo $name_function ?>*)(ptr))
+#define PHP_<?php echo $name_macro ?>_CLASS          php_<?php echo $name_function ?>_class_entry
+#define PHP_<?php echo $name_macro ?>_OFFSET         (sizeof(php_<?php echo $name_function ?>) - sizeof(zend_object))
+#define PHP_<?php echo $name_macro ?>_PTR(zobj)      (zobj)->ptr
+
+#define ZOBJ_IS_PHP_<?php echo $name_macro ?>(obj)   ((obj)!=NULL && obj->ce == php_<?php echo $name_function ?>_class_entry)
+#define ZOBJ_TO_PHP_<?php echo $name_macro ?>(std)   PHP_<?php echo $name_macro ?>( ((void*)(std))-PHP_<?php echo $name_macro ?>_OFFSET )
+
+#define ZVAL_IS_PHP_<?php echo $name_macro ?>(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_<?php echo $name_macro ?>((val)->value.obj))
+#define ZVAL_GET_PHP_<?php echo $name_macro ?>(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_TO_PHP_<?php echo $name_macro ?>((val)->value.obj))
+
+
+
+#define PHP_<?php echo $name_macro ?>_FE() \
+<?php foreach($functions as $function): ?>
+    PHP_GTK_FE(<?php
+        //sprintf("%-*s", $function->pad, $function->name.',');//Not supported in PHP 7.4 echo 
+        $pad = str_repeat(' ', $function->pad-strlen($function->name));
+        echo sprintf("%s,%s", $function->name, $pad);
+     ?> arginfo_<?php echo $function->name ?>) \
+<?php endforeach; ?>
+
+#define PHP_<?php echo $name_macro ?>_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_<?php echo $name_function ?>_class_init(container_ce, parent_ce)
+
+#define PHP_<?php echo $name_macro ?>_MSHUTDOWN_FUNCTION() { \
+}
+
+#define PHP_<?php echo $name_macro ?>_RSHUTDOWN_FUNCTION() {\
+}
+
+extern zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
+
+
+typedef struct _php_<?php echo $name_function ?> php_<?php echo $name_function ?>;
+struct _php_<?php echo $name_function ?> {
+<?php
+if (empty($members)) {
+    echo '    '.$name.' *ptr;'.PHP_EOL;
+} else {
+    foreach($members as $property) {
+        echo '    zval '.$property->name.';// of '.$property->type.PHP_EOL;
+    }
+}
+?>
+
+    zend_object std;
+};
+
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
+
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $name_function ?>___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(<?php echo $name_function ?>, __construct);
+
+<?php foreach($functions as $function): ?>
+<?php echo $function->arguments->info; ?>
+PHP_FUNCTION(<?php echo $function->name ?>);
+
+<?php endforeach; ?>
+
+
+#endif	/* PHP_<?php echo $this->name_macro ?>_H */

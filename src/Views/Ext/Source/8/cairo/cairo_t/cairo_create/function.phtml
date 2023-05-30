@@ -1,0 +1,19 @@
+PHP_FUNCTION(cairo_create) /* {{{  */
+{
+    zval *z_target;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT_OF_CLASS_EX(z_target, php_cairo_surface_t_class_entry, 1, 0);
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_cairo_surface_t *php_target = ZVAL_IS_PHP_CAIRO_SURFACE_T(z_target)? ZVAL_GET_PHP_CAIRO_SURFACE_T(z_target): NULL;
+    cairo_surface_t *target = php_target->ptr;
+
+    cairo_t *ret = cairo_create(target);
+
+    php_cairo_t *php_ret = php_cairo_t_new();
+    php_ret->ptr = ret;
+
+    RETURN_OBJ(&php_ret->std);
+}/* }}} */
+

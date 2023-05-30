@@ -1,0 +1,62 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+
+#include "php_gtk.h"
+
+<?php foreach($this->uses as $use): ?>
+<?php echo '#include "' . $use .'"' . PHP_EOL; ?>
+<?php endforeach; ?>
+
+
+extern HashTable         classes;
+extern zend_module_entry gtk_module_entry;
+
+
+zend_class_entry     *php_<?php echo $name_function ?>_class_entry;// class
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+
+ /*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+ /*{{{ php_<?php echo $name_function ?>_class_init */
+zend_class_entry*
+php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+
+    //PHP_GTK_INIT_CLASS_ALIAS(parent_ce, "<?php echo $this->name ?>");
+
+    php_<?php echo $name_function ?>_class_entry = zend_register_class_alias("<?php echo $this->name ?>", parent_ce);
+    php_<?php echo $name_function ?>_class_entry = zend_register_ns_class_alias('Vendor', "<?php echo $this->name ?>", parent_ce);
+
+    return php_<?php echo $name_function ?>_class_entry;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/

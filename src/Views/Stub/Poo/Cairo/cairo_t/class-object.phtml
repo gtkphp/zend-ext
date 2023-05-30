@@ -1,0 +1,162 @@
+
+//use Psr\Cairo\Context;
+use Psr\Cairo\Matrix;
+use Psr\Cairo\Path;
+
+use Psr\Cairo\Pattern\AbstractPattern as Pattern;
+use Psr\Cairo\Pattern\Solid as SolidPattern;
+use Psr\Cairo\Pattern\Gradient\Linear as LinearGradient;
+use Psr\Cairo\Pattern\Gradient\Radial as RadialGradient;
+
+use Psr\Cairo\Surface\AbstractSurface as Surface;
+use Psr\Cairo\Surface\Image as ImageSurface;
+use Psr\Cairo\Surface\Svg as SvgSurface;
+use Psr\Cairo\Surface\Png as PngSurface;
+
+use Psr\Cairo\FontFace\FreeType as FtFont;
+
+/**
+ * @property Surface $target
+ * @property Surface $group_target
+ * @property Source $source
+ * @property Antialias $antialias
+ * @property float[] $dash An array of alternate lengths of on and off stroke, last float is the optional offset at which the stroke should start
+ * @property FillRule $fill_rule
+ * @property LineCap $line_cap
+ * @property LineJoin $line_join
+ * @property float $line_width
+ * @property float $miter_limit
+ * @property Operator $operator
+ * @property float $tolerance
+ */
+class Context extends \cairo_t
+{
+    function __construct(Surface $surface) {
+        parent::__construct($surface);
+    }
+    function __get($name) {
+        switch ($name) {
+        case 'dash':
+            \cairo_get_dash($this, $dashes, $offset);
+            return array('dashes'=>$dashes, 'offset'=>$offset);
+          break;
+        case 'tolerance':
+            return \cairo_get_tolerance($this);
+          break;
+        case 'operator':
+            return \cairo_get_operator($this);
+          break;
+        default:
+          break;
+      }
+    }
+    function __set($name, $value) {
+      switch ($name) {
+        case 'dash':
+            \cairo_set_dash($this, $value, count($value), 0.0);
+          break;
+        case 'tolerance':
+          break;
+        case 'operator':
+          break;
+        default:
+          break;
+      }
+    }
+  
+    function save():Context {
+      \cairo_save($this);
+      return $this;
+    }
+    function restore():Context {
+      \cairo_restore($this);
+      return $this;
+    }
+    function pushGroup(Content $content=null):Context {
+      if ($content) {
+          \cairo_push_group_with_content($this, $content);
+      } else {
+          \cairo_push_group($this);
+      }
+      return $this;
+    }
+    function popGroup():Pattern {
+      return \cairo_pop_group($this);
+    }
+    function popGroupToSource() {
+        //---------------------------------------------------------------------
+    }
+    function clip(bool $preserve=false):Context {
+      if ($preserve) {
+        \cairo_clip_preserve($this);
+      } else {
+        \cairo_clip($this);
+      }
+      return $this;
+    }
+    function clipExtents(float &$x1, float &$y1, float &$x2, float &$y2):Context {
+        return \cairo_clip_extends($this, $x1, $y1, $x2, $y2);
+        return $this;
+    }
+    function inClip(float $x, float $y):int {
+      return \cairo_in_clip($this, $x, $y);
+    }
+    function resetClip():Context {
+        return \cairo_reset_clip($this);
+        return $this;
+    }
+    function copyClipRectangleList():RectangleList {
+        return \cairo_clip_rectangle_list($this);
+    }
+    function fill(bool $preserve=false):Context {
+      if ($preserve) {
+        \cairo_fill_preserve($this);
+      } else {
+        \cairo_fill($this);
+      }
+      return $this;
+    }
+    function fillExtents(float &$x1, float &$y1, float &$x2, float &$y2):Context {
+      \cairo_fill_extends($this, $x1, $y1, $x2, $y2);
+      return $this;
+    }
+    function inFill(float $x, float $y):int {
+      return \cairo_in_fill($this, $x, $y);
+    }
+    function mask(Pattern $pattern):Context {
+      \cairo_mask($this, $pattern);
+      return $this;
+    }
+    function maskSurface(Surface $surface, float $surface_x, float $surface_y) {}
+    function paint(float $alpha = 1.0):Context {
+      if ($alpha<1.0) {
+        \cairo_paint_with_alpha($this, $alpha);
+      } else {
+        \cairo_paint($this);
+      }
+      return $this;
+    }
+    function stroke(bool $preserve=false):Context {
+      if ($preserve) {
+        \cairo_stroke_preserve($this);
+      } else {
+        \cairo_stroke($this);
+      }
+      return $this;
+    }
+    function strokeExtents(float &$x1, float &$y1, float &$x2, float &$y2):Context {
+      \cairo_in_stroke($this, $x1, $y1, $x2, $y2);
+      return $this;
+    }
+    function inStroke(float $x, float $y):int {
+      return \cairo_in_stroke($this, $x, $y);
+    }
+    function copyPage():Context {
+      \cairo_copy_page($this);
+      return $this;
+    }
+    function showPage():Context {
+      \cairo_show_page($this);
+      return $this;
+    }
+}

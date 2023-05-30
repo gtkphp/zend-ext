@@ -23,6 +23,12 @@ use Zend\Ext\Views\C\Header\Helpers\TypeHelper;// <------- TODO: move file
 use Zend\Ext\Views\C\Source\Helpers\DocBlockHelper;
 //use Zend\Ext\Views\C\Source\ClassDto;
 
+
+use Zend\Ext\Models\Dto\ExtensionDto;
+use Zend\Ext\Models\Dto\PackageDto;
+use Zend\Ext\Models\Dto\ObjectDto;
+
+/*
 use Zend\Ext\Views\MethodDto;
 //use Zend\Ext\Views\C\ParameterDto;
 //use Zend\Ext\Views\C\PropertyDto;
@@ -38,6 +44,9 @@ use Zend\Ext\Views\EnumDto;
 use Zend\Ext\Views\ConstantDto;
 use Zend\Ext\Views\UnionDto;
 use Zend\Ext\Views\VarDto;
+*/
+
+use Zend\Ext\Services\Classifier\Cairo as CairoClassifier;
 
 use Zend\ExtGtk\Implementation;
 
@@ -85,6 +94,11 @@ class CodeGenerator
      * @var  PhpRenderer $renderer
      */
     protected $renderer;
+
+    /** @var  PackageDto */
+    protected $current_root_dto;
+    /** @var  PackageDto */
+    protected $current_package_dto;
 
     function __construct($name)
     {
@@ -185,10 +199,40 @@ class CodeGenerator
         return $name;//str_replace('_', '-', $name);
     }
     
+    function createExtensionDto(PackageGenerator $package):ExtensionDto {
+        $extensionDto = new ExtensionDto;
+        $extensionDto->name = $package->getName();
+        $extensionDto->description = $package->getDescription();
+
+        foreach ($package->subpackage as $pkg) {
+            $packageDto = $this->createPackageDto($pkg);
+            $extensionDto->packages[$packageDto->name] = $packageDto;
+        }
+
+        return $extensionDto;
+    }
+
     function createPackageDto(PackageGenerator $package):PackageDto {
         $packageDto = new PackageDto;
         $packageDto->name = $package->getName();
         $packageDto->description = $package->getDescription();
+
+        foreach ($package->subpackage as $subpackage) {
+            $subpackageDto = $this->createPackageDto($subpackage);
+            $packageDto->subpackage[$subpackageDto->name] = $subpackageDto;
+        }
+        $classifier = new CairoClassifier();
+        foreach ($package->children as $file) {
+            echo $file->getName(), PHP_EOL;
+            foreach ($file->children as $child) {
+                if ($child instanceof StructGenerator) {
+                    echo '  ', $child->getName(), PHP_EOL;
+
+                }
+                //$classifier->getThis();
+            }
+        }
+
         return $packageDto;
     }
     
@@ -446,27 +490,26 @@ class CodeGenerator
     }
 
     // override: C/H/Php/Xml
-    function getPackageDto(PackageGenerator $root)
+    public function getExtensionDto(PackageGenerator $root) : ExtensionDto
     {
         $struct_used = array();
 
-        $rootDto = $this->createPackageDto($root);
+        $rootDto = $this->createExtensionDto($root);
+
+        /*
         $this->current_root_dto = $rootDto;
         foreach ($root->subpackage as $package) {
             $packageDto = $this->createPackageDto($package);
-            $packageDto->package = $rootDto;
-            $rootDto->subpackage[] = $packageDto;
-            $this->current_package_dto = $packageDto;
+            $rootDto->packages[] = $packageDto;
             foreach ($package->subpackage as $subpackage) {
                 $subpackageDto = $this->createPackageDto($subpackage);
-                $subpackageDto->package = $packageDto;
                 $packageDto->subpackage[] = $subpackageDto;
-                $this->current_subpackage_dto = $subpackageDto;
                 foreach ($subpackage->children as $file) {
                     foreach ($file->children as $object) {
-                        //if ($object instanceof StructGenerator) continue;
+                        if ($object instanceof StructGenerator) echo $object->getName(), PHP_EOL;
                         //if ($object instanceof EnumGenerator) continue;
                         //if ($object instanceof UnionGenerator) continue;
+                        if ($object instanceof ConstantGenerator) continue;
                         if ($object instanceof FunctionGenerator) {
                             if ($object->isClassified) {
                                 //echo '+'.$object->getName().PHP_EOL;
@@ -475,13 +518,146 @@ class CodeGenerator
                             }
                             continue;
                         }
+                        //echo '='.get_class($object)."; ".$object->getName().PHP_EOL;
                         $objectDto = $this->createObjectDto($object);
                         $objectDto->package = $subpackageDto;
                     }
                 }
             }
         }
+        */
         return $rootDto;
+    }
+
+    // loadChapter; getOtherDetails do classification(remove it)
+    protected function _______classify() {
+        echo '-----------------------------------------------' . PHP_EOL;
+
+        $_RESTRICT = 'cairo-font-face.xml';
+        $classifier = new CairoClassifier();
+
+        /** zend_class_entry */
+        foreach($this->package->subpackage as $subpackage) {
+            //echo $subpackage->getName().PHP_EOL;
+            foreach($subpackage->subpackage as $package) {
+                //echo '  '.$package->getName().PHP_EOL;
+                /** @var GroupGenerator $groupGenerator */
+                foreach($package->children as $groupGenerator) {
+                    //echo '    '.$groupGenerator->getName().PHP_EOL;
+
+                    // CairoClassifier()->classify();
+                    // return $cairo_classifier->classify($function_name);
+
+                    /**
+                     * cairo_depend on cairo_glyph_t in Paths.xml
+                     * void cairo_glyph_path (cairo_t *cr,
+                     * const cairo_glyph_t *glyphs,
+                     * int num_glyphs);
+                     */
+                    $types = array();// Types dependancies
+                    foreach($groupGenerator->children as $child) {
+                        /** */
+                        if ($child instanceof FunctionGenerator) {
+                            $parameters = $child->getParameters();
+                            foreach($parameters as $parameter) {
+                                if (!$parameter->getType()->isPrimitive()) {
+                                    $types[$parameter->getType()->getName()] = 1;
+
+                                }
+                            }
+                            if (!$child->getParameterReturn()->getType()->isPrimitive()) {
+                                $types[$child->getParameterReturn()->getType()->getName()] = 1;
+                            }
+                        } else {
+                            $types[$child->getName()] = 1;
+                        }
+                        /** */
+                    }
+
+
+                    if ($_RESTRICT==$groupGenerator->getName())
+                    foreach($groupGenerator->children as $child) {
+                        if ($classifier->isExportable($child)) {
+                            $file_name = $classifier->getExportName($child);
+                            $fileGenerator = new FileGenerator($child->getName());
+                            $fileGenerator->filename = $file_name;
+                            $fileGenerator->object = $child;
+                            $groupGenerator->exports[$child->getName()] = $fileGenerator;
+                        }
+                    }
+
+                    //$master = $classifier->getMatserObjectByFile($groupGenerator);
+                    //printf("            %29s => '%s',\n", "'$fileGenerator->refentry_id'", $master);
+
+                    /*
+                    $master = $fileGenerator->getMatserObject();
+                    if ($master) {
+                        //printf("%24s : %s\n", $fileGenerator->getName(), $master->getName());
+
+                        $master_name = $master->getName();
+                        echo $master_name . ' : ' . PHP_EOL;
+                        unset($types['cairo_bool_t']);
+                        unset($types['cairo_user_data_key_t']);
+                        unset($types['cairo_destroy_func_t']);
+                        unset($types[$master_name]);
+                        ///print_r($types);
+
+                        $master->dependencies = $types;
+                    } else {
+                        //printf("%24s : %s\n", $fileGenerator->getName(), $fileGenerator->refentry_id);
+                        //echo 'No master object in '.$fileGenerator->getName() . PHP_EOL;
+                    }
+                    */
+
+                }
+            }
+        }
+
+        /** zend_function */
+        foreach($this->package->subpackage as $subpackage) {
+            foreach($subpackage->subpackage as $package) {
+                foreach($package->children as $groupGenerator) {
+                    if ($_RESTRICT==$groupGenerator->getName())
+                    foreach($groupGenerator->children as $child) {
+                        if ($child instanceof FunctionGenerator) {
+                            $isMm = $classifier->isMemoryManagement($child);
+                            $isEm = $classifier->isErrorManagement($child);
+                            $isUd = $classifier->isUserData($child);
+                            if ($isMm || $isEm || $isUd) {
+                                continue;
+                            }
+                            
+                            $name = $classifier->getThis($child);
+                            $isMethod = $classifier->isMethod($child, $name);
+                            //echo $child->getName(), '; ', $name, PHP_EOL;
+
+                            if (isset($groupGenerator->exports[$name])) {
+                                $file = $groupGenerator->exports[$name];// use ownPackage()->exports
+                                $file->object->methods[] = $child;
+                                //echo $file->getFilename(), '.h : ', $child->getName(), '(', $file->object->getName(), ')', PHP_EOL;
+                            }
+                            /*
+                            */
+
+                        }
+                    }
+
+                }
+            }
+        }
+
+        $type_name = '';
+        /*
+        #ifdef CAIRO_HAS_FT_FONT
+
+        * _allocate
+        * _free
+        *_reference
+        *_destroy
+        * _create
+        */
+
+        return $type_name;
     }
 
     // -------------------------------------------------------------------
