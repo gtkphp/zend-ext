@@ -41,19 +41,7 @@ extern zend_class_entry     *php_<?php echo $name_function ?>_class_entry;
 
 
 typedef struct _php_<?php echo $name_function ?> php_<?php echo $name_function ?>;
-struct _php_<?php echo $name_function ?> {
-<?php
-if (empty($members)) {
-    echo '    '.$name.' *ptr;'.PHP_EOL;
-} else {
-    foreach($members as $property) {
-        echo '    zval '.$property->name.';// of '.$property->type.PHP_EOL;
-    }
-}
-?>
-
-    zend_object std;
-};
+<?php echo $this->render('class-entry.phtml', $this->vars()); ?>
 
 zend_class_entry*
 php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);

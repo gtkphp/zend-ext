@@ -1,0 +1,31 @@
+static zval*
+php_g_list_read_property(zend_object *object, zend_string *member_str, int type, void **cache_slot, zval *rv)
+{
+    php_g_list *intern = ZOBJ_TO_PHP_G_LIST(object);
+
+    const struct PhpGListProperty *cmd = php_g_list_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+        case PHP_G_LIST_DATA:
+            ZVAL_COPY(rv, &intern->data);
+            return rv;
+            break;
+        case PHP_G_LIST_NEXT:
+            ZVAL_COPY(rv, &intern->next);
+            return rv;
+            break;
+        case PHP_G_LIST_PREV:
+            ZVAL_COPY(rv, &intern->prev);
+            return rv;
+            break;
+        default:
+            //zend_internal_type_error(1, "Internal bug,");
+            //zend_error(E_USER_NOTICE, "Internal bug,");
+            break;
+        }
+    } else {
+        // property not found
+    }
+
+    return rv;
+}

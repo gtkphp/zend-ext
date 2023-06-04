@@ -1,0 +1,23 @@
+static zval*
+php_g_list_write_property(zend_object *object, zend_string *member_str, zval *value, void **cache_slot)
+{
+    php_g_list *intern = ZOBJ_TO_PHP_G_LIST(object);
+    // struct
+    const struct PhpGListProperty *cmd = php_g_list_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+        case PHP_G_LIST_DATA:
+            cmd->setter(intern, value, member_str->val, &intern->data);
+        break;
+        case PHP_G_LIST_NEXT:
+            cmd->setter(intern, value, member_str->val, &intern->next);
+        break;
+        case PHP_G_LIST_PREV:
+            cmd->setter(intern, value, member_str->val, &intern->prev);
+        break;
+        }
+    } else {
+        // property not found
+    }
+    return value;
+}

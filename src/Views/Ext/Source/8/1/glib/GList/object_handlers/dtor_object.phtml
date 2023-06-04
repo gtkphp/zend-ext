@@ -1,0 +1,23 @@
+static void
+php_g_list_dtor_object(zend_object *obj) {
+    php_g_list *intern = ZOBJ_TO_PHP_G_LIST(obj);
+    //php_printf("php_g_list_dtor_object: %p\n", intern);
+
+    if (Z_TYPE(intern->next)==IS_OBJECT) {
+        if(intern->next.value.obj->gc.refcount>1) {
+            zend_object_release(intern->next.value.obj);
+        } else {
+            zend_object_release(intern->next.value.obj);
+            ZVAL_NULL(&intern->next);
+        }
+    }
+    if (Z_TYPE(intern->prev)==IS_OBJECT) {
+        if(intern->prev.value.obj->gc.refcount>1) {
+            zend_object_release(intern->prev.value.obj);
+        } else {
+            zend_object_release(intern->prev.value.obj);
+            ZVAL_NULL(&intern->prev);
+        }
+    }
+
+}

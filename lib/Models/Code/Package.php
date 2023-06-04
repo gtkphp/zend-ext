@@ -2,7 +2,7 @@
 
 namespace Zend\Ext\Models\Code;
 
-use Zend\Ext\Models\Code\FileGenerator;
+use Zend\Ext\Models\Code\Generator\FileGenerator;
 
 class Package
 {

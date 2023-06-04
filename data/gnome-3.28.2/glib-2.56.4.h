@@ -1091,7 +1091,7 @@ typedef struct _GArray GArray;
 #define _GLIB_EXTERN extern
 typedef __gnuc_va_list va_list;
 typedef int FILE;
-typedef int time_t;
+typedef long time_t;
 typedef unsigned long int pthread_t;
 typedef struct
 {

@@ -202,6 +202,7 @@ class ClassGeneratorTest extends TestCase
             $tokens = $this->preprocessor->process($this->tmp_dir.'/../data/gnome-3.28.2/glib-2.56.4.h');
             $ast = $this->parser->parse($tokens, $this->context);
             $this->printer->print($ast, $array);
+            /*
             $tokens = $this->preprocessor->process($this->tmp_dir.'/../data/gnome-3.28.2/gobject-2.56.4.h');
             $ast = $this->parser->parse($tokens, $this->context);
             $this->printer->print($ast, $array);
@@ -220,12 +221,36 @@ class ClassGeneratorTest extends TestCase
             $tokens = $this->preprocessor->process($this->tmp_dir.'/../data/gnome-3.28.2/gdk-3.22.30.h');
             $ast = $this->parser->parse($tokens, $this->context);
             $this->printer->print($ast, $array);
+            */
+
         } catch (\Exception $error) {
             throw new \Zend\C\Engine\Error($error->getMessage());
         }
 
+        /*
         print_r($array['typedefs']['GDBusMessage']);
         print_r(array_keys($array['structs']['__GDBusMessage']));
+        */
+        /**
+         * #define g_node_prev_sibling(node)	((node) ? \
+		 *			                            ((GNode*) (node))->prev : NULL)
+         */
+        $defines = $this->preprocessor->getDefinitions();
+        if (isset($defines['g_node_prev_sibling'])) {
+            //echo $name, PHP_EOL;
+            $ast = $defines['g_node_prev_sibling'];
+            //print_r($ast);
+            //print_r($ast->next->next->next);//     (   (node) ? ((GNode*) (node))->prev : NULL  )
+            print_r($ast->next->next->next->next->next);//    (node) ? ((GNode*) (node))->prev : NULL
+            /*
+            $parser = new \Zend\C\MacroParser();
+            $m = $parser->parse($ast);
+            print_r($m);
+            */
+        }
+
+
+        //
         /*
         print_r($array['typedefs']['GdkAtom']);
         print_r(array_keys($array['structs']['_GdkAtom']));

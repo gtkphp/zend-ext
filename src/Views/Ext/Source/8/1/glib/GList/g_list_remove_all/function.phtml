@@ -1,0 +1,20 @@
+PHP_FUNCTION(g_list_remove_all)
+{
+    zval *list = NULL;
+    zval *data = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_ZVAL(list)
+        Z_PARAM_ZVAL(data)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_list *php_list = ZVAL_IS_PHP_G_LIST(list)? ZVAL_GET_PHP_G_LIST(list): NULL;
+    php_g_list *php_ret = php_g_list_remove_all(php_list, data);
+
+    if (php_ret) {
+        GC_ADDREF(&php_ret->std);
+        RETURN_OBJ(&php_ret->std);
+    } else {
+        RETURN_NULL();
+    }
+}

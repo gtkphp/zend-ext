@@ -93,6 +93,12 @@ class Agent
         $this->whitelist = $whitelist;
         return $this;
     }
+    protected $blacklist;
+    public function useBlacklist(array $blacklist) {
+        $this->blacklist = $blacklist;
+        return $this;
+    }
+    
     
 
     public function loadCode(bool $use_cache=true) {
@@ -134,6 +140,8 @@ class Agent
             $sourceCode->defines = $data['macro'];
             // Time: 147 ms, Memory: 61.69 MB
         }
+        $sourceCode->loadStubs($this->data_path.'/glib-2.56.4.php');
+        
 
         return $sourceCode;
     }
@@ -150,6 +158,10 @@ class Agent
         if (isset($this->whitelist)) {
             $generator->setWhitelist($this->whitelist);
         }
+        if (isset($this->blacklist)) {
+            $generator->setBlacklist($this->blacklist);
+        }
+        
         $this->packages = $generator->getCodeGenerator($modelDocBook);
 
         return $this;

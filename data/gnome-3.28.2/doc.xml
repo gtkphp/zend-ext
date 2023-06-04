@@ -12,7 +12,7 @@
     <releaseinfo>for php &version;</releaseinfo>
   </setinfo>
 
-  <xi:include href="../../../../../cairo/doc/public/cairo-docs.xml"/>
+  <!--xi:include href="../../../../../cairo/doc/public/cairo-docs.xml"/-->
 
   <set>
     <title>Glib</title>
@@ -29,11 +29,22 @@
       </bookinfo>
       <chapter id="glib-fundamentals">
         <title>GLib Fundamentals</title>
+
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/date.xml" />
+
+
         <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/types.xml"/>
+
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/trees-nary.xml"/>
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/datasets.xml"/>
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/linked_lists_double.xml"/>
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/arrays.xml"/>
+        
+        <xi:include href="../../../../../glib-build-doc/docs/reference/glib/xml/error_reporting.xml"/>
       </chapter>
     </book-->
 
-    <xi:include href="../../../../../glib-build-doc/docs/reference/gobject/gobject-docs.xml"/>
+    <!--xi:include href="../../../../../glib-build-doc/docs/reference/gobject/gobject-docs.xml"/-->
     <!--book id="gobject" href="../../../../../glib-build-doc/docs/reference/gobject" xmlns:xi="http://www.w3.org/2003/XInclude">
       <bookinfo>
         <title>GObject Reference Manual</title>
@@ -44,7 +55,7 @@
       </reference>
     </book-->
 
-    <xi:include href="../../../../../glib-build-doc/docs/reference/gio/gio-docs.xml"/>
+    <!--xi:include href="../../../../../glib-build-doc/docs/reference/gio/gio-docs.xml"/-->
     <!--book id="gio" href="../../../../../glib-build-doc/docs/reference/gio" xmlns:xi="http://www.w3.org/2003/XInclude">
       <bookinfo>
         <title>GIO Reference Manual</title>
@@ -55,7 +66,7 @@
 
   <!--xi:include href="../../../../../pango-build-doc/docs/pango-docs.sgml"/-->
 
-  <xi:include href="../../../../../atk-build-doc/docs/atk-docs.xml"/>
+  <!--xi:include href="../../../../../atk-build-doc/docs/atk-docs.xml"/-->
   
   <!--xi:include href="../../../../../gdk-pixbuf-build-doc/docs/reference/gdk-pixbuf/gdk-pixbuf.xml"/-->
 
@@ -67,11 +78,11 @@
       </releaseinfo>
     </setinfo>
 
-    <xi:include href="../../../../../gtk-build-doc/docs/reference/gdk/gdk-docs.sgml"/>
+    <!--xi:include href="../../../../../gtk-build-doc/docs/reference/gdk/gdk-docs.sgml"/-->
     <!--book id="gdk" href="../../../../../gtk-build-doc/docs/reference/gdk" xmlns:xi="http://www.w3.org/2003/XInclude">
     </book-->
 
-    <xi:include href="../../../../../gtk-build-doc/docs/reference/gtk/gtk-docs.sgml"/>
+    <!--xi:include href="../../../../../gtk-build-doc/docs/reference/gtk/gtk-docs.sgml"/-->
     <!--book id="gtk" href="../../../../../gtk-build-doc/docs/reference/gtk" xmlns:xi="http://www.w3.org/2003/XInclude">
       <bookinfo>
         <title>GTK+ 3 Reference Manual</title>

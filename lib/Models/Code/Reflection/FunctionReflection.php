@@ -190,10 +190,11 @@ class FunctionReflection extends ReflectionFunction implements ReflectionInterfa
         $name = $this->getName();
 
         return array_map(
-            static fn (ReflectionParameter $parameter): ParameterReflection
-                => new ParameterReflection($name, $parameter->getName()),
+            //static fn (ReflectionParameter $parameter): ParameterReflection => new ParameterReflection($name, $parameter->getName()),
+            function (ReflectionParameter $parameter) use ($name) { return new ParameterReflection($name, $parameter->getName());},
             parent::getParameters()
         );
+        
     }
 
     /**

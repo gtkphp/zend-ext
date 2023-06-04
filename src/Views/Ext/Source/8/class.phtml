@@ -47,6 +47,8 @@ php_<?php echo $name_function ?>_methods[] = {
     PHP_FE_END
 };
 
+<?php echo $this->render('utils-function.phtml', $this->vars()); ?>
+
 /*----------------------------------------------------------------------+
  | Zend Handler                                                         |
  +----------------------------------------------------------------------*/
@@ -61,11 +63,20 @@ php_<?php echo $name_function ?>_methods[] = {
 
 <?php echo $this->render('object_handlers/dtor_object.phtml', $this->vars()); ?>
 
-<?php echo $this->render('object_handlers/free_object.phtml', $this->vars()); ?>
+<?php
+    echo $this->render('object_handlers/free_object.phtml', $this->vars());
+?>
 
-<?php //echo $this->render('object_handlers/read_property.phtml', $this->vars()); ?>
+<?php
+    $read_property = $this->render('object_handlers/read_property.phtml', $this->vars());
+    echo $read_property;
 
-<?php //echo $this->render('object_handlers/write_property.phtml', $this->vars()); ?>
+    $write_property = $this->render('object_handlers/write_property.phtml', $this->vars());
+    echo $write_property;
+
+    /*$debug_property = $this->render('object_handlers/get_debug_info.phtml', $this->vars());
+    echo $debug_property;*/
+?>
 
 <?php //echo $this->render('object_handlers/get_debug_info.phtml', $this->vars()); ?>
 
@@ -90,8 +101,10 @@ php_<?php echo $name_function ?>_get_handlers()
     php_<?php echo $name_function ?>_handlers.dtor_obj = php_<?php echo $name_function ?>_dtor_object;
     php_<?php echo $name_function ?>_handlers.free_obj = php_<?php echo $name_function ?>_free_object;
 
-<?php if($has_members): ?>
+<?php if($read_property): ?>
     php_<?php echo $name_function ?>_handlers.read_property = php_<?php echo $name_function ?>_read_property;
+<?php endif; ?>
+<?php if($write_property): ?>
     php_<?php echo $name_function ?>_handlers.write_property = php_<?php echo $name_function ?>_write_property;
 <?php endif; ?>
 
@@ -167,7 +180,7 @@ php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend
 /*----------------------------------------------------------------------+
  | Zend-User API                                                        |
  +----------------------------------------------------------------------*/
-<?php echo $this->render('user-function.phtml', $this->vars()); ?>
+ <?php echo $this->render('user-function.phtml', $this->vars()); ?>
 
 /*----------------------------------------------------------------------+
  | PHP_METHOD                                                           |

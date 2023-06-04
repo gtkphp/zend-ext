@@ -1,0 +1,14 @@
+PHP_FUNCTION(g_list_length)
+{
+    zval *zlist;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zlist, php_g_list_class_entry, 0, 0);
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_list *php_list = ZVAL_IS_PHP_G_LIST(zlist)? ZVAL_GET_PHP_G_LIST(zlist): NULL;
+
+    int ret = php_g_list_length(php_list);
+
+    RETURN_LONG(ret);
+}

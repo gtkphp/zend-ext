@@ -43,6 +43,41 @@ class Glib extends SourceCode {
 
     }
 
+    function loadStubs($filename) {
+        $functions = include($filename);
+        $functions = array_diff($functions['user'], ['composer\autoload\includefile', 'deepcopy\deep_copy', 'gint']);
+        $functions = array_filter($functions, function ($v) {
+            // "composerrequireb77025529192e879922af895bdc5f677"
+            if (0===strpos($v, 'composerrequire')) return false; return true;
+        });
+        $functions = array_values($functions);// remake index
+        
+
+        $this->array['stub'] = [];
+
+        foreach ($functions as $function) {
+            $functionReflection = new \ReflectionFunction($function);
+            $function_name = $functionReflection->getName();
+            $stub = ['type'=>'macro', 'role'=>'function', 'signature'=>['return'=>['type'=>'void'], 'parameters'=>[]]];
+            //TODO: isVariadic, reference
+            $parameters = $functionReflection->getParameters();
+            foreach ($parameters as $parameter) {
+                if ($parameter->getType()) {
+                    $parameter_type = $parameter->getType()->__toString();
+                } else {
+                    $parameter_type = "mixed";
+                }
+                $stub['signature']['parameters'][$parameter->getName()] = ['name'=>$parameter->getName(), 'type'=>$parameter_type];
+            }
+            $returns = $functionReflection->getReturnType();
+            if ($returns) {
+                $stub['signature']['return'] = ['type'=>$returns->getName()];
+            }
+            $this->array['stub'][$function_name] = $stub;
+        }
+
+    }
+
     function loadTypes($filename) {
         try {
             $tokens = $this->preprocessor->process($filename);
@@ -141,6 +176,11 @@ class Glib extends SourceCode {
         //print_r($defines);
 
         // How to parse : G_WIN32_DLLMAIN_FOR_DLL_NAME
+        $stubs = $this->array['stub'];
+
+        if (array_key_exists($name, $stubs)) {
+            return $stubs[$name];
+        }
 
         if (isset($defines[$name])) {
             //echo $name, PHP_EOL;

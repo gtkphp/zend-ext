@@ -2,7 +2,7 @@
 
 namespace Zend\Ext\Services\Classifier;
 
-
+use Exception;
 use Zend\Ext\Models\TypeGenerator;
 use Zend\Ext\Models\ParameterGenerator;
 use Zend\Ext\Models\FunctionGenerator;
@@ -172,13 +172,71 @@ class Cairo
         return null;
     }
     /**
+     * Find the struct than match with the function parameter according with the namespace
+     * g_set_error([GError] $err); match with the struct [GError]
+     * 
+     * Exception :
+     * gtk_cairo_should_draw_window(cairo_t $cr); match with the struct [cairo_t] but not with the namespace
+     * 
      *  @return StructDocBook|TypedefDocBook|null
      */
-    public function getObjectOfFunction(FunctionDocBook $functionDocBook) {
+    public function getObjectOfStaticFunction(FunctionDocBook $functionDocBook) {
         /** @var RefEntryDocBook $refEntryDocBook */
         $refEntryDocBook = $functionDocBook->parent;
-        $structs = $refEntryDocBook->structs();
+
+        /** @var ParameterDocBook $parameterDocBook */
+        $parameterDocBook = $functionDocBook->getParameterAt(0);
+        if ($parameterDocBook) {
+            $typeDocBook = $parameterDocBook->getType();
+            $structs = $refEntryDocBook->structs();
+            $typedefs = $refEntryDocBook->typedefs();
+            if (array_key_exists($typeDocBook->getName(), $structs)) {
+                return $structs[$typeDocBook->getName()];
+            }
+            if (array_key_exists($typeDocBook->getName(), $typedefs)) {
+                return $typedefs[$typeDocBook->getName()];
+            }
+            //throw new Exception("Type ".$typeDocBook->getName()." of first parameter do not exist in refEntry ".$refEntryDocBook->id);
+        }
+
+        return null;
+    }
+
+    
+    public function getNamespaceOfFunction(FunctionDocBook $functionDocBook) {
+        $parts = explode('_', $functionDocBook->name);
+        $namespace = array_shift($parts);
+        if (count($parts)>1) {
+            $sub_namespace = array_shift($parts);
+        }
+        $method_name = implode('_', $parts);
+        return $method_name;
+    }
+
+    /**
+     * Find the struct than match with the function name
+     * [g_error_]matches(); match with the type [GError]
+     * 
+     *  @return StructDocBook|TypedefDocBook|null
+     */
+    public function getObjectOfFunction(FunctionDocBook $functionDocBook/*, StructDocBook $structDocBook*/) {
+        $object_name = null;
+        if (array_key_exists($functionDocBook->name, self::$map_function)) {
+            $object_name = self::$map_function[$functionDocBook->name];
+        }
+        
+        /** @var RefEntryDocBook $refEntryDocBook */
+        $refEntryDocBook = $functionDocBook->parent;
+        /** @var SetDocBook $root; */
+        $root = $refEntryDocBook->getRoot();
+        $structs = $root->getStructs($root);// function refer to an other RefEntry
         foreach ($structs as $name=>$struct) {
+            if ($object_name) {
+                if ($object_name==$name) {
+                    return $struct;
+                }
+                continue;// function is mapped, search struct...
+            }
 
             // Cairo exception
             if (0===strpos(strrev($name), 't_')) {
@@ -186,18 +244,48 @@ class Cairo
             } else {
                 $prefix = self::PascalToSnake($name);
             }
-
+            if ('gs_list'==$prefix) { $prefix = 'g_slist';}
+            if ('gio_channel'==$prefix) { $prefix = 'g_io_channel';}
+            
             // Exceptions
-            if (array_key_exists($functionDocBook->name, self::$map)) {
-                if ($name==self::$map[$functionDocBook->name]) {
-                    return $struct;
-                }
-            } else if (0===strpos($functionDocBook->name, $prefix.'_')) {
+            if (0===strpos($functionDocBook->name, $prefix.'_')) {
                     return $struct;
             }
         }
-        $typedefs = $refEntryDocBook->typedefs();
+        $typedefs = $root->getTypedefs($root);
         foreach ($typedefs as $name=>$typedef) {
+            if ($object_name) {
+                if ($object_name==$name) {
+                    return $typedef;
+                }
+                continue;// function is mapped, search struct...
+            }
+            
+            // Cairo exception
+            if (0===strpos(strrev($name), 't_')) {
+                $prefix = substr($name, 0, -2);
+            } else {
+                $prefix = self::PascalToSnake($name);
+            }
+            /*if ('GTestSuite'==$name && $functionDocBook->name=='g_test_run_suite') {
+
+                throw new Exception("".$prefix);
+            }*/
+
+            if (0===strpos($functionDocBook->name, $prefix.'_')) {
+                return $typedef;
+            }
+        }
+
+        $unions = $root->getUnions($root);
+        foreach ($unions as $name=>$union) {
+            if ($object_name) {
+                if ($object_name==$name) {
+                    return $union;
+                }
+                continue;// function is mapped, search struct...
+            }
+
             // Cairo exception
             if (0===strpos(strrev($name), 't_')) {
                 $prefix = substr($name, 0, -2);
@@ -205,12 +293,17 @@ class Cairo
                 $prefix = self::PascalToSnake($name);
             }
             if (0===strpos($functionDocBook->name, $prefix.'_')) {
-                return $typedef;
+                return $union;
             }
         }
+
         return null;
     }
 
+    /**
+     * Check if function name match with struct name
+     * then check if parameter is struct
+     */
     public function isFunctionOfObject(FunctionDocBook $functionDocBook, AbstractDocBook $objectDocBook):bool {
         /** @var StructDocBook $structDocBook */
         $structDocBook = $objectDocBook;
@@ -257,6 +350,11 @@ class Cairo
                 // gtk_button_new();
                 return true;
             }
+            if (false!==strpos($functionDocBook->name, '_new_')) {
+                // g_tree_new_full();
+                return true;
+            }
+            /*
             if (0===strpos($name_function, strrev('_new_full'))) {
                 // g_tree_new_full();
                 return true;
@@ -270,6 +368,7 @@ class Cairo
                 // gtk_button_new_from_stock();
                 return true;
             }
+            */
         }
 
         if (0===strpos($name_function, strrev('_alloc'))) {
@@ -284,6 +383,22 @@ class Cairo
 
         return false;
     }
+    public function isMMCopy(FunctionDocBook $functionDocBook): bool {
+        $function_name = $functionDocBook->name;
+        $name_function = strrev($function_name);
+        
+        $pos = strpos($name_function, strrev('_copy'));
+        if (0===$pos) {
+            return true;
+        }
+        $pos = strpos($functionDocBook->name, '_copy_');
+        if (false!==$pos) {
+            return true;
+        }
+
+        return false;
+    }
+
 
     // referentor
     public function isMMRef(FunctionDocBook $functionDocBook): bool {
@@ -323,11 +438,19 @@ class Cairo
             return true;
         }
 
+        $pos = strpos($functionDocBook->name, '_clear_');
+        if (false!==$pos) {
+            return true;
+        }
+        
         return false;
     }
     
     public function isMemoryManagement(FunctionDocBook $functionDocBook): bool {
         if ($this->isMMNew($functionDocBook)) {
+            return true;
+        }
+        if ($this->isMMCopy($functionDocBook)) {
             return true;
         }
         if ($this->isMMRef($functionDocBook)) {

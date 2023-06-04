@@ -1,6 +1,25 @@
 # Zend Extension
 C & Php code generator from ModelGenerator
 
+
+
+Step 1 generate header definition 
+$ ./vendor/bin/phpunit --filter ClassGeneratorTest::testDecl ./test
+Step 2 adjust definition 
+$ ./vendor/bin/phpunit --filter ClassGeneratorTest::testInc ./test
+
+then copy tmp/declaration.h -> data/<gnome>/<glib>.h
+
+Step 10 generate macro definition and put it in data/gnome/glib.php
+$ ./vendor/bin/phpunit --filter DocBookGeneratorTest::testMacro ./test
+
+Step 11 generate ext/stub/wrapper/doc
+$ ./vendor/bin/phpunit --filter DocBookGeneratorTest::testAgent ./test
+
+
+
+
+
 TODO: fixe annotation for cairo_get_dashe()
 @dashes: (array) (element-type double) (transfer none)
 

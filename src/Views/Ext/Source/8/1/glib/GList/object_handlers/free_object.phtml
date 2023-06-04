@@ -1,0 +1,8 @@
+static void
+php_g_list_free_object(zend_object *object)
+{
+    php_g_list *intern = ZOBJ_TO_PHP_G_LIST(object);
+    //php_printf("php_g_list_free_object: %p( %d)\n", intern, intern->std.gc.refcount);
+
+    zend_object_std_dtor(&intern->std);
+}

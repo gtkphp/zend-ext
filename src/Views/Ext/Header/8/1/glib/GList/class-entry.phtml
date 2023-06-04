@@ -1,0 +1,7 @@
+struct _php_g_list {
+    zval data;// of zval *
+    zval next;// of php_g_list *
+    zval prev;// of php_g_list *
+
+    zend_object std;
+};

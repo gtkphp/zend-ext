@@ -3,6 +3,7 @@
 namespace Zend\Ext\Services;
 
 use Exception;
+use FFI;
 use Zend\Ext\Services\DocBook\Gnome as DocBook;
 use Zend\Ext\Services\Classifier\Cairo as CairoClassifier;
 
@@ -53,6 +54,10 @@ class Extension
 {
     const ENABLE_TRACE = 0;
     const ENABLE_BREAK = 0;
+    const ENABLE_MACRO_ONLY = 0;
+    const ENABLE_TRACE_CONTEXT = 0;
+    const ENABLE_TRACE_STATIC = 0;
+    const ENABLE_TRACE_VARIADIC = 0;
     
     /**
      * @var DocBook $docBook
@@ -86,6 +91,9 @@ class Extension
     /** @var array[string=>string[]] $whitelist */
     private $whitelist;
 
+    /** @var array[string=>string[]] $blacklist */
+    private $blacklist;
+
     protected $php_version;
 
     public function setVersion($php_version) {
@@ -98,6 +106,15 @@ class Extension
     public function setWhitelist($whitelist): Extension
     {
         $this->whitelist = $whitelist;
+        return $this;
+    }
+
+    /**
+     * @param array[string=>string[]] $whitelist object_name=>[function_name,]
+     */
+    public function setBlacklist($blacklist): Extension
+    {
+        $this->blacklist = $blacklist;
         return $this;
     }
 
@@ -119,366 +136,6 @@ class Extension
         return $this;
     }
     
-    protected function getFunctions(AbstractDocBook $docBook) {
-        //echo 'docBook('.get_class($docBook).')', PHP_EOL;
-        $functions = [];
-        if ($docBook instanceof SetDocBook) {
-            //echo '  getFunctions(Set)', PHP_EOL;
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $fns = $this->getFunctions($set);
-                $functions = array_merge($functions, $fns);
-            }
-            foreach ($docBook->books() as $book) {
-                $fns = $this->getFunctions($book);
-                $functions = array_merge($functions, $fns);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            //echo '    getFunctions(Book)', PHP_EOL;
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $fns = $this->getFunctions($part);
-                $functions = array_merge($functions, $fns);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getFunctions($reference);
-                $functions = array_merge($functions, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $fns = $this->getFunctions($chapter);
-                $functions = array_merge($functions, $fns);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            //echo '      getFunctions(Part)', PHP_EOL;
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $fns = $this->getFunctions($chapter);
-                $functions = array_merge($functions, $fns);
-            }
-            foreach ($docBook->refentries() as $refentry) {
-                $fns = $this->getFunctions($refentry);
-                $functions = array_merge($functions, $fns);
-            }
-        } else if ($docBook instanceof ChapterDocBook) {
-            //echo '      getFunctions(Chapter)', PHP_EOL;
-            /** @var ChapterDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $fns = $this->getFunctions($refentry);
-                $functions = array_merge($functions, $fns);
-            }
-        } else if ($docBook instanceof RefEntryDocBook) {
-            //echo '        getFunctions(Ref)', PHP_EOL;
-            /** @var RefEntryDocBook $docBook */
-            $functions = array_merge($functions, $docBook->functions());
-            /* foreach ($docBook->functions() as $function) {
-                $functions[] = $function;
-            } */
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $functions;
-    }
-
-    protected function getBooks(AbstractDocBook $docBook) {
-        $books = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $bks = $this->getBooks($set);
-                $books = array_merge($books, $bks);
-            }
-            $books = array_merge($books, $docBook->books());
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            $books[] = $docBook;
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $books;
-    }
-
-    protected function getRefEntries(AbstractDocBook $docBook) {
-        $refentries = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $sts = $this->getRefEntries($set);
-                $refentries = array_merge($refentries, $sts);
-            }
-            foreach ($docBook->books() as $book) {
-                $sts = $this->getRefEntries($book);
-                $refentries = array_merge($refentries, $sts);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $sts = $this->getRefEntries($part);
-                $refentries = array_merge($refentries, $sts);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getRefEntries($reference);
-                $refentries = array_merge($refentries, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getRefEntries($chapter);
-                $refentries = array_merge($refentries, $sts);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getRefEntries($chapter);
-                $refentries = array_merge($refentries, $sts);
-            }
-            $refentries = array_merge($refentries, $docBook->refentries());
-        } else if ($docBook instanceof ReferenceDocBook) {
-            $refentries = array_merge($refentries, $docBook->refentries());
-        } else if ($docBook instanceof ChapterDocBook) {
-            $refentries = array_merge($refentries, $docBook->refentries());
-        } else if ($docBook instanceof RefEntryDocBook) {
-            $refentries[] = $docBook;
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $refentries;
-    }
-    protected function getStructs(AbstractDocBook $docBook) {
-        $structs = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $sts = $this->getStructs($set);
-                $structs = array_merge($structs, $sts);
-            }
-            foreach ($docBook->books() as $book) {
-                $sts = $this->getStructs($book);
-                $structs = array_merge($structs, $sts);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $sts = $this->getStructs($part);
-                $structs = array_merge($structs, $sts);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getStructs($reference);
-                $structs = array_merge($structs, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getStructs($chapter);
-                $structs = array_merge($structs, $sts);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getStructs($chapter);
-                $structs = array_merge($structs, $sts);
-            }
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getStructs($refentry);
-                $structs = array_merge($structs, $sts);
-            }
-        } else if ($docBook instanceof ReferenceDocBook) {
-            /** @var ReferenceDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getStructs($refentry);
-                $structs = array_merge($structs, $sts);
-            }
-        } else if ($docBook instanceof ChapterDocBook) {
-            /** @var ChapterDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getStructs($refentry);
-                $structs = array_merge($structs, $sts);
-            }
-        } else if ($docBook instanceof RefEntryDocBook) {
-            /** @var RefEntryDocBook $docBook */
-            $structs = array_merge($structs, $docBook->structs());
-            /* foreach ($docBook->functions() as $function) {
-                $functions[] = $function;
-            } */
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $structs;
-    }
-    protected function getEnums(AbstractDocBook $docBook) {
-        $enums = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $sts = $this->getEnums($set);
-                $enums = array_merge($enums, $sts);
-            }
-            foreach ($docBook->books() as $book) {
-                $sts = $this->getEnums($book);
-                $enums = array_merge($enums, $sts);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $sts = $this->getEnums($part);
-                $enums = array_merge($enums, $sts);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getEnums($reference);
-                $enums = array_merge($enums, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getEnums($chapter);
-                $enums = array_merge($enums, $sts);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getEnums($chapter);
-                $enums = array_merge($enums, $sts);
-            }
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getEnums($refentry);
-                $enums = array_merge($enums, $sts);
-            }
-        } else if ($docBook instanceof ReferenceDocBook) {
-            /** @var ReferenceDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getEnums($refentry);
-                $enums = array_merge($enums, $sts);
-            }
-        } else if ($docBook instanceof ChapterDocBook) {
-            /** @var ChapterDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getEnums($refentry);
-                $enums = array_merge($enums, $sts);
-            }
-        } else if ($docBook instanceof RefEntryDocBook) {
-            /** @var RefEntryDocBook $docBook */
-            $enums = array_merge($enums, $docBook->enums());
-            /* foreach ($docBook->functions() as $function) {
-                $functions[] = $function;
-            } */
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $enums;
-    }
-    protected function getUnions(AbstractDocBook $docBook) {
-        $unions = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $sts = $this->getUnions($set);
-                $unions = array_merge($unions, $sts);
-            }
-            foreach ($docBook->books() as $book) {
-                $sts = $this->getUnions($book);
-                $unions = array_merge($unions, $sts);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $sts = $this->getUnions($part);
-                $unions = array_merge($unions, $sts);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getUnions($reference);
-                $unions = array_merge($unions, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getUnions($chapter);
-                $unions = array_merge($unions, $sts);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getUnions($chapter);
-                $unions = array_merge($unions, $sts);
-            }
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getUnions($refentry);
-                $unions = array_merge($unions, $sts);
-            }
-        } else if ($docBook instanceof ReferenceDocBook) {
-            /** @var ReferenceDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getUnions($refentry);
-                $unions = array_merge($unions, $sts);
-            }
-        } else if ($docBook instanceof ChapterDocBook) {
-            /** @var ChapterDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getUnions($refentry);
-                $unions = array_merge($unions, $sts);
-            }
-        } else if ($docBook instanceof RefEntryDocBook) {
-            /** @var RefEntryDocBook $docBook */
-            $unions = array_merge($unions, $docBook->unions());
-            /* foreach ($docBook->functions() as $function) {
-                $functions[] = $function;
-            } */
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $unions;
-    }
-    protected function getTypedefs(AbstractDocBook $docBook) {
-        /** @var TypedefDocBook[] $typedefs */
-        $typedefs = [];
-        if ($docBook instanceof SetDocBook) {
-            /** @var SetDocBook $docBook */
-            foreach ($docBook->sets() as $set) {
-                $sts = $this->getTypedefs($set);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-            foreach ($docBook->books() as $book) {
-                $sts = $this->getTypedefs($book);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-        } else if ($docBook instanceof BookDocBook) {
-            /** @var BookDocBook $docBook */
-            foreach ($docBook->parts() as $part) {
-                $sts = $this->getTypedefs($part);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-            foreach ($docBook->references() as $reference) {
-                $sts = $this->getTypedefs($reference);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getTypedefs($chapter);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-        } else if ($docBook instanceof PartDocBook) {
-            /** @var PartDocBook $docBook */
-            foreach ($docBook->chapters() as $chapter) {
-                $sts = $this->getTypedefs($chapter);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getTypedefs($refentry);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-        } else if ($docBook instanceof ReferenceDocBook) {
-            /** @var ReferenceDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getTypedefs($refentry);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-        } else if ($docBook instanceof ChapterDocBook) {
-            /** @var ChapterDocBook $docBook */
-            foreach ($docBook->refentries() as $refentry) {
-                $sts = $this->getTypedefs($refentry);
-                $typedefs = array_merge($typedefs, $sts);
-            }
-        } else if ($docBook instanceof RefEntryDocBook) {
-            /** @var RefEntryDocBook $docBook */
-            $typedefs = array_merge($typedefs, $docBook->typedefs());
-            /* foreach ($docBook->functions() as $function) {
-                $functions[] = $function;
-            } */
-        } else {
-            throw new Exception("Unexpected");
-        }
-        return $typedefs;
-    }
-
     /**
      * @param StructDocBook|TypedefDocBook $structDocBook
      */
@@ -524,7 +181,6 @@ class Extension
 
         $classGenerator->addProperties($propertiesGenerator);
     }
-
     /**
      * @var StructDocBook|TypedefDocBook $structDocBook
      * @return MethodGenerator[]
@@ -533,11 +189,6 @@ class Extension
         /** @var MethodGenerator $functionsGenerator */
         $functionsGenerator = [];
 
-        $do_begin = 3;// show() / check if is virtual
-        $do_begin = 7;//11 draw() / is virtual
-        $do_end = $do_begin + 1;
-        $do_i = 0;
-        
         /** @var RefEntryDocBook */
         $refEntryDocBook = $structDocBook->parent;
 
@@ -546,161 +197,308 @@ class Extension
 
         /** @var FunctionDocBook $functionDocBook */
         foreach($functions as $name=>$functionDocBook) {
+            // 1 bold; 3 italic; 4 underline; 5 normal
+            $color = "\033[34;";// blue
+            $decor = "5m";
+
+            //if (self::ENABLE_TRACE) echo "=>".$functionDocBook->name.":\n";
 
             /** @var RefEntryDocBook $ref */
             $ref = $functionDocBook->parent;
 
-            if ($ref->id == $refEntryDocBook->id) {
-
-                if ($functionDocBook->isCallback()) {
-                    if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( prototype)', PHP_EOL;
-                    continue;
-                }
-
-                if ($functionDocBook->isMacro()) {
-                    if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( macro)', PHP_EOL;
-                    continue;
-                }
-
-                //echo "    - ".$functionDocBook->name."\n";
-                /** @var StructDocBook $structDocBook */
-                $objectDocBook = $classifier->getObjectOfFunction($functionDocBook);
-
-                if ($objectDocBook && $this->skip($objectDocBook->name, $functionDocBook->name)) continue;
-
-                //CairoClassifier::$map
-                if (null==$objectDocBook) {
-                    if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( class '.$ref->id.' not found)', PHP_EOL;
-                    /**
-                     * Créer toutes les class, puis refaire une boucle pour attacher les method/property
-                     */
-                    continue;
-                }
-                if ($objectDocBook->name !== $structDocBook->name) {
-                    if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( not in same class)', PHP_EOL;
-                    continue;
-                }
-
-                // TODO subdivid by (new, free), (ref, unref, adopt, get_reference_count), (get_user_data, set_user_data)
-                /*
-                if ($classifier->isMemoryManagement($functionDocBook)) {
-                    echo $refEntryDocBook->id, '::', $functionDocBook->name, '( memory)', PHP_EOL;
-                    continue;
-                }
-                if ($classifier->isErrorManagement($functionDocBook)) {
-                    echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Status|Error|Exception)', PHP_EOL;
-                    continue;
-                }
-                if ($classifier->isUserData($functionDocBook)) {
-                    echo $refEntryDocBook->id, '::', $functionDocBook->name, '( UserData)', PHP_EOL;
-                    continue;
-                }
-                if ($classifier->isGetterSetter($functionDocBook)) {
-                    echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Getter|Setter)', PHP_EOL;
-                    continue;
-                }
-                */
-                
-                
-                //isInternal() ? isEndUser() ? isUserData ?
-                //if ($functionDocBook->isStatic()) {}
-                //if ($functionDocBook->isVirtual()) {}
-
-
-
-                //TODO function can throw Exception func( GError **error);
-                $method_name = $classifier->getMethodName($functionDocBook, $structDocBook);
-                
-                /** @var StructDocBook $classDocBook */
-                $classDocBook = null;
-                if (array_key_exists($objectDocBook->name.'Class', $this->structsDocBook)) {
-                    $classDocBook = $this->structsDocBook[$objectDocBook->name.'Class'];
-                }
-
-                //echo count($classDocBook->getFields()), ' fields', PHP_EOL; 
-                if (/*$method_name &&*/ $classDocBook) {
-                    // Append Virtual method
-                    // 1 bold; 3 italic; 4 underline
-                    $color = "\033[34;";// blue
-                    $decor = "5m";// normal
-                    if ($classifier->isStatic($functionDocBook)) {
-                        $color = "\033[0;";// black
-                        $decor = "1m";// bold
-                    }
-                    if ($classifier->isMemoryManagement($functionDocBook)) {
-                        $color = "\033[31;";// red
-                    }
-
-                    //echo 'TODO: ', $classDocBook->name, ':: ... ', $functionDocBook->name;
-                    /*var_dump($method_name);
-                    echo $classDocBook->getField($method_name)->name, PHP_EOL;*/ 
-    
-                    //$this->structsDocBook[$objectDocBook->name];
-                    //$this->typedefsDocBook = $this->getTypedefs($docBook);
-                    $methodGenerator = new MethodGenerator($functionDocBook->name);
-                    $methodGenerator->setNickName($method_name);
-                    $this->loadMethodParametersGenerator($functionDocBook, $methodGenerator);
-                    $this->loadMethodReturnGenerator($functionDocBook, $methodGenerator);
-        
-                    $methodGenerator->setMethod(true);
-                    if ($classDocBook->getField($method_name)) {
-                        $methodGenerator->setVirtual(true);
-                        $decor = "4m";// underline
-                    }
-                    //echo "    - ".$color.$decor.$functionDocBook->name."\033[0m\n";
-                    //CHECK TODO: $this->loadFunctionDockBlockGenerator($functionDocBook, $functionGenerator);
-                    $classGenerator->addMethodFromGenerator($methodGenerator);
-                    $functionGenerator = $methodGenerator;
-                } else {
-                    echo "      ::function()\n";
-                    $functionGenerator = new MethodGenerator($functionDocBook->name);
-                    $this->loadFunctionParametersGenerator($functionDocBook, $functionGenerator);
-                    $this->loadFunctionReturnGenerator($functionDocBook, $functionGenerator);
-                    $this->loadFunctionDockBlockGenerator($functionDocBook, $functionGenerator);
-                    if ($method_name) {
-                        $functionGenerator->setMethod(true);
-                        $functionGenerator->setNickName($method_name);
-                        //echo 'TODO: ', $objectDocBook->name, '::', $functionDocBook->name, ';', $method_name, PHP_EOL;
-                        //echo '    ', $objectDocBook->name, '!==', $structDocBook->name, PHP_EOL;
-                    }
-                    // + isMemoryManagement
-                    //    + isConstructor
-                    //    + isReferror
-                    //    + isDestructor
-                    if ($classifier->isMemoryManagement($functionDocBook)) {
-                        $functionGenerator->setMemoryManagement();
-                        if ($classifier->isMMFree($functionDocBook)) {
-                            $classGenerator->setDestroyFunction($functionDocBook->name);
-                        }
-                        if ($classifier->isMMNew($functionDocBook)) {
-                            $classGenerator->setCreatorFunction($functionDocBook->name);
-                        }
-                    }
-                    if ($classifier->isErrorManagement($functionDocBook)) {
-                        $functionGenerator->setErrorManagement();
-                    }
-                    if ($classifier->isUserData($functionDocBook)) {
-                        $functionGenerator->setUserData();
-                    }
-                    if ($classifier->isStatic($functionDocBook)) {
-                        echo "$functionDocBook->name is Static \n";
-                        $functionGenerator->setStatic(true);
-                    }
-                    if ($classifier->isGetterSetter($functionDocBook)) {
-                        $functionGenerator->setGetterSetter(true);
-                    }
-                }
-                $functionsGenerator[] = $functionGenerator;
-
-            } else {
-                echo "Never append\n";
-    
+            if ($functionDocBook->isCallback()) {
+                if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( prototype)', PHP_EOL;
+                continue;
             }
-   
+
+            //self::ENABLE_MACRO_ONLY
+
+            if ($functionDocBook->isMacro()) {
+                //if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( macro)', PHP_EOL;
+                //continue;
+                $decor = "1m";
+            }
+
+            /** @var StructDocBook $structDocBook */
+            $objectDocBook = $classifier->getObjectOfFunction($functionDocBook/*, $structDocBook*/);// match function_name with type registered
+
+            if (!$objectDocBook) {
+                $context       = $classifier->getObjectOfStaticFunction($functionDocBook);// getContext of function
+                if (!$context) {
+                    if (self::ENABLE_TRACE_CONTEXT) echo "\033[31;5m ".$functionDocBook->name ."()\033[0m, do not match with function_name or struct/class in current ref entry\n";
+                    continue;
+                }
+                if ($context->name != $structDocBook->name) {
+                    if (self::ENABLE_TRACE_CONTEXT) echo "\033[31;5m ".$functionDocBook->name ."()\033[0m, first parameter do not match with current object\n";// eg: cairo_copy_path() defined in path for cairo_t
+                    continue;
+                }
+                $objectDocBook = $context;
+            }
+
+            if ($objectDocBook && $this->skip($objectDocBook->name, $functionDocBook->name)) continue;
+
+            //CairoClassifier::$map
+            if (null==$objectDocBook) {
+                if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( {{class}} '.$ref->id.' not found)', PHP_EOL;
+                /**
+                 * Créer toutes les class, puis refaire une boucle pour attacher les method/property
+                 */
+                continue;
+            }
+            if ($objectDocBook->name !== $structDocBook->name) {
+                if ('g_thread_init'==$functionDocBook->name) {
+                    var_dump($objectDocBook->name);
+                    throw new Exception("stop");
+                }
+    
+                if (self::ENABLE_TRACE) echo $refEntryDocBook->id, '::', $functionDocBook->name, '( not in RefEntry struct)', PHP_EOL;
+                continue;
+            }
+
+            // TODO subdivid by (new, free), (ref, unref, adopt, get_reference_count), (get_user_data, set_user_data)
+            if ($classifier->isMemoryManagement($functionDocBook)) {
+                //echo $refEntryDocBook->id, '::', $functionDocBook->name, '( memory)', PHP_EOL;
+                // continue;
+                $color = "\033[31;";// red
+            }
+            /*
+            if ($classifier->isErrorManagement($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Status|Error|Exception)', PHP_EOL;
+                continue;
+            }
+            if ($classifier->isUserData($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( UserData)', PHP_EOL;
+                continue;
+            }
+            if ($classifier->isGetterSetter($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Getter|Setter)', PHP_EOL;
+                continue;
+            }
+            */
+            
+            
+            //isInternal() ? isEndUser() ? isUserData ?
+            //if ($functionDocBook->isStatic()) {}
+            //if ($functionDocBook->isVirtual()) {}
+
+
+            $functionGenerator = new MethodGenerator($functionDocBook->name);
+            $this->loadFunctionParametersGenerator($functionDocBook, $functionGenerator);
+            $this->loadFunctionReturnGenerator($functionDocBook, $functionGenerator);
+            $this->loadFunctionDockBlockGenerator($functionDocBook, $functionGenerator);
+
+            // + isMemoryManagement
+            //    + isConstructor
+            //    + isReferror
+            //    + isDestructor
+            if ($classifier->isMemoryManagement($functionDocBook)) {
+                $functionGenerator->setMemoryManagement();
+                if ($classifier->isMMFree($functionDocBook)) {
+                    $classGenerator->setDestroyFunction($functionDocBook->name);
+                }
+                if ($classifier->isMMNew($functionDocBook)) {
+                    $classGenerator->setCreatorFunction($functionDocBook->name);
+                }
+            }
+            if ($classifier->isErrorManagement($functionDocBook)) {
+                $functionGenerator->setErrorManagement();
+            }
+            if ($classifier->isUserData($functionDocBook)) {
+                $functionGenerator->setUserData();
+            }
+            if ($classifier->isStatic($functionDocBook)) {
+                if (self::ENABLE_TRACE_STATIC) echo "$functionDocBook->name is Static \n";
+                $functionGenerator->setStatic(true);
+            }
+            if ($classifier->isGetterSetter($functionDocBook)) {
+                $functionGenerator->setGetterSetter(true);
+            }
+
+
+            /** @var StructDocBook $classDocBook */
+            $classDocBook = null;
+            if (array_key_exists($objectDocBook->name.'Class', $this->structsDocBook)) {
+                $classDocBook = $this->structsDocBook[$objectDocBook->name.'Class'];
+            }
+
+            // struct is class
+            if ($classDocBook) {
+                //TODO function can throw Exception func( GError **error);
+                $method_name = $classifier->getMethodName($functionDocBook, $structDocBook);/// TODO : use $objectDocBook instead
+                
+                if ($method_name) {
+                    $functionGenerator->setMethod(true);
+                    $functionGenerator->setNickName($method_name);
+                    //echo 'TODO: ', $objectDocBook->name, '::', $functionDocBook->name, ';', $method_name, PHP_EOL;
+                    //echo '    ', $objectDocBook->name, '!==', $structDocBook->name, PHP_EOL;
+                }
+    
+                if ($classifier->isStatic($functionDocBook)) {
+                    $color = "\033[0;";// black
+                    $decor = "1m";// bold
+                }
+                if ($classifier->isMemoryManagement($functionDocBook)) {
+                    $color = "\033[31;";// red
+                }
+
+                //echo 'TODO: ', $classDocBook->name, ':: ... ', $functionDocBook->name;
+                /*var_dump($method_name);
+                echo $classDocBook->getField($method_name)->name, PHP_EOL;*/ 
+
+                //$this->structsDocBook[$objectDocBook->name];
+                //$this->typedefsDocBook = $this->getTypedefs($docBook);
+                $functionGenerator->setNickName($method_name);
+    
+                $functionGenerator->setMethod(true);
+                if ($classDocBook->getField($method_name)) {
+                    $functionGenerator->setVirtual(true);
+                    $decor = "4m";// underline
+                }
+            }
+            if (self::ENABLE_TRACE) echo "    - ".$color.$decor.$functionDocBook->name."\033[0m\n";
+            $functionsGenerator[] = $functionGenerator;
+
+            $functionDocBook->setContext($objectDocBook);
+            //$refentry = $functionDocBook->parent;
+
         }
+        
         return $functionsGenerator;
     }
+    /**
+     * @var FunctionDocBook $functionDocBook
+     * @return MethodGenerator
+     */
+    protected function loadMethodGenerator($functionDocBook, ClassGenerator $classGenerator) {
+        /** @var MethodGenerator $functionGenerator */
+        $functionGenerator = null;
 
+        $classifier = new CairoClassifier();
+
+            // 1 bold; 3 italic; 4 underline; 5 normal
+            $color = "\033[34;";// blue
+            $decor = "5m";
+
+
+            if ($functionDocBook->isCallback()) {
+                $decor = "2m";
+            }
+
+            if ($functionDocBook->isMacro()) {
+                $decor = "1m";
+            }
+
+            // TODO subdivid by (new, free), (ref, unref, adopt, get_reference_count), (get_user_data, set_user_data)
+            if ($classifier->isMemoryManagement($functionDocBook)) {
+                //echo $refEntryDocBook->id, '::', $functionDocBook->name, '( memory)', PHP_EOL;
+                // continue;
+                $color = "\033[31;";// red
+            }
+            /*
+            if ($classifier->isErrorManagement($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Status|Error|Exception)', PHP_EOL;
+                continue;
+            }
+            if ($classifier->isUserData($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( UserData)', PHP_EOL;
+                continue;
+            }
+            if ($classifier->isGetterSetter($functionDocBook)) {
+                echo $refEntryDocBook->id, '::', $functionDocBook->name, '( Getter|Setter)', PHP_EOL;
+                continue;
+            }
+            */
+            
+            
+            //isInternal() ? isEndUser() ? isUserData ?
+            //if ($functionDocBook->isStatic()) {}
+            //if ($functionDocBook->isVirtual()) {}
+
+
+            $functionGenerator = new MethodGenerator($functionDocBook->name);
+            $this->loadFunctionParametersGenerator($functionDocBook, $functionGenerator);
+            $this->loadFunctionReturnGenerator($functionDocBook, $functionGenerator);
+            $this->loadFunctionDockBlockGenerator($functionDocBook, $functionGenerator);
+
+            // + isMemoryManagement
+            //    + isConstructor
+            //    + isReferror
+            //    + isDestructor
+            if ($classifier->isMemoryManagement($functionDocBook)) {
+                $functionGenerator->setMemoryManagement();
+                if ($classifier->isMMFree($functionDocBook)) {
+                    $classGenerator->setDestroyFunction($functionDocBook->name);
+                }
+                if ($classifier->isMMNew($functionDocBook)) {
+                    $classGenerator->setCreatorFunction($functionDocBook->name);
+                }
+            }
+            if ($classifier->isErrorManagement($functionDocBook)) {
+                $functionGenerator->setErrorManagement();
+            }
+            if ($classifier->isUserData($functionDocBook)) {
+                $functionGenerator->setUserData();
+            }
+            if ($classifier->isStatic($functionDocBook)) {
+                if (self::ENABLE_TRACE_STATIC) echo "$functionDocBook->name is Static \n";
+                $functionGenerator->setStatic(true);
+            }
+            if ($classifier->isGetterSetter($functionDocBook)) {
+                $functionGenerator->setGetterSetter(true);
+            }
+
+
+            /** @var StructDocBook $classDocBook */
+            $classDocBook = null;
+            
+            if (array_key_exists($classGenerator->getName().'Class', $this->structsDocBook)) {
+                $classDocBook = $this->structsDocBook[$classGenerator->getName().'Class'];
+            }
+
+            // struct is class
+            if ($classDocBook) {
+                echo "Class foudn !\n";
+                /*
+                //TODO function can throw Exception func( GError **error);
+                $method_name = $classifier->getMethodName($functionDocBook, $structDocBook);/// TODO : use $objectDocBook instead
+                
+                if ($method_name) {
+                    $functionGenerator->setMethod(true);
+                    $functionGenerator->setNickName($method_name);
+                    //echo 'TODO: ', $objectDocBook->name, '::', $functionDocBook->name, ';', $method_name, PHP_EOL;
+                    //echo '    ', $objectDocBook->name, '!==', $structDocBook->name, PHP_EOL;
+                }
+    
+                if ($classifier->isStatic($functionDocBook)) {
+                    $color = "\033[0;";// black
+                    $decor = "1m";// bold
+                }
+                if ($classifier->isMemoryManagement($functionDocBook)) {
+                    $color = "\033[31;";// red
+                }
+
+                //echo 'TODO: ', $classDocBook->name, ':: ... ', $functionDocBook->name;
+                //var_dump($method_name);
+                //echo $classDocBook->getField($method_name)->name, PHP_EOL;
+
+                //$this->structsDocBook[$objectDocBook->name];
+                //$this->typedefsDocBook = $this->getTypedefs($docBook);
+                $functionGenerator->setNickName($method_name);
+    
+                $functionGenerator->setMethod(true);
+                if ($classDocBook->getField($method_name)) {
+                    $functionGenerator->setVirtual(true);
+                    $decor = "4m";// underline
+                }
+                */
+            }
+            //echo "    - ".$color.$decor.$functionDocBook->name."\033[0m\n";
+
+            //$functionDocBook->setContext($objectDocBook);
+            //$refentry = $functionDocBook->parent;
+
+        return $functionGenerator;
+    }
     protected function loadFunctionParametersGenerator(FunctionDocBook $functionDocBook, MethodGenerator $methodGenerator) {
         // In a method, first parameter is the $this context
         /** @var ParameterDocBook[] $parameters */
@@ -764,6 +562,7 @@ class Extension
                 if (array_key_exists($type->getName(), $this->typesGenerator)) {
                     $typeGenerator = $this->typesGenerator[$type->getName()];
                 } else {
+                    var_dump($type);
                     throw new Exception("stop here");
                 }
     
@@ -782,6 +581,9 @@ class Extension
      * @return ParameterGenerator
      */
     protected function loadParameterGenerator(ParameterDocBook $parameterDocBook) {
+        /** @var MethodGenerator $functionGenerator */
+        $functionGenerator = $parameterDocBook->parent;
+
         /** @var ParameterGenerator $parameterGenerator */
         $parameterGenerator = new ParameterGenerator();
 
@@ -802,7 +604,7 @@ class Extension
             if (array_key_exists($type->getName(), $this->typesGenerator)) {
                 $typeGenerator = $this->typesGenerator[$type->getName()];
             } else {
-                throw new Exception("stop here");
+                throw new Exception("Error: Type '".$type->getName()."' not registered for " . $functionGenerator->name .'(..., $'. $parameterDocBook->getName().', ...)');
             }
             $parameterGenerator->setType($typeGenerator);
             
@@ -857,23 +659,23 @@ class Extension
         $parameters = $functionDocBook->getParameters();
         /** @var ParameterDocBook $parameterDocBlock */
         foreach($parameters as $parameterDocBlock) {
-            $paramTag = new ParamTag($parameterDocBlock->getName());
-            $paramTag->setDescription($parameterDocBlock->getDescription());
-            $typeDocBook = $parameterDocBlock->getType();
-            
-            if (array_key_exists($typeDocBook->getName(), $this->typesGenerator)) {
-                $typeGenerator = $this->typesGenerator[$typeDocBook->getName()];
+            if ($parameterDocBlock->isVariadic()) {
+                if (self::ENABLE_TRACE_VARIADIC) echo $functionDocBook->name, " has variadic\n";
             } else {
-                throw new Exception("stop here");
+                $paramTag = new ParamTag($parameterDocBlock->getName());
+                $paramTag->setDescription($parameterDocBlock->getDescription());
+                $typeDocBook = $parameterDocBlock->getType();
+                if (array_key_exists($typeDocBook->getName(), $this->typesGenerator)) {
+                    $typeGenerator = $this->typesGenerator[$typeDocBook->getName()];
+                    $paramTag->setTypes($typeGenerator->generate());
+                    $docBlockGenerator->setTag($paramTag);
+                } else {
+                    throw new Exception("Error: Type not registered " . $functionDocBook->name . '('.$parameterDocBlock->getName().')');
+                }
             }
-
-            $paramTag->setTypes($typeGenerator->generate());
 
             //$parameterDocBlock->isDeref();
             //$paramTag->setDeref(true);
-
-            
-            $docBlockGenerator->setTag($paramTag);
         }
 
         /** @var ParameterDocBook|null $returnsDocBook */
@@ -1060,7 +862,9 @@ class Extension
     public function loadPackages(SetDocBook $docBook) {
         $packages = [];
 
-        foreach ($this->getBooks($docBook) as $docBook) {
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+        foreach ($root->getBooks($docBook) as $docBook) {
             $package = new Package();
             $package->name = $docBook->id;
             //$package->top = $docBook->parent->id;
@@ -1172,6 +976,218 @@ class Extension
     
         }
     }
+    
+    protected function loadObjectFunctions(AbstractDocBook $docBook) {
+        $objects = $this->kinds['object'];
+
+        $structs = $this->structsDocBook;
+        $typedefs = $this->typedefsDocBook;
+
+        //$packageGenerator = new PackageGenerator($name);
+        foreach($objects as $name=>$object_name) {
+            /** @var StructDocBook */
+            if (array_key_exists($name, $structs)) {
+                $object = $structs[$name];
+            } else if (array_key_exists($name, $typedefs)) {
+                $object = $typedefs[$name];
+            } else {
+                throw new Exception("Why ?");
+            }
+            $docBook = $object->getBook();
+            $files = $this->packages[$docBook->id]->files;
+
+            $fileGenerator = $files[$name];
+            $classGenerator = $fileGenerator->getClass();
+
+            if ($this->skip($name)) continue;
+
+            $this->requiredFiles = [];
+            $this->useFiles = [];
+
+            echo "TODO: load method of $name and set Uses/Requireds ".$classGenerator->getName()."\n";
+            
+            $functionsGenerator = $this->loadMethodsGenerator($object, $classGenerator);
+            $fileGenerator->setFunctions($functionsGenerator);
+    
+            //$this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
+    
+        }
+    }
+
+    protected function loadGlobalFunctions(AbstractDocBook $docBook) {
+        // getContainingFileGenerator();
+        $refs = [];
+        $it = 0;
+        $count_method = 0;
+        $classifier = new CairoClassifier();
+
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+
+        /** @var FunctionDocBook $functionDocBook */
+        foreach ($root->getFunctions($docBook) as $name=>$functionDocBook) {
+
+            // Trouver ou placer chaque fonction
+            // chercher la class dans le RefEntry courant, puis dans root
+            $objectDocBook = $classifier->getObjectOfFunction($functionDocBook);
+            if ($objectDocBook) {
+                //echo $objectDocBook->name, '::', $functionDocBook->name, PHP_EOL;
+                $count_method++;
+
+                /*
+                */
+                $docBook = $objectDocBook->getBook();
+                $files = $this->packages[$docBook->id]->files;
+
+                $fileGenerator = $files[$objectDocBook->name];
+                $classGenerator = $fileGenerator->getClass();
+
+                if ($this->skip($name)) continue;
+
+                $this->requiredFiles = [];
+                $this->useFiles = [];
+
+                //echo "TODO: load method of $name and set Uses/Requireds ".$classGenerator->getName()."\n";
+                
+                $functionGenerator = $this->loadMethodGenerator($functionDocBook, $classGenerator);
+                $fileGenerator->setFunction($functionGenerator);
+                /*
+                */
+
+            } else {
+                $method_name = $classifier->getNamespaceOfFunction($functionDocBook);
+                echo '\\', $functionDocBook->name, ' - ', $method_name, PHP_EOL;
+            }
+            $it++;
+            // 65.88% -> 1062/1568 - 67.73% -> 1069/1568 - 68.18% -> 1106/1568 - 70.54% -> 71.17%
+
+
+            /** @var RefEntryDocBook $refEntryDocBook */
+            $refEntryDocBook = $functionDocBook->parent;
+            /*
+            $ref = substr($refEntryDocBook->id, strpos($refEntryDocBook->id, '-')+1);
+            $ref = strtolower($ref);
+            if (!isset($refs[$ref])) $refs[$ref] = [];
+            $refs[$ref][] = $functionDocBook->name;
+            */
+
+            //echo ' => ', $functionDocBook->name, ' :: ', PHP_EOL;
+
+            //$docBook = $refEntryDocBook->getBook();
+            //$files = $this->packages[$docBook->id]->files;
+
+            /*
+            $fileGenerator = $files[$name];
+            $classGenerator = $fileGenerator->getClass();
+
+            if ($this->skip($name)) continue;
+
+            // StructDocBook
+            $objectDocBook = $functionDocBook->getContext();
+
+            */
+        }
+        echo $count_method, '/', $it, ' - ', sprintf("%.2f%%", 100*$count_method/$it), PHP_EOL;
+        
+
+
+
+        //print_r($refs['version-information']);
+        $files = array(
+            'version-information'      => 'version-information',
+            'atomic-operations'        => 'atomic-operations',
+            'the-main-event-loop'      => 'the-main-event-loop',
+            'threads'                  => 'threads',
+            'memory-allocation'        => 'memory-allocation',
+            'memory-slices'            => 'memory-slices',
+            'io-channels'              => 'io-channels',
+            'warnings-and-assertions'  => 'warnings-and-assertions',
+            'message-logging'          => 'message-logging',
+            'string-utility-functions' => 'string-utility-functions',
+            'character-set-conversion' => 'character-set-conversion',
+            'unicode-manipulation'     => 'unicode-manipulation',
+            'base64-encoding'          => 'base64-encoding',
+            'data-checksums'           => 'data-checksums',
+            'data-hmacs'               => 'data-hmacs',
+            'i18n'                     => 'i18n',
+            'date-and-time-functions'  => 'date-and-time-functions',
+            'random-numbers'           => 'random-numbers',
+            'miscellaneous-utility-functions'         => 'miscellaneous-utility-functions',
+            'spawning-processes'       => 'spawning-processes',
+            'file-utilities'           => 'file-utilities',
+            'uri-functions'            => 'uri-functions',
+            'hostname-utilities'       => 'hostname-utilities',
+            'shell-related-utilities'  => 'shell-related-utilities',
+            'glob-style-pattern-matching'             => 'glob-style-pattern-matching',
+            'simple-xml-subset-parser' => 'simple-xml-subset-parser',
+            'testing'                  => 'testing',
+            'unix-specific-utilities-and-integration' => 'unix-specific-utilities-and-integration',
+            'windows-compatibility-functions'         => 'windows-compatibility-functions',
+            'guuid'                    => 'guuid',
+            'singly-linked-lists'      => 'singly-linked-lists',
+            'hash-tables'              => 'hash-tables',
+            'quarks'                   => 'quarks',
+            'datasets'                 => 'datasets',
+            'deprecated-thread-apis'   => 'deprecated-thread-apis',
+        );
+        /*
+        -information
+        -operations
+        -manipulation
+        -functions
+        -utilities
+        */
+
+    }
+
+    protected function resumRefEntry(AbstractDocBook $docBook) {
+        $refs = [];
+
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+
+        $refEntries = $root->getRefEntries($docBook);
+        /** @var RefEntry $refEntryDocBook */
+        foreach ($refEntries as $refEntryDocBook) {
+
+            $ref = [];
+            $ref['name'] = $refEntryDocBook->id;
+            $ref['structs'] = count($refEntryDocBook->structs());
+            $ref['opaques'] = count($refEntryDocBook->typedefs());
+            $ref['functions'] = count($refEntryDocBook->functions());
+            $ref['items'] = '';
+            //$refs[$refEntryDocBook->id]['macros'] = count($refEntryDocBook->macros());
+            //$refs[$refEntryDocBook->id]['defines'] = count($refEntryDocBook->defines());
+            //$ref['orphelans'] = '3/18; 2; 3';
+
+            $glue = '';
+            $count = 0;
+            /** @var FunctionDocBook $functionDocBook */
+            foreach($refEntryDocBook->functions() as $name=>$functionDocBook) {
+                if ($functionDocBook->getContext()) {
+                    $count++;
+                    continue;
+                }
+                if ($functionDocBook->isCallback()) {
+                    $count++;
+                    continue;
+                }
+                if ($functionDocBook->isMacro()) {
+                    $count++;
+                    continue;
+                }
+                $ref['items'] .= $glue.$name;
+                $glue = ', ';
+            }
+            $num = $ref['functions'];
+            $ref['functions'] = ($ref['functions']-$count). '/' . $ref['functions'];
+
+            if ($num-$count)
+                $refs[] = $ref;
+            
+        }
+        return $refs;// 54/84 posède des 
+    }
 
     protected function loadObjectGenerator(AbstractDocBook $docBook) {
         $objects = $this->kinds['object'];
@@ -1194,7 +1210,7 @@ class Extension
                 throw new Exception("Why ? $name");
                 continue;
             }
-                
+
             $this->requiredFiles = [];
             $this->useFiles = [];
 
@@ -1231,7 +1247,7 @@ class Extension
 
             $this->loadNamespace($fileGenerator, $object);
             $this->loadFilename($fileGenerator, $object);
-            //$this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
+            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
 
             $docBook = $object->getBook();
             $this->packages[$docBook->id]->files[$name] = $fileGenerator;
@@ -1295,7 +1311,10 @@ class Extension
     }
 
     protected function loadUnionGenerator(AbstractDocBook $docBook) {
-        $unions = $this->getUnions($docBook);
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+
+        $unions = $root->getUnions($docBook);
 
         //$packageGenerator = new PackageGenerator($name);
         foreach($unions as $name=>$union) {
@@ -1313,12 +1332,23 @@ class Extension
                 new AuthorTag("mail", 'mail@gmail.com')
             ]);
             $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
-            /*$fileGenerator = new FileGenerator();
+            $fileGenerator = new FileGenerator();
             $fileGenerator->setDocBlock($docFileGenerator);
 
             $docClassGenerator = new DocBlockGenerator();
-            $docClassGenerator->setLongDescription("Class $name");*/
+            $docClassGenerator->setLongDescription("Class $name");
             
+            $classGenerator = new ClassGenerator($name);// UnionGenerator|EnumGenerator|AliasGenerator|ClassGenerator
+
+            $fileGenerator->setClass($classGenerator);
+            //$fileGenerator->setFunctions($functionsGenerator);
+
+            $this->loadNamespace($fileGenerator, $union);
+            $this->loadFilename($fileGenerator, $union);
+            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
+            
+            $docBook = $union->getBook();
+            $this->packages[$docBook->id]->files[$name] = $fileGenerator;
 
             // create 2 ClassGenerator if anonymous structure + 1 TypeGenerator (union)
             //echo $union->getDescription(), PHP_EOL;
@@ -1384,7 +1414,7 @@ class Extension
                     
                     $docBook = $union->getBook();
                     $this->packages[$docBook->id]->files[$type_union_name] = $fileStructGenerator;
-        
+
                 }
 
             }
@@ -1423,6 +1453,11 @@ class Extension
 
         }
     }
+    protected function loadMacroGenerator(AbstractDocBook $docBook) {
+        //TODO: load macro constants
+        // Reflection
+    }
+
 
     protected function loadAliasGenerator(AbstractDocBook $docBook) :? ClassGenerator {
         $alias = $this->kinds['alias'];
@@ -1476,8 +1511,30 @@ class Extension
             $typeGenerator->explicite_type = $php_type;
             $this->typesGenerator[$type] = $typeGenerator;
         }
+        foreach (array_keys(TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE) as $php_type) {
+            $internal_types = [
+                'bool'     => 'gboolean',
+                'int'      => 'int',
+                'float'    => 'float',
+                'string'   => 'char *',
+                'array'    => 'gpointer',
+                'callable' => 'gpointer',
+                'iterable' => 'gpointer',
+                'object'   => 'gpointer',
+                'mixed'    => 'gpointer',
+                'void'     => 'void',
+            ];
+            if (array_key_exists($php_type, $internal_types)) {
+                $typeGenerator = TypeGenerator::fromTypeString($php_type);
+                $typeGenerator->internal_type = $internal_types[$php_type];
+                $typeGenerator->explicite_type = $php_type;
+                $this->typesGenerator[$php_type] = $typeGenerator;
+            }
+        }
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
 
-        $typesdefs = $this->getTypedefs($docBook);
+        $typesdefs = $root->getTypedefs($docBook);
         foreach ($typesdefs as $type_name=>$typedef) {
         
             $typdef = $this->getDocBook()->getSourceCode()->getTypedef($type_name);
@@ -1510,7 +1567,10 @@ class Extension
         /*
         echo "\033[34;1mStructs: \033[0m", PHP_EOL;
         */
-        $structs = $this->getStructs($docBook);
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+
+        $structs = $root->getStructs($docBook);
         foreach ($structs as $struct_name=>$struct) {
             if (array_key_exists($struct_name, $this->typesGenerator)) {
                 continue;
@@ -1530,7 +1590,7 @@ class Extension
             }
         }
 
-        $enums = $this->getEnums($docBook);
+        $enums = $root->getEnums($docBook);
         foreach ($enums as $enum_name=>$enum) {
             if (array_key_exists($enum_name, $this->typesGenerator)) {
                 continue;
@@ -1549,7 +1609,7 @@ class Extension
             $this->typesGenerator[$enum->name] = $typeGenerator;
         }
 
-        $unions = $this->getUnions($docBook);
+        $unions = $root->getUnions($docBook);
         foreach ($unions as $union_name=>$union) {
             if (array_key_exists($union_name, $this->typesGenerator)) {
                 continue;
@@ -1593,7 +1653,7 @@ class Extension
         }
         
         // foreach RefEntry
-        $refEntries = $this->getRefEntries($docBook);
+        $refEntries = $root->getRefEntries($docBook);
         foreach ($refEntries as $refEntry) {
             $this->loadTypeCallbacksGenerator($refEntry);
         }
@@ -1861,15 +1921,14 @@ class Extension
             $typeDocBook = $parameterDocBook->getType();
             if ($typeDocBook) {
                 $type = $parameterDocBook->getType();
-                if (array_key_exists($type->getName(), $this->typesGenerator)) {
-                    continue;
-                }
-                $php_type = $this->loadTypePhp($type->getName());
+                if (!array_key_exists($type->getName(), $this->typesGenerator)) {
+                    $php_type = $this->loadTypePhp($type->getName());
 
-                $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
-                $typeGenerator->internal_type = $type->getName();
-                $typeGenerator->explicite_type = $php_type['specific'];
-                $this->typesGenerator[$typeDocBook->getName()] = $typeGenerator;
+                    $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
+                    $typeGenerator->internal_type = $type->getName();
+                    $typeGenerator->explicite_type = $php_type['specific'];
+                    $this->typesGenerator[$typeDocBook->getName()] = $typeGenerator;
+                }
             }
 
             /** @var ParameterDocBook $parameterDocBook */
@@ -1878,18 +1937,17 @@ class Extension
                 $typeDocBook = $parameterDocBook->getType();
                 if ($typeDocBook) {
                     $type = $parameterDocBook->getType();
-                    if (array_key_exists($type->getName(), $this->typesGenerator)) {
-                        continue;
+
+                    if (!array_key_exists($type->getName(), $this->typesGenerator)) {
+                        $php_type = $this->loadTypePhp($type->getName());
+
+                        $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
+                        $typeGenerator->internal_type = $type->getName();
+                        $typeGenerator->explicite_type = $php_type['specific'];
+                        $this->typesGenerator[$typeDocBook->getName()] = $typeGenerator;
                     }
-
-                    $php_type = $this->loadTypePhp($type->getName());
-
-                    $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
-                    $typeGenerator->internal_type = $type->getName();
-                    $typeGenerator->explicite_type = $php_type['specific'];
-                    $this->typesGenerator[$typeDocBook->getName()] = $typeGenerator;
                 } else {
-                    echo "Skip $functionDocBook->name(", $parameterDocBook->getName(), ')', PHP_EOL;
+                    if (self::ENABLE_TRACE_VARIADIC) echo "Skiped $functionDocBook->name(", $parameterDocBook->getName(), ')', PHP_EOL;
                     //return null;
                 }
 /*
@@ -1937,6 +1995,18 @@ class Extension
     }
 
     protected function skip(string $object, string $name=null): bool {
+        if (isset($this->blacklist)) {
+            if (array_key_exists($object, $this->blacklist)) {
+                if ($name) {
+                    if (in_array($name, $this->blacklist[$object])) {
+                        return true;// object + function in blacklist
+                    }
+                } else if (empty($this->blacklist[$object])) {
+                    return true;// object in blacklist
+                }
+            }
+            // not in blacklist
+        }
         if (isset($this->whitelist)) {
             if (array_key_exists($object, $this->whitelist)) {
                 if ($name) {
@@ -1977,7 +2047,10 @@ class Extension
             'builtin'=>[],// cairo_bool_t => int
         );
 
-        $this->structsDocBook = $this->getStructs($docBook);
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
+
+        $this->structsDocBook = $root->getStructs($docBook);
         $classes = [];
         $structs = [];
         foreach ($this->structsDocBook as $struct) {//'struct'==$t['type'] || 'enum'==$t['type'] || 'union'==$t['type']
@@ -1990,8 +2063,9 @@ class Extension
             }
         }
 
-        $this->typedefsDocBook = $this->getTypedefs($docBook);
-        $structs = [];
+        $this->typedefsDocBook = $root->getTypedefs($docBook);
+        $enums = [];
+        $unions = [];
         $alias = [];
         $typedefs = [];
         foreach ($this->typedefsDocBook as $typedef) {//'struct'==$t['type'] || 'enum'==$t['type'] || 'union'==$t['type']
@@ -2009,10 +2083,6 @@ class Extension
             } else if ('union'==$t['type']) {
                 $unions[$typedef->name] = $typedef->name;
             } else {
-                if (array_key_exists($t['type'], TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE)) {
-                    $typedefs[$typedef->name] = $typedef->name;
-                    continue;
-                }
                 if (in_array($typedef->name, CairoClassifier::$map_class)) {
                     $prefix = substr($struct->name, 0, -5);
                     $classes[$prefix] = $struct->name;
@@ -2022,32 +2092,31 @@ class Extension
                     $structs[$typedef->name] = $typedef->name;
                     continue;
                 }
+                if (array_key_exists($t['type'], TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE)) {
+                    $typedefs[$typedef->name] = $typedef->name;
+                    continue;
+                }
                 $alias[$typedef->name] = array('name'=>$typedef->name, 'type'=>$t['type']);
                 //echo $t['name'], ' alias ', $t['type'], PHP_EOL;
             }
         }
 
-        $structs = array_diff_key($structs, $classes);
-
-        $this->kinds['class'] = $classes;
-        $this->kinds['object'] = $structs;
-        $this->kinds['alias'] = $alias;
-        $this->kinds['builtin'] = $typedefs;
-
-
-        $this->enumsDocBook = $this->getEnums($docBook);
-        $enums = [];
+        $this->enumsDocBook = $root->getEnums($docBook);
         foreach ($this->enumsDocBook as $enum) {//'struct'==$t['type'] || 'enum'==$t['type'] || 'union'==$t['type']
             $enums[$enum->name] = $enum->name;
 
         }
-        $this->kinds['enum'] = $enums;
-
-        $this->unionsDocBook = $this->getUnions($docBook);
-        $unions = [];
+        
+        $this->unionsDocBook = $root->getUnions($docBook);
         foreach ($this->unionsDocBook as $union) {//'struct'==$t['type'] || 'enum'==$t['type'] || 'union'==$t['type']
             $unions[$union->name] = $union->name;
         }
+
+        $this->kinds['class'] = $classes;
+        $this->kinds['object'] = array_diff_key($structs, $classes);
+        $this->kinds['alias'] = $alias;
+        $this->kinds['builtin'] = $typedefs;
+        $this->kinds['enum'] = $enums;
         $this->kinds['union'] = $unions;
         /*
         echo "Class objects : \n";
@@ -2081,14 +2150,15 @@ class Extension
         $this->loadPackages($docBook);
         $this->loadExtKinds($docBook);
         /**
-         echo "Class defined:", PHP_EOL;
-         foreach ($this->kinds['class'] as $name=>$klass) {
-             echo "\t+ ", $klass, PHP_EOL;
-            }
-            echo "Struct defined:", PHP_EOL;
-            foreach ($this->kinds['object'] as $name=>$klass) {
-                echo "\t+ ", $klass, PHP_EOL;
-            }
+        echo "Class defined:", PHP_EOL;
+        foreach ($this->kinds['class'] as $name=>$klass) {
+            echo "\t+ ", $klass, PHP_EOL;
+        }
+        echo "Struct defined:", PHP_EOL;
+        foreach ($this->kinds['object'] as $name=>$klass) {
+            echo "\t+ ", $klass, PHP_EOL;
+        }
+        var_dump(array_key_exists('GError', $this->kinds['object']));
             */
             /*
             print_r($this->kinds['class']['GType']);
@@ -2112,7 +2182,7 @@ class Extension
         foreach ($this->typesGenerator as $name=>$typeGenerator) {
             echo "\t+ ", $name, ': ', $typeGenerator->generate(), ' => ', $typeGenerator->internal_type, " : \033[32;1m", $typeGenerator->explicite_type, "\033[0m", PHP_EOL;
         }
-         * gintptr => int  utilise la reference
+        * gintptr => int  utilise la reference
          * GMutexLocker void ???
          * GStrv peut-etre en array
          * 
@@ -2137,250 +2207,48 @@ class Extension
         $this->loadAliasGenerator($docBook);// GtlAllocation => GdkRectangle
         $this->loadUnionGenerator($docBook);
         /*
+        $this->loadMacroGenerator($docBook);// constants ...
         */
 
-        // TODO when creat property use TypeGenerated
-
-        // use TypeGenerator : eg: cairo_bool_t => int
         // step 3] creat function for each class (after each object exist)
         // ====================================================================
-        /*
-        $this->loadClassFunctions($docBook);// GtkWidget[Class]
-        */
-        // $this->loadObjectFunctions($docBook);// GtkWidget[Class]
+        //$this->loadClassFunctions($docBook);// GtkWidget[Class]
+        //$this->loadObjectFunctions($docBook);// GDate
         //unused $this->loadEnumFunctions($docBook);// GtkWidget[Class]
         //unused $this->loadAliasFunctions($docBook);// GtkWidget[Class]
         //unused $this->loadUnionFunctions($docBook);// GtkWidget[Class]
+        $this->loadGlobalFunctions($docBook);// functions that is not attached with struct/class/enum/union (create an additional file)
+
+        //TODO $this->loadGlobalVariable($docBook);
+
+        //print_r($this->resumRefEntry($docBook));
 
         return $this->packages;
     }
 
-    /**
-     * @return Package[] 
-     */
-    public function getCodeGenerator__(AbstractDocBook $docBook) {
-        $packages = $this->loadPackages($docBook);
+    public function macroCodeGenerator(AbstractDocBook $docBook) {
+        // TODO #1: display all macro of a specific package
+        $output = '';
+        /** @var SetDocBook $root; */
+        $root = $docBook->getRoot();
 
-        $classes = [];
-        $instances = [];
-        $this->structsDocBook = $this->getStructs($docBook);
-        $this->typedefsDocBook = $this->getTypedefs($docBook);
-        $this->enumsDocBook = $this->getEnums($docBook);
-        // enum, union, etc
-        $structs = $this->structsDocBook;
-        foreach ($structs as $struct) {
-            $suffix = substr($struct->name, -5);
-            if ('Class'==$suffix) {
-                $prefix = substr($struct->name, 0, -5);
-                $classes[$prefix] = $struct->name;
-            } else {
-                $instances[$struct->name] = $struct->name;
+        /** @var RefEntryDocBook $refentry */
+        foreach ($root->getRefEntries($docBook) as $refentry) {
+            /** @var FunctionDocBook $function */
+            foreach($refentry->functions() as $function) {
+                if ($function->isMacro()) {
+                    $output .= 'function ' . $function->name . '(';
+                    $glue = '';
+                    /** @var ParameterDocBook $parameter */
+                    foreach($function->getParameters() as $parameter) {
+                        $output .= $glue . '$' . $parameter->getName();
+                        $glue = ', ';
+                    }
+                    $output .= ') {}'. PHP_EOL;
+                }
             }
         }
-        //print_r(array_keys($structs));
-        //print_r($classes);
-        //print_r($instances);
-        $instances = array_diff_key($instances, $classes);
-        echo count($structs), ' struct found. ', count($instances), ' + ', count($classes), '*2', PHP_EOL;
-        
-        $refEntry = null;
-        $classGenerator = null;
-
-        //$packageGenerator = new PackageGenerator($name);
-        foreach($classes as $name=>$class_name) {
-            /** @var StructDocBook */
-            $struct = $structs[$name];
-
-            $this->requiredFiles = [];
-            $this->useFiles = [];
-            
-            if ($this->skip($name)) continue;
-            //if ($this->skip($struct->parent->id)) continue;
-
-            $docFileGenerator = new DocBlockGenerator();
-            $docFileGenerator->setTags([
-                new LicenseTag(null, 'GPL 3.0'),
-                new AuthorTag("mail", 'mail@gmail.com')
-            ]);
-            $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
-            $fileGenerator = new FileGenerator();
-            $fileGenerator->setDocBlock($docFileGenerator);
-
-            $docClassGenerator = new DocBlockGenerator();
-            $docClassGenerator->setLongDescription("Class $name");
-            
-
-            $classGenerator = new ClassGenerator($name);
-            $classGenerator->setDocBlock($docClassGenerator);
-
-
-            $functionsGenerator = $this->loadMethodsGenerator($struct, $classGenerator);
-
-            
-            
-            $fileGenerator->setClass($classGenerator);
-            $fileGenerator->setFunctions($functionsGenerator);
-
-            $this->loadNamespace($fileGenerator, $struct);
-            $this->loadFilename($fileGenerator, $struct);
-            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
-            
-            $docBook = $struct->getBook();
-            $packages[$docBook->id]->files[] = $fileGenerator;
-
-            if (self::ENABLE_BREAK) 
-            break;
-        }
-
-        $begin = 1;// 7=>cairo_matrix_t
-        $end = $begin +1;
-        $do_it = 0;
-        foreach($instances as $name=>$struct_name) {
-
-            if (self::ENABLE_BREAK) 
-            if ($do_it++<$begin) continue;
-            
-            $this->requiredFiles = [];
-            $this->useFiles = [];
-
-            if ($this->skip($name)) continue;
-
-            /** @var StructDocBook */
-            $struct = $structs[$name];
-
-            $docFileGenerator = new DocBlockGenerator();
-            $docFileGenerator->setTags([
-                new LicenseTag(null, 'GPL 3.0'),
-                new AuthorTag("mail", 'mail@gmail.com')
-            ]);
-            $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
-            $fileGenerator = new FileGenerator();
-            $fileGenerator->setDocBlock($docFileGenerator);
-
-            $docClassGenerator = new DocBlockGenerator();
-            $docClassGenerator->setLongDescription("Class $name");
-            
-
-            $classGenerator = new ClassGenerator($name);
-            $classGenerator->setDocBlock($docClassGenerator);
-
-
-            $functionsGenerator = $this->loadMethodsGenerator($struct, $classGenerator);
-            $propertiesGenerator = $this->loadPropertiesGenerator($struct, $classGenerator);
-            
-            
-            $fileGenerator->setClass($classGenerator);
-            $fileGenerator->setFunctions($functionsGenerator);
-
-            $this->loadNamespace($fileGenerator, $struct);
-            $this->loadFilename($fileGenerator, $struct);
-            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
-
-            $docBook = $struct->getBook();
-            $packages[$docBook->id]->files[] = $fileGenerator;
-
-            if (self::ENABLE_BREAK) 
-            if ($do_it>=$end) break;
-        }
-
-        $begin = 0;// 0=>cairo_t
-        $end = $begin +1;
-        $do_it = 0;
-        /** @var TypedefDocBook $typedef */
-        foreach($this->typedefsDocBook as $name=>$typedef) {
-
-            if (self::ENABLE_BREAK) 
-            if ($do_it++<$begin) continue;
-
-            $this->requiredFiles = [];
-            $this->useFiles = [];
-
-            //echo "* RUNNING : $name\n";
-            if ($this->skip($name)) continue;
-
-
-            $docFileGenerator = new DocBlockGenerator();
-            $docFileGenerator->setTags([
-                new LicenseTag(null, 'GPL 3.0'),
-                new AuthorTag("mail", 'mail@gmail.com')
-            ]);
-            $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
-            $fileGenerator = new FileGenerator();
-            $fileGenerator->setDocBlock($docFileGenerator);
-
-            $docClassGenerator = new DocBlockGenerator();
-            $docClassGenerator->setLongDescription("Class $name");
-            $docClassGenerator->setTags([
-                new GenericTag('package', 'Cairo'),
-                new GenericTag("internal", 'stub')
-            ]);
-            
-            $classGenerator = new ClassGenerator($name);
-            $classGenerator->setDocBlock($docClassGenerator);
-
-            $functionsGenerator = $this->loadMethodsGenerator($typedef, $classGenerator);
-            //$propertiesGenerator = $this->loadPropertiesGenerator($struct, $classGenerator);
-
-            
-            $fileGenerator->setClass($classGenerator);
-            $fileGenerator->setFunctions($functionsGenerator);
-            
-            $this->loadNamespace($fileGenerator, $typedef);
-            $this->loadFilename($fileGenerator, $typedef);
-            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
-
-            $docBook = $typedef->getBook();
-            $packages[$docBook->id]->files[] = $fileGenerator;
-
-
-            if (self::ENABLE_BREAK) 
-            if ($do_it>=$end) break;
-        }
-
-        //debug:
-        //echo $fileGenerator->generate();
-        
-        echo "\n", PHP_EOL;
-        echo "next create dto(xml, php, Ext)\n";
-        echo 'ClassGenerator represente a generic(C/Php) code model', PHP_EOL;
-        echo "TODO : returnType dereference see : [out][transfer full];\n";
-        echo "TODO: GProperty, GProperty-child, GSignal, Style;\n";
-        echo "FIX: qualifier is method: cairo_surface_hello(cairo_t *cr) can be catched by cairo_t instead of sttatic cairo_surface()\n";
-        echo "TODO: fixeUse\n";
-        echo "Use ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX to specify return type \n";
-        echo "in PHP_FUNCTION CHECK_CAIRO_VERSION if is avalable \n";// check lib installed | systeme dependence
-
-        echo "ArgumentDto implement all the type\n";
-        echo "rename ArgumentsDto to FunctionArgsDto";
-
-        echo "TODO: search comment at : 'not found)'";// cairo_copy_path n'est pas crée car elle est défini dans un autre fichier
-        echo "Cairo-Paths : cairo_copy_path(cairo_t *cr) do not found class; it's an error ? \n";
-
-        echo "zend_object_handlers\n";
-        echo "zend_class_entry_handlers\n";
-        echo "object_handlers \n";
-        echo "zend-user API (php_cairo_t_new(), php_cairo_operator_t_new(), ...) \n";// PARSE_PARAM if isOut lazyLoad
-        echo "cairo_bool_t is int do not use class\n";
-        
-
-        /*$classGenerator->;*/
-
-        /*
-        $functions = $this->getFunctions($docBook);
-        echo count($functions), ' functions found.', PHP_EOL;
-
-        $func = $functions[10];
-        echo $func->name, '()', PHP_EOL;
-        echo $func->parent->id, PHP_EOL;
-        echo $func->parent->parent->title, PHP_EOL;
-        echo $func->parent->parent->parent->title, PHP_EOL;
-        echo $func->parent->parent->parent->parent->title, PHP_EOL;
-        echo $func->parent->parent->parent->parent->parent->title, PHP_EOL;
-        echo null==$func->parent->parent->parent->parent->parent->parent ? 'null' : '...' , PHP_EOL;
-        */
-
-
-        return $packages;
+        return $output;
     }
 
 }

@@ -3,6 +3,7 @@
 namespace Zend\Ext\Models\Code\Generator;
 
 use Zend\Ext\Models\Code\Reflection\MethodReflection;
+use Zend\Ext\Models\Code\Generator\FileGenerator;
 
 use function array_map;
 use function explode;

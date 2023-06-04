@@ -54,6 +54,26 @@ class FunctionDocBook extends AbstractDocBook
         return $this;
     }
 
+    /** @var AbstractDocBook|null */
+    protected $context = null;
+
+    /**
+     * @return static
+     */
+    public function setContext(AbstractDocBook $context)
+    {
+        $this->context = $context;
+        return $this;
+    }
+
+    /**
+     * @return ?AbstractDocBook
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
+
     public function setIsStatic(bool $isStatic=True)
     {
         $this->isStatic = $isStatic;

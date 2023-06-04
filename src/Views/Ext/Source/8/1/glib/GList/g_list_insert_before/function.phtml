@@ -1,0 +1,20 @@
+PHP_FUNCTION(g_list_insert_before)
+{
+    zval *zlist;
+    zval *zsibling;
+    zval *zdata;
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zlist, php_g_list_class_entry, 1, 0);
+        Z_PARAM_OBJECT_OF_CLASS_EX(zsibling, php_g_list_class_entry, 1, 0);
+        Z_PARAM_ZVAL(zdata);
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_list *php_list = ZVAL_IS_PHP_G_LIST(zlist)? ZVAL_GET_PHP_G_LIST(zlist): NULL;
+    php_g_list *php_sibling = ZVAL_IS_PHP_G_LIST(zsibling)? ZVAL_GET_PHP_G_LIST(zsibling): NULL;
+
+    php_g_list *php_ret = php_g_list_insert_before(php_list, php_sibling, zdata);
+    zend_object *z_ret = &php_ret->std;
+
+    RETURN_OBJ(z_ret);
+}

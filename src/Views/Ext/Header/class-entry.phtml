@@ -1,0 +1,13 @@
+struct _php_<?php echo $name_function ?> {
+<?php
+if (empty($members)) {
+    echo '    '.$name.' *ptr;'.PHP_EOL;
+} else {
+    foreach($members as $property) {
+        echo '    zval '.$property->name.';// of '.$property->type.PHP_EOL;
+    }
+}
+?>
+
+    zend_object std;
+};

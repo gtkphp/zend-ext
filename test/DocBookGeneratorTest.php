@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Error\Notice;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\Error\Error;
-
+use SebastianBergmann\CodeCoverage\Report\Xml\Method;
 use Zend\Ext\Models\DocBook\TypeDocBook;
 
 use Zend\Ext\Models\Dto\ObjectDto;
@@ -14,6 +14,12 @@ use Zend\Ext\Models\Dto\PackageDto;
 use Zend\Ext\Models\Dto\ExtensionDto;
 
 use Zend\Ext\Services\Classifier\Cairo as Classifier;
+
+use Zend\Ext\Models\Code\Generator\FileGenerator;
+use Zend\Ext\Models\Code\Generator\MethodGenerator;
+use Zend\Ext\Models\Code\Reflection\FunctionReflection;
+
+use Zend\Ext\Models\DocBook\FunctionDocBook;
 
 /*
 use Zend\Ext\Models\Dto\StructDto;
@@ -487,6 +493,12 @@ typedef unsigned short int guint16;
             'gtk_widget_destroy'   => '__destructor',
             'gtk_requisition_copy' => '__clone',
         ];
+        Classifier::$map_file = [
+            'cairo_copy_path'      => '__clone',
+            'gtk_widget_new'       => '__construct',
+            'gtk_widget_destroy'   => '__destructor',
+            'gtk_requisition_copy' => '__clone',
+        ];
         */
 
         Classifier::$map_namespace = [
@@ -501,6 +513,47 @@ typedef unsigned short int guint16;
             'cairo_copy_path'              => 'cairo_path_t',// depend on cairo_t
             'gtk_widget_new'               => 'GtkWidget',
             'gtk_cairo_should_draw_window' => 'GtkWidget',// PHP_FUNCTION(gtk_cairo_should_draw_window) in php_gtk/widget.c
+
+            /*
+            'g_set_error'                  => 'GError',
+            'g_set_error_literal'          => 'GError',
+            'g_propagate_error'            => 'GError',
+            'g_clear_error'                => 'GError',
+            'g_prefix_error'               => 'GError',
+            'g_propagate_prefixed_error'   => 'GError',
+
+            'g_compute_checksum_for_data'  => 'GChecksum',
+            'g_compute_checksum_for_string'=> 'GChecksum',
+            'g_compute_checksum_for_bytes' => 'GChecksum',
+
+            'g_compute_hmac_for_data'      => 'GHmac',
+            'g_compute_hmac_for_string'    => 'GHmac',
+            'g_compute_hmac_for_bytes'     => 'GHmac',
+            */
+
+            'g_thread_init'                => 'GThread',
+            'g_thread_get_initialized'     => 'GThread',
+            'g_thread_create'              => 'GThread',
+            'g_thread_create_full'         => 'GThread',
+            'g_thread_set_priority'        => 'GThread',
+            'g_thread_foreach'             => 'GThread',
+
+            'g_mutex_new'                  => 'GMutex',
+            'g_mutex_free'                 => 'GMutex',
+
+            'g_cond_new'                   => 'GCond',
+            'g_cond_free'                  => 'GCond',
+
+            'g_private_new'                => 'GPrivate',
+
+            /*
+            'g_test_get_root'              => 'GTestSuite',
+            'g_test_run_suite'             => 'GTestSuite',
+            'g_test_create_suite'          => 'GTestSuite',
+
+            'g_test_create_case'          => 'GTestCase',
+            */
+
         ];
         Classifier::$map_type = [
             /** C-Type      => Php-Type */
@@ -535,6 +588,7 @@ typedef unsigned short int guint16;
 
             "gchararray"    => "string",// string[]
 
+            "va_list"       => "array",// string[]
             "GTokenValue"   => "object|string|int|float",// gpointer=>mixed, but in this case we use object
             
 
@@ -550,6 +604,8 @@ typedef unsigned short int guint16;
             "GType",
             "GInitiallyUnowned",
             "GMutex",
+            "GMutexLocker",
+            "GStrv",
             "GTime",
             "GDateDay",
             "GDateYear",
@@ -576,7 +632,7 @@ typedef unsigned short int guint16;
         cairo_user_scaled_font_text_to_glyphs_func_t:callable
         */
 
-        $php_version = '8.0.0';
+        $php_version = '8.1.0';
         $agent->setVersion($php_version);
         $agent->setDataPath(__DIR__.'/../data/gnome-3.28.2');
         $agent->setCachePath(__DIR__.'/../data');// use ../tmp
@@ -584,14 +640,16 @@ typedef unsigned short int guint16;
         $agent->setModelPath(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
 
         //$agent->useWhitelist(['cairo_t'=>['cairo_get_dash'/*, 'cairo_set_dash'*/], 'GtkWidget'=>['gtk_widget_new', 'gtk_widget_show'], 'GObject'=>[]]);
-        //$agent->useBlacklist(['cairo_t', 'GtkWidget', 'GObject']);
+        //$agent->useBlacklist(['GDate'=>['g_date_to_struct_tm']]);
 
         //$agent->clearCache();// use rm ../data/cache.txt
         $sourceCode = $agent->loadCode();
+        //print_r($sourceCode->getMacro('g_thread_supported'));
         $agent->loadBook('doc.xml', $sourceCode);
         
+
         
-        $run_dry = true;
+        $run_dry = false;
         //$agent->save('Stub/Poo', __DIR__.'/../output/stub/poo', $run_dry);
         //$agent->save('Stub/Pp', __DIR__.'/../output/stub/pp', $run_dry);
         
@@ -599,6 +657,34 @@ typedef unsigned short int guint16;
         $agent->save('Ext/Source', __DIR__.'/../output/ext', $run_dry);
         /*
         */
+
+        $this->assertTrue(true);
+    }
+
+    public function testMacro() {
+        $agent = new Agent();
+        $php_version = '8.0.0';
+        $agent->setVersion($php_version);
+        $agent->setDataPath(__DIR__.'/../data/gnome-3.28.2');
+        $agent->setCachePath(__DIR__.'/../data');// use ../tmp
+        $agent->setViewPath(__DIR__.'/../src/Views');
+        $agent->setModelPath(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
+
+        $sourceCode = $agent->loadCode();
+        
+        //$agent->loadBook('doc.xml', $sourceCode);
+        $docBook = new \Zend\Ext\Services\DocBook\Gnome();
+        $docBook->setSourceCode($sourceCode);
+        $modelDocBook = $docBook->load(__DIR__.'/../data/gnome-3.28.2/doc.xml');
+
+        $generator = new CodeGenerator();
+        $generator->setVersion($php_version);
+        $generator->setDocBook($docBook);
+        //$generator->getCodeGenerator($modelDocBook);
+        $output_str = $generator->macroCodeGenerator($modelDocBook);
+
+        echo '<?php ', PHP_EOL;
+        echo $output_str;
 
         $this->assertTrue(true);
     }
@@ -623,6 +709,49 @@ typedef unsigned short int guint16;
         echo implode('.', $version_target);
         $version_target = $resolver->downgrader($version_target, $path);
         echo ' => ', implode('.', $version_target), PHP_EOL;// 8
+
+        $this->assertTrue(true);
+    }
+
+    public function testReflection() {
+        $path = realpath(__DIR__.'/../data/gnome-3.28.2');
+        $path .= '/glib-2.56.4.php';
+        echo $path, PHP_EOL;
+
+        $functions = include($path);
+        $functions = array_diff($functions['user'], ['composer\autoload\includefile', 'deepcopy\deep_copy', 'gint']);
+        $functions = array_filter($functions, function ($v) {
+            // "composerrequireb77025529192e879922af895bdc5f677"
+            if (0===strpos($v, 'composerrequire')) return false; return true;
+        });
+        $functions = array_values($functions);// remake index
+        
+
+        print_r($functions);
+        $function = $functions[1];// g_node_append
+        //FileGenerator::fromArray();
+
+        /*
+        $functionReflection = new FunctionReflection($function);
+        echo $functionReflection->getName(), PHP_EOL;
+        $parameters = $functionReflection->getParameters();
+        foreach ($parameters as $parameter) {
+            echo "\t" . $parameter->getType() . ' $' . $parameter->getName(), PHP_EOL;
+        }
+        $returns = $functionReflection->getReturnType();
+        if ($returns) {
+            echo " -> " . $returns->getName();
+        }
+        */
+
+        /*
+        $functionGenerator = new MethodGenerator($functionReflection->getName());
+        echo $functionGenerator->getName(), PHP_EOL;
+        $parameters = $functionGenerator->getParameters();
+        foreach ($parameters as $parameter) {
+            echo $parameter->getType() . ' $' . $parameter->getName(), PHP_EOL;
+        }
+        */
 
         $this->assertTrue(true);
     }

@@ -1,0 +1,17 @@
+PHP_FUNCTION(g_list_prepend)
+{
+    zval *zlist;
+    zval *zdata;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zlist, php_g_list_class_entry, 1, 0);
+        Z_PARAM_ZVAL(zdata);
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_list *php_list = ZVAL_IS_PHP_G_LIST(zlist)? ZVAL_GET_PHP_G_LIST(zlist): NULL;
+
+    php_g_list *php_ret = php_g_list_prepend(php_list, zdata);
+    zend_object *z_ret = &php_ret->std;
+
+    RETURN_OBJ(z_ret);
+}
