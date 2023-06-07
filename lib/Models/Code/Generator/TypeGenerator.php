@@ -152,6 +152,11 @@ final class TypeGenerator implements GeneratorInterface
     {
         return $this->nullable;
     }
+    public function setNullable(bool $nullable = true)
+    {
+        $this->nullable = $nullable;
+        return $this;
+    }
 
     /**
      * @return non-empty-string the cleaned type string. Note that this value is not suitable for code generation,

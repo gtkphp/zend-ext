@@ -81,24 +81,34 @@ class FunctionReturnsDto
                         break;
                     case 'iterable':
                         break;
-                    case 'object':
-                        break;
                     case 'static':
                         break;
                     case 'mixed':
                         break;
                     case 'void':
                         break;
+                    case 'object':
+                        if ($parameter && 'GError'==$parameter->type->internal_type) {
+                            $error_name = $parameter->getName();
+                            $output .= '    if ('.$error_name.') {'.PHP_EOL;
+                            $output .= '        if (z_'.$error_name.') {'.PHP_EOL;
+                            $output .= '            php_g_error *ret_p_'.$error_name.' = php_g_error_new('.$error_name.');'.PHP_EOL;
+                            $output .= '            zend_object *ret_z_'.$error_name.' = &ret_p_'.$error_name.'->std;'.PHP_EOL;
+                            $output .= '            ZVAL_OBJ(z_'.$error_name.', ret_z_'.$error_name.');'.PHP_EOL;
+                            $output .= '        } else {'.PHP_EOL;
+                            $output .= '            zend_error(E_USER_ERROR, "%s#%d: %s", g_quark_to_string(error->domain), error->code, error->message);'.PHP_EOL;
+                            $output .= '        }'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
+                        } else {
+                            $output .= '    ZVAL_OBJ(z_'.$name.', &php_'.$name.'->std);'.PHP_EOL;
+                        }
+                        break;
                     case 'false':
-                        break;
                     case 'true':
-                        break;
                     case 'null':
-                        break;
                     case 'never':
-                        break;
                     default:
-                        $output .= '    ZVAL_OBJ(z_'.$name.', &php_'.$name.'->std);'.PHP_EOL;
+                        echo "Error: Unexpected '$type' at ".__FILE__.":".__LINE__." \n";
                         break;
                 }
                 //$break = PHP_EOL;
@@ -156,8 +166,6 @@ class FunctionReturnsDto
                     break;
                 case 'iterable':
                     break;
-                case 'object':
-                    break;
                 case 'static':
                     break;
                 case 'mixed':
@@ -173,13 +181,16 @@ class FunctionReturnsDto
                     break;
                 case 'never':
                     break;
-                default:
+                case 'object':
                     $this_name = strtolower(preg_replace('/[A-Z]([A-Z](?![a-z]))*/', '_$0', lcfirst($returnType->internal_type)));
 
-                    $output .= '    zend_object *ret_z_value = zend_objects_new(php_'.$this_name.'_class_entry);'.PHP_EOL;
-                    $output .= '    php_'.$this_name.' *ret_php_value = ZOBJ_TO_PHP_'.strtoupper($this_name).'(ret_z_value);'.PHP_EOL;
-                    $output .= '    ret_php_value->ptr = ret_value;'.PHP_EOL;
+                    $output .= '    zend_object *ret_z_value = php_'.$this_name.'_create_object(php_'.$this_name.'_class_entry);'.PHP_EOL;
+                    $output .= '    php_'.$this_name.' *ret_p_value = ZOBJ_TO_PHP_'.strtoupper($this_name).'(ret_z_value);'.PHP_EOL;
+                    $output .= '    ret_p_value->ptr = ret_value;'.PHP_EOL;
                     $output .= '    RETURN_OBJ(ret_z_value);';
+                    break;
+                default:
+                    echo "Error: Unexpected '$returnType' at ".__FILE__.":".__LINE__." \n";
                     break;
             }
             $output .= PHP_EOL;

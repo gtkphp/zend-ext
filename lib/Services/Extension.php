@@ -614,6 +614,16 @@ class Extension
             //return null;
         }
 
+        
+        //echo $parameterDocBook->getPass(), ' :: ', $parameterGenerator->getType(), ' -> ', $parameterGenerator->type->internal_type, '==', $parameterGenerator->type->explicite_type, PHP_EOL;
+        if ('object'==$parameterGenerator->getType() && '**'==$parameterDocBook->getPass()) {
+            $parameterGenerator->setPassedByReference(true);
+            $parameterGenerator->isOut(true);
+            if ('GError'==$parameterGenerator->type->explicite_type) {
+                $parameterGenerator->type->setNullable();
+            }
+        }
+
         if ($parameterDocBook->hasAnnotation(AnnotationDocBook::ANNOTATION_OUT)) {
             $parameterGenerator->setPassedByReference(true);
             $parameterGenerator->isOut(true);
@@ -1027,13 +1037,28 @@ class Extension
         /** @var FunctionDocBook $functionDocBook */
         foreach ($root->getFunctions($docBook) as $name=>$functionDocBook) {
 
+            if ($functionDocBook->isCallback()) {
+                continue;
+            }
+            if ($functionDocBook->isMacro()) {
+                continue;
+            }
+            // pourquoi g_rw_lock_init() n'est pas classé ?
+            // ajouter version.[ch] glib_check_version()
+
             // Trouver ou placer chaque fonction
             // chercher la class dans le RefEntry courant, puis dans root
             $objectDocBook = $classifier->getObjectOfFunction($functionDocBook);
+
+            $objectName = $objectDocBook ? $objectDocBook->getName() : '';
+            if ($this->skip($objectName, $functionDocBook->name)) {
+                continue;
+            }
+
             if ($objectDocBook) {
                 //echo $objectDocBook->name, '::', $functionDocBook->name, PHP_EOL;
                 $count_method++;
-
+               
                 /*
                 */
                 $docBook = $objectDocBook->getBook();
@@ -1041,8 +1066,6 @@ class Extension
 
                 $fileGenerator = $files[$objectDocBook->name];
                 $classGenerator = $fileGenerator->getClass();
-
-                if ($this->skip($name)) continue;
 
                 $this->requiredFiles = [];
                 $this->useFiles = [];
@@ -1056,7 +1079,12 @@ class Extension
 
             } else {
                 $method_name = $classifier->getNamespaceOfFunction($functionDocBook);
-                echo '\\', $functionDocBook->name, ' - ', $method_name, PHP_EOL;
+                //echo '\\', $functionDocBook->name, ' - ', $method_name, PHP_EOL;
+                if (array_key_exists($functionDocBook->parent->id, $refs)) {//$refentryDocBook->id
+                    $refs[$functionDocBook->parent->id][] = $functionDocBook->name;
+                } else {
+                    $refs[$functionDocBook->parent->id]=[$functionDocBook->name];
+                }
             }
             $it++;
             // 65.88% -> 1062/1568 - 67.73% -> 1069/1568 - 68.18% -> 1106/1568 - 70.54% -> 71.17%
@@ -1087,10 +1115,12 @@ class Extension
 
             */
         }
+        /*
         echo $count_method, '/', $it, ' - ', sprintf("%.2f%%", 100*$count_method/$it), PHP_EOL;
+        print_r($refs);
+        echo count($refs), PHP_EOL;
+        */
         
-
-
 
         //print_r($refs['version-information']);
         $files = array(
@@ -1536,7 +1566,6 @@ class Extension
 
         $typesdefs = $root->getTypedefs($docBook);
         foreach ($typesdefs as $type_name=>$typedef) {
-        
             $typdef = $this->getDocBook()->getSourceCode()->getTypedef($type_name);
             //print_r($typdef);
             //echo $type_name, ', ', $typedef->name, ', ', $typdef['name'], ', ', $typdef['type'], PHP_EOL;
@@ -1578,15 +1607,29 @@ class Extension
 
             if (in_array($struct_name, $this->kinds['class'])) {
                 // Notice: GtkWidgetClass as string  use : GtkWidget::class
+                $php_type = $this->loadTypePhp($struct_name);
+                $typeGenerator = TypeGenerator::fromTypeString('string');
+                $typeGenerator->internal_type = $struct_name;
+                $typeGenerator->explicite_type = $php_type['specific'];
+                $this->typesGenerator[$struct->name] = $typeGenerator;
+/*
                 $typeGenerator = TypeGenerator::fromTypeString('string');
                 $typeGenerator->internal_type = $struct->name;//.'Class';
                 $typeGenerator->explicite_type = 'string';
                 $this->typesGenerator[$struct->name] = $typeGenerator;
+*/
             } else {
+                $php_type = $this->loadTypePhp($struct_name);
+                $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
+                $typeGenerator->internal_type = $struct_name;
+                $typeGenerator->explicite_type = $php_type['specific'];
+                $this->typesGenerator[$struct->name] = $typeGenerator;
+/*
                 $typeGenerator = TypeGenerator::fromTypeString($struct_name);
                 $typeGenerator->internal_type = $struct->name;
                 $typeGenerator->explicite_type = $struct->name;
                 $this->typesGenerator[$struct->name] = $typeGenerator;
+*/
             }
         }
 
@@ -2010,7 +2053,9 @@ class Extension
         if (isset($this->whitelist)) {
             if (array_key_exists($object, $this->whitelist)) {
                 if ($name) {
-                    if (in_array($name, $this->whitelist[$object])) {
+                    if (empty($this->whitelist[$object])) {
+                        return false;// object + all function in whitelist
+                    } else if (in_array($name, $this->whitelist[$object])) {
                         return false;// object + function in whitelist
                     }
                 } else {

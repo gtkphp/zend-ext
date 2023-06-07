@@ -13,7 +13,10 @@ class TypedefDocBook extends AbstractDocBook
 {
     /** @var string $name The public name of field */
     public $name;
-    
+    public function getName() {
+        return $this->name;
+    }
+
     use TraitDescriptionDocBook;
     use TraitAnnotationDocBook;
 

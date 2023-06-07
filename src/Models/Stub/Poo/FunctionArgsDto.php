@@ -9,7 +9,7 @@ use Zend\Ext\Services\Classifier\Cairo as GnomeClassifier;
 
 
 
-class ArgumentsDto
+class FunctionArgsDto
 {
     /** @var string */
     public $info;

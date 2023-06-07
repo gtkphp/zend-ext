@@ -15,7 +15,7 @@ use Zend\Ext\Models\Code\Generator\TypeGenerator;
 use Zend\Ext\Models\Code\Generator\PropertyGenerator;
 
 
-class ArgumentsDto
+class FunctionArgsDto
 {
     /** @var string */
     public $info;
@@ -27,7 +27,7 @@ class ArgumentsDto
         /** @var MethodGenerator $methodGenerator */
         $methodGenerator = $codeGenerator;
 
-        $dto = new ArgumentsDto();
+        $dto = new self();
 
         $output = '';
         $output .= self::createDeclaration($methodGenerator, $renderer);
@@ -53,6 +53,8 @@ class ArgumentsDto
             $is_deref = $parameter->getPassedByReference();
             $is_array = $parameter->isArray();
 
+            $prefix = $is_deref ? 'z_ref_' : 'z_';
+
             if ($parameter->getVariadic()) {
                 $output .= '    int z_argc;'. PHP_EOL;
                 $output .= '    zval *z_args = NULL;'. PHP_EOL;
@@ -60,31 +62,36 @@ class ArgumentsDto
             switch ($parameter->getType()) {
                 case 'bool':
                     if ($is_deref || $is_array || $is_nullable) {
-                        $output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zval *'.$prefix.$parameter->getName().';';
                     } else {
-                        $output .= '    zend_bool z_'.$parameter->getName().';';
+                        $output .= '    zend_bool '.$prefix.$parameter->getName().';';
                     }
                     break;
                 case 'int':
                     if ($is_deref || $is_array || $is_nullable) {
-                        $output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zval *'.$prefix.$parameter->getName().';';
                     } else {
-                        $output .= '    zend_long z_'.$parameter->getName().';';
+                        $output .= '    zend_long '.$prefix.$parameter->getName().';';
                     }
                     break;
                 case 'float':
                     if ($is_deref || $is_array || $is_nullable) {
-                        $output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zval *'.$prefix.$parameter->getName().';';
                     } else {
-                        $output .= '    double z_'.$parameter->getName().';';
+                        $output .= '    double '.$prefix.$parameter->getName().';';
                     }
                     break;
                 case 'string':
                     if ($is_deref || $is_array || $is_nullable) {
-                        $output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zval *'.$prefix.$parameter->getName().';';
+                        // string[]
+                        // string == gchar *
+                        // string == gchar[]
+                        /*if ('gchar'==$parameter->type->internal_type) {
+                        }*/
                     } else {
-                        $output .= '    char *z_'.$parameter->getName().';'.PHP_EOL;
-                        $output .= '    int z_'.$parameter->getName().'_len;';
+                        $output .= '    char *'.$prefix.$parameter->getName().';'.PHP_EOL;
+                        $output .= '    int '.$prefix.$parameter->getName().'_len;';
                     }
                     break;
                 case 'array':
@@ -92,8 +99,6 @@ class ArgumentsDto
                 case 'callable':
                     break;
                 case 'iterable':
-                    break;
-                case 'object':
                     break;
                 case 'static':
                     break;
@@ -109,9 +114,12 @@ class ArgumentsDto
                     break;
                 case 'never':
                     break;
-                default:
+                case 'object':
                     // is custom object
-                    $output .= '    zval *z_'.$parameter->getName().';';// // zend_object for ' . $parameter->type->internal_type;
+                    $output .= '    zval *'.$prefix.$parameter->getName().' = NULL;';// // zend_object for ' . $parameter->type->internal_type;
+                    break;
+                default:
+                    echo "Error: Unexpected '".$parameter->getType()."' at ".__FILE__.":".__LINE__." \n";
                     break;
             }
             $output .= PHP_EOL;
@@ -125,9 +133,8 @@ class ArgumentsDto
         $parameters = $methodGenerator->getParameters();
         $output = '';
         $extra = '';
+        $optinal = 0;
 
-        if(count($parameters))
-            $output .= '    ZEND_PARSE_PARAMETERS_START('. count($parameters) .', '. count($parameters).')'. PHP_EOL;
         /** @var ParameterGenerator $parameter */
         foreach($parameters as $parameter) {
             
@@ -146,9 +153,8 @@ class ArgumentsDto
                     $allow_null = '1';
                 }*/
             }
+            $prefix = $is_deref ? 'z_ref_' : 'z_';
 
-            $allow_null = 'ZEND_SEND_NULLABLE';
-            
             $check_null = $allow_null;
             //@see TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE
             // $parameter->type->internal_type
@@ -211,8 +217,8 @@ class ArgumentsDto
                     break;
                 case 'string':
                     $output .= '        ';
-                    //$output .= 'ZEND_ARG_TYPE_INFO(z_'.$send_by.', '.$parameter->getName().', IS_STRING, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
-                    $output .= 'Z_PARAM_STRING(z_'.$send_by.', z_'.$parameter->getName().', z_'.$parameter->getName().'_len);'.PHP_EOL;
+                    $output .= 'Z_PARAM_STRING(z_'.$parameter->getName().', z_'.$parameter->getName().'_len);'.PHP_EOL;
+                    //$output .= 'Z_PARAM_STRING_EX2(z_'.$parameter->getName().', z_'.$parameter->getName().'_len, '.$allow_null.', '.$send_by.', 0);'.PHP_EOL;
                     $extra  .= '    ';
                     $extra  .= ''.$parameter->type->internal_type.' *' . $parameter->getName();
                     $extra  .= ' = z_'.$parameter->getName().';'.PHP_EOL;
@@ -220,7 +226,6 @@ class ArgumentsDto
                 case 'array':
                 case 'callable':
                 case 'iterable':
-                case 'object':
                 /*case 'static':
                 case 'mixed':
                 case 'void':
@@ -228,13 +233,30 @@ class ArgumentsDto
                 case 'true':
                 case 'null':
                 case 'never':*/
-                    break;
-                default:
+                break;
+                case 'object':
                     $name_function = strtolower(preg_replace('/[A-Z]([A-Z](?![a-z]))*/', '_$0', lcfirst($parameter->type->internal_type)));
         
-                    $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX(z_'.$parameter->getName().', php_'.$name_function.'_class_entry, 1, 0);'. PHP_EOL;
+                    if ('GError'==$parameter->type->internal_type) {
+                        $output .= '        Z_PARAM_OPTIONAL'. PHP_EOL;
+                        $optinal++;
+                    }
+                    if ($is_deref) {
+                        $output .= '        Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0);'. PHP_EOL;
+                    } else {
+                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX2('.$prefix.$parameter->getName().', php_'.$name_function.'_class_entry, '.$check_null.', '.$send_by.', 0);'. PHP_EOL;
+                    }
 
-                    $extra .= '    php_' . $name_function . ' *php_' . $parameter->getName();
+                    if ($is_deref) {
+                        $extra .= '    ';
+                        $extra .= 'zval *z_'.$parameter->getName();
+                        $extra .= ' = ('.$prefix.$parameter->getName().' && Z_TYPE_P('.$prefix.$parameter->getName().')==IS_REFERENCE)';
+                        $extra .= ' ? &(Z_REF_P('.$prefix.$parameter->getName().')->val)';
+                        $extra .= ' : '.$prefix.$parameter->getName().';';
+                        $extra .= PHP_EOL;
+                    }
+                    
+                    $extra .= '    php_' . $name_function . ' *p_' . $parameter->getName();
                     $extra .= ' = ';
                     $extra .= 'ZVAL_IS_PHP_'. strtoupper($name_function);
                     $extra .= '(z_'. $parameter->getName() . ')? ';
@@ -242,25 +264,41 @@ class ArgumentsDto
                     $extra .= '(z_'. $parameter->getName() .'): ';// $is_deref
                     if ($is_deref) {
                         // create php_[object_type_name]_new();
-                        $extra .= 'php_'.$name_function.'_new()';
+                        $extra .= 'NULL;//php_'.$name_function.'_new()';
                     } else {
                         $extra .= 'NULL';
                     }
                     $extra .= ';' . PHP_EOL;
 
-                    $extra .= '    ' . $parameter->type->internal_type . ' *' . $parameter->getName() . ' = php_'.$parameter->getName();
-                    $extra .= ' ? php_'.$parameter->getName().'->ptr : NULL;'.PHP_EOL;
+                    $extra .= '    ' . $parameter->type->internal_type . ' *' . $parameter->getName() . ' = p_'.$parameter->getName();
+                    //$extra .= ' ? php_'.$name_function.'_get_ptr(p_'.$parameter->getName().') : NULL;//-- nullable ? : error()'.PHP_EOL;
+                    $extra .= ' ? PHP_'.strtoupper($name_function).'_GET_PTR(p_'.$parameter->getName().') : NULL;'.PHP_EOL;
 
+
+                    if ('GError'==$parameter->type->internal_type) {
+                        $extra .= '    if (z_error && IS_NULL!=Z_TYPE_P(z_error)) {'. PHP_EOL;
+                        $extra .= '        zend_error(E_USER_WARNING, "%s", "An error occurred prior to the call to '.$methodGenerator->getName().'(). Release the GError object");'. PHP_EOL;
+                        $extra .= '    }'. PHP_EOL;
+                    }
+                
                     break;
+                default:
+                    echo "Unexpected Error at ".__FILE__.":".__LINE__." \n";
+                    break;
+    
             }
 
         }
+
+        $info = '';
         if(count($parameters)) {
-            $output .= '    ZEND_PARSE_PARAMETERS_END();'. PHP_EOL;
-            $output .= PHP_EOL . $extra;
+            $info  = '    ZEND_PARSE_PARAMETERS_START('. (count($parameters)-$optinal) .', '. count($parameters).')'. PHP_EOL;
+            $info .= $output;
+            $info .= '    ZEND_PARSE_PARAMETERS_END();'. PHP_EOL;
+            $info .= PHP_EOL . $extra;
         }
 
-        return $output;
+        return $info;
     }
 
 }

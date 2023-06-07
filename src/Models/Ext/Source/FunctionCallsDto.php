@@ -48,10 +48,12 @@ class FunctionCallsDto
 
         $output .= $methodGenerator->getName() .'(';
 
+        $last_parameter = null;
         $break='';
         $glue='';
         /** @var ParameterGenerator $parameter */
         foreach ($methodGenerator->getParameters() as $parameter) {
+            $last_parameter = $parameter;
             $is_deref = $parameter->getPassedByReference();
             $is_array = 0;
             $is_nullable = 0;
@@ -92,8 +94,6 @@ class FunctionCallsDto
                     break;
                 case 'iterable':
                     break;
-                case 'object':
-                    break;
                 case 'static':
                     break;
                 case 'mixed':
@@ -108,8 +108,11 @@ class FunctionCallsDto
                     break;
                 case 'never':
                     break;
-                default:
+                case 'object':
                     $output .= $glue . $deref . $name;
+                    break;
+                default:
+                    echo "Unexpected Error at ".__FILE__.":".__LINE__." \n";
                     break;
             }
 

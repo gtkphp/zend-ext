@@ -521,6 +521,7 @@ typedef unsigned short int guint16;
             'g_clear_error'                => 'GError',
             'g_prefix_error'               => 'GError',
             'g_propagate_prefixed_error'   => 'GError',
+            */
 
             'g_compute_checksum_for_data'  => 'GChecksum',
             'g_compute_checksum_for_string'=> 'GChecksum',
@@ -529,7 +530,6 @@ typedef unsigned short int guint16;
             'g_compute_hmac_for_data'      => 'GHmac',
             'g_compute_hmac_for_string'    => 'GHmac',
             'g_compute_hmac_for_bytes'     => 'GHmac',
-            */
 
             'g_thread_init'                => 'GThread',
             'g_thread_get_initialized'     => 'GThread',
@@ -631,19 +631,53 @@ typedef unsigned short int guint16;
         cairo_destroy_func_t:callable
         cairo_user_scaled_font_text_to_glyphs_func_t:callable
         */
+        $dist = [
+            'gnome-3.28.2' => [
+                'headers'=>[
+                    'glib-2.56.4.h',
+                    'gobject-2.56.4.h',
+                    'gio-2.56.4.h',
+                    'cairo-1.15.10.h',
+                    'pango-1.40.14.h',
+                    'atk-2.28.1.h',
+                    'gdk_pixbuf-2.36.11.h',
+                    'gdk-3.22.30.h',
+                    'gtk-3.22.30.h',
+                ],
+                'overwrite'=>[
+                    'glib-2.56.4.php',// macro prototype
+                ],
+            ],
+            'gnome-42.5' => [
+                'headers'=>[
+                    'glib-2.72.4.h',
+                    //...
+                ],
+                'overwrite'=>[
+                    'glib-2.72.4.php',
+                    //...
+                ],
+            ]
+        ];
 
+        $gnome_version = '3.28.2';
         $php_version = '8.1.0';
+        $key = 'gnome-'.$gnome_version;
         $agent->setVersion($php_version);
-        $agent->setDataPath(__DIR__.'/../data/gnome-3.28.2');
+        $agent->setDataPath(__DIR__.'/../data/'.$key);
         $agent->setCachePath(__DIR__.'/../data');// use ../tmp
         $agent->setViewPath(__DIR__.'/../src/Views');
         $agent->setModelPath(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
 
         //$agent->useWhitelist(['cairo_t'=>['cairo_get_dash'/*, 'cairo_set_dash'*/], 'GtkWidget'=>['gtk_widget_new', 'gtk_widget_show'], 'GObject'=>[]]);
         //$agent->useBlacklist(['GDate'=>['g_date_to_struct_tm']]);
-
+        //$agent->useWhitelist(['GBookmarkFile'=>['g_bookmark_file_new', 'g_bookmark_file_load_from_file', 'g_bookmark_file_load_from_data']]);
+        $agent->useWhitelist(['GBookmarkFile'=>[]]);
+        //gboolean 	g_bookmark_file_load_from_data_dirs ()
+        
         //$agent->clearCache();// use rm ../data/cache.txt
-        $sourceCode = $agent->loadCode();
+        $sourceCode = $agent->loadCode($dist[$key]['headers'], $dist[$key]['overwrite']);
+
         //print_r($sourceCode->getMacro('g_thread_supported'));
         $agent->loadBook('doc.xml', $sourceCode);
         

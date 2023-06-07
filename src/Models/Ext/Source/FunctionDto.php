@@ -24,7 +24,7 @@ class FunctionDto //extends BaseFileDto
     /** @var string */
     public $name;
 
-    /** @var ArgumentsDto TODO: rename by FunctionArgumentsDto */
+    /** @var FunctionArgsDto */
     public $zend_parameters;
 
     /** @var FunctionCallsDto */
@@ -43,7 +43,7 @@ class FunctionDto //extends BaseFileDto
         $dto->name = $methodGenerator->getName();
         
         // in gtk.c add function like zval_get_array_[float|int|array|object]
-        $dto->zend_parameters = $renderer->transfer('ArgumentsDto.php', $methodGenerator);
+        $dto->zend_parameters = $renderer->transfer('FunctionArgsDto.php', $methodGenerator);
         $dto->zend_call = $renderer->transfer('FunctionCallsDto.php', $methodGenerator);
         $dto->zend_return = $renderer->transfer('FunctionReturnsDto.php', $methodGenerator);
 

@@ -15,7 +15,7 @@ use Zend\Ext\Models\Code\Generator\TypeGenerator;
 use Zend\Ext\Models\Code\Generator\PropertyGenerator;
 
 
-class ArgumentsDto
+class FunctionArgsDto
 {
     /** @var string */
     public $info;
@@ -24,7 +24,7 @@ class ArgumentsDto
 
     static public function create(MethodGenerator $methodGenerator)
     {
-        $dto = new ArgumentsDto();
+        $dto = new self();
         
         $parameters = $methodGenerator->getParameters();
         //$enums = $methodGenerator->getOwnPackage()->getPackage()->getListTypeEnum();
@@ -40,9 +40,9 @@ class ArgumentsDto
         }
 
         // TODO: use ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX
+        $optional=0;
 
         $output = '';
-        $output .= 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$methodGenerator->getName().', 0, '.$send_by.', '.count($parameters).')'. PHP_EOL;
         foreach($parameters as $parameter) {
 
             $allow_null = '0';
@@ -88,7 +88,6 @@ class ArgumentsDto
                 case 'array':
                 case 'callable':
                 case 'iterable':
-                case 'object':
                 /*case 'static':
                 case 'mixed':
                 case 'void':
@@ -97,8 +96,14 @@ class ArgumentsDto
                 case 'null':
                 case 'never':*/
                     break;
-                default:
+                case 'object':
+                    if ('GError'==$parameter->type->internal_type) {
+                        $optional++;
+                    }
                     $output .= '    ZEND_ARG_OBJ_INFO('.$send_by.', '.$parameter->getName().', '.$parameter->type->internal_type.', '.$allow_null.')'. PHP_EOL;
+                    break;
+                default:
+                    echo "Unexpected Error at ".__FILE__.":".__LINE__." \n";
                     break;
             }
     
@@ -132,9 +137,12 @@ class ArgumentsDto
             }
             */
         }
-        $output .= 'ZEND_END_ARG_INFO()'. PHP_EOL;
 
-        $dto->info = $output;
+        $info = 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$methodGenerator->getName().', 0, '.$send_by.', '.(count($parameters)-$optional).')'. PHP_EOL;
+        $info .= $output;
+        $info .= 'ZEND_END_ARG_INFO()'. PHP_EOL;
+
+        $dto->info = $info;
 
         return $dto;
     }

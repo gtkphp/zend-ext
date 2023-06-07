@@ -5,7 +5,6 @@
 #ifndef PHP_<?php echo $this->name_macro ?>_H
 #define PHP_<?php echo $this->name_macro ?>_H
 
-// PHP_G_DECLARE($name_macro, $name_function)
 #define PHP_<?php echo $name_macro ?>(ptr)           ((php_<?php echo $name_function ?>*)(ptr))
 #define PHP_<?php echo $name_macro ?>_CLASS          php_<?php echo $name_function ?>_class_entry
 #define PHP_<?php echo $name_macro ?>_OFFSET         (sizeof(php_<?php echo $name_function ?>) - sizeof(zend_object))
@@ -17,6 +16,7 @@
 #define ZVAL_IS_PHP_<?php echo $name_macro ?>(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_<?php echo $name_macro ?>((val)->value.obj))
 #define ZVAL_GET_PHP_<?php echo $name_macro ?>(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_TO_PHP_<?php echo $name_macro ?>((val)->value.obj))
 
+#define PHP_<?php echo $name_macro ?>_GET_PTR(val)   (val->ptr)
 
 
 #define PHP_<?php echo $name_macro ?>_FE() \

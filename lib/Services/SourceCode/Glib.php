@@ -116,6 +116,12 @@ class Glib extends SourceCode {
     }
 
     function getFunction($name) {
+        $stubs = $this->array['stub'];
+
+        if (array_key_exists($name, $stubs)) {
+            return $stubs[$name];
+        }
+
         $functions = $this->array['functions'];
         if (isset($functions[$name])) {
             return $functions[$name];

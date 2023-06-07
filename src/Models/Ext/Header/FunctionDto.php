@@ -14,7 +14,7 @@ use Zend\Ext\Models\Code\Generator\ParameterGenerator;
 use Zend\Ext\Models\Code\Generator\TypeGenerator;
 use Zend\Ext\Models\Code\Generator\PropertyGenerator;
 
-use ZendExt\Dto\Ext\Header\ArgumentsDto;
+use ZendExt\Dto\Ext\Header\FunctionArgsDto;
 
 
 class FunctionDto //extends BaseFileDto
@@ -25,7 +25,7 @@ class FunctionDto //extends BaseFileDto
     /** @var ParameterDto[] */
     public $parameters;
 
-    /** @var ArgumentsDto */
+    /** @var FunctionArgsDto */
     public $arguments;
 
     public $pad = 0;
@@ -36,7 +36,7 @@ class FunctionDto //extends BaseFileDto
         $dto = new FunctionDto();
         $dto->name = $methodGenerator->getName();
 
-        $dto->arguments = ArgumentsDto::create($methodGenerator);
+        $dto->arguments = FunctionArgsDto::create($methodGenerator);
 
         /** @var ParameterGenerator $parameter */
         /*foreach($methodGenerator->getParameters() as $parameter) {

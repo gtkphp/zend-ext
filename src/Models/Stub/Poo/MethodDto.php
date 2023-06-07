@@ -12,7 +12,7 @@ use Zend\Ext\Models\Code\Generator\DocBlock\Tag\ReturnTag;
 use Zend\Ext\Models\Code\Generator\MethodGenerator;
 use Zend\Ext\Models\Code\Generator\TypeGenerator;
 use ZendExt\Dto\Stub\FunctionDto as BaseFunctionDto;
-use ZendExt\Dto\Stub\ArgumentsDto;
+use ZendExt\Dto\Stub\FunctionArgsDto;
 
 
 class MethodDto extends BaseFunctionDto
@@ -26,7 +26,7 @@ class MethodDto extends BaseFunctionDto
         $dto = new self();
         $dto->name = GnomeClassifier::SnakeToCamel($methodGenerator->getNickName());
 
-        $dto->arguments = $renderer->transfer('ArgumentsDto.php', $methodGenerator);
+        $dto->arguments = $renderer->transfer('FunctionArgsDto.php', $methodGenerator);
 
         
         $returnsGenerator = $methodGenerator->getReturnType();

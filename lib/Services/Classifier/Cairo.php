@@ -246,7 +246,8 @@ class Cairo
             }
             if ('gs_list'==$prefix) { $prefix = 'g_slist';}
             if ('gio_channel'==$prefix) { $prefix = 'g_io_channel';}
-            
+            if ('grw_lock'==$prefix) { $prefix = 'g_rw_lock';}
+                
             // Exceptions
             if (0===strpos($functionDocBook->name, $prefix.'_')) {
                     return $struct;

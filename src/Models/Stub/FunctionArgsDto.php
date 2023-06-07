@@ -5,7 +5,7 @@ namespace ZendExt\Dto\Stub;
 use Zend\Ext\Models\Code\Generator\MethodGenerator;
 
 
-class ArgumentsDto
+class FunctionArgsDto
 {
     /** @var string */
     public $info;

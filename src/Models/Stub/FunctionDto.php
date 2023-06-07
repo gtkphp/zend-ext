@@ -10,7 +10,7 @@ use Zend\Ext\Models\Code\Generator\DocBlock\Tag\ParamTag;
 use Zend\Ext\Models\Code\Generator\DocBlock\Tag\ReturnTag;
 use Zend\Ext\Models\Code\Generator\MethodGenerator;
 
-use ZendExt\Dto\Stub\ArgumentsDto;
+use ZendExt\Dto\Stub\FunctionArgsDto;
 
 
 class FunctionDto //extends BaseFileDto
@@ -21,7 +21,7 @@ class FunctionDto //extends BaseFileDto
     /** @var string */
     public $dockBlock='';
 
-    /** @var ArgumentsDto */
+    /** @var FunctionArgsDto */
     public $arguments;
 
     /** @var string */
@@ -35,7 +35,7 @@ class FunctionDto //extends BaseFileDto
         $dto = new self();
         $dto->name = $methodGenerator->getName();
 
-        $dto->arguments = $renderer->transfer('ArgumentsDto.php', $methodGenerator);
+        $dto->arguments = $renderer->transfer('FunctionArgsDto.php', $methodGenerator);
 
         $returnsGenerator = $methodGenerator->getReturnType();
         if (!$returnsGenerator || 'void'==$returnsGenerator) {

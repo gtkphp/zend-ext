@@ -101,23 +101,23 @@ class Agent
     
     
 
-    public function loadCode(bool $use_cache=true) {
+    public function loadCode($files, $extras) {
         $has_cache = false;
         $cache_filename = $this->cache_path . '/' . self::SOURCE_CACHE_FILENAME;
-        if ($use_cache) {
-            if (!is_dir($this->cache_path)) {
-                throw new \Exception("Cache directory do not exists : '$this->cache_path'");
-            }
-            
-            if (file_exists($cache_filename)) {
-                $has_cache = true;
-            } else {
-                `touch $cache_filename`;
-            }
+        if (!is_dir($this->cache_path)) {
+            throw new \Exception("Cache directory do not exists : '$this->cache_path'");
+        }
+        
+        if (file_exists($cache_filename)) {
+            $has_cache = true;
         }
 
         if (! $has_cache) {
             $sourceCode = new GlibSourceCode();
+            foreach ($files as $file) {
+                $sourceCode->loadTypes($this->data_path.'/'.$file);
+            }
+            /*
             $sourceCode->loadTypes($this->data_path.'/glib-2.56.4.h');
             $sourceCode->loadTypes($this->data_path.'/gobject-2.56.4.h');
             $sourceCode->loadTypes($this->data_path.'/gio-2.56.4.h');
@@ -127,7 +127,6 @@ class Agent
             $sourceCode->loadTypes($this->data_path.'/gdk_pixbuf-2.36.11.h');
             $sourceCode->loadTypes($this->data_path.'/gdk-3.22.30.h');
             $sourceCode->loadTypes($this->data_path.'/gtk-3.22.30.h');
-            /*
             */
             $sourceCode->evaluate();// resolve enum value
             // Time: 15.73 seconds, Memory: 129.69 MB
@@ -140,7 +139,9 @@ class Agent
             $sourceCode->defines = $data['macro'];
             // Time: 147 ms, Memory: 61.69 MB
         }
-        $sourceCode->loadStubs($this->data_path.'/glib-2.56.4.php');
+        foreach ($extras as $file) {
+            $sourceCode->loadStubs($this->data_path.'/'.$file);
+        }
         
 
         return $sourceCode;

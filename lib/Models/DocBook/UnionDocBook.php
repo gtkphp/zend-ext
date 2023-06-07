@@ -13,7 +13,10 @@ class UnionDocBook extends AbstractDocBook
 {
     /** @var string $name The public name of struct */
     public $name;
-    
+    public function getName() {
+        return $this->name;
+    }
+
     use TraitDescriptionDocBook;
 
     /**

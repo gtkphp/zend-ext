@@ -1,0 +1,190 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef PHP_G_ARRAY_H
+#define PHP_G_ARRAY_H
+
+
+
+#define PHP_G_ARRAY(ptr)           ((php_g_array*)(ptr))
+#define PHP_G_ARRAY_CLASS          php_g_array_class_entry
+#define PHP_G_ARRAY_OFFSET         (sizeof(php_g_array) - sizeof(zend_object))
+
+#define ZOBJ_IS_PHP_G_ARRAY(obj)   ((obj)!=NULL && obj->ce == php_g_array_class_entry)
+#define ZOBJ_TO_PHP_G_ARRAY(std)   PHP_G_ARRAY( ((void*)(std))-PHP_G_ARRAY_OFFSET )
+
+#define ZVAL_IS_PHP_G_ARRAY(val)   ((val)!=NULL && Z_TYPE_P(val)==IS_OBJECT && ZOBJ_IS_PHP_G_ARRAY((val)->value.obj))
+#define ZVAL_GET_PHP_G_ARRAY(val)  (((val)==NULL || ZVAL_IS_NULL(val)) ? NULL : ZOBJ_TO_PHP_G_ARRAY((val)->value.obj))
+
+#define ZVAL_SET_PHP_G_ARRAY(z, o) do {        \
+        if (o==NULL) {                              \
+            ZVAL_NULL(z);                           \
+        } else {                                    \
+            zval *__z = (z);                        \
+            Z_OBJ_P(__z) = &(o)->std;               \
+            Z_TYPE_INFO_P(__z) = IS_OBJECT_EX;      \
+            GC_REFCOUNT(&o->std)++;                 \
+        }                                           \
+    } while (0)
+
+
+
+#define PHP_G_ARRAY_COPY(src, dest) \
+
+
+#define PHP_G_ARRAY_SET(dest, src) \
+
+
+
+#define DECL_PHP_G_ARRAY(name) \
+    g_array __##name; \
+    g_array *name = &__##name; \
+    PHP_G_ARRAY_COPY(php_##name, name);
+
+
+
+#if 1
+#define PHP_G_ARRAY_FE_0() \
+    PHP_GTK_FE(g_array_new,              arginfo_g_array_new)              \
+    PHP_GTK_FE(g_array_sized_new,        arginfo_g_array_sized_new)        \
+    PHP_GTK_FE(g_array_append_val,       arginfo_g_array_append_val)       \
+    PHP_GTK_FE(g_array_prepend_val,      arginfo_g_array_prepend_val)      \
+    PHP_GTK_FE(g_array_insert_val,       arginfo_g_array_insert_val)       \
+    PHP_GTK_FE(g_array_index,            arginfo_g_array_index)            \
+    PHP_GTK_FE(g_array_free,             arginfo_g_array_free)
+#else
+#define PHP_G_ARRAY_FE_0()
+#endif
+
+
+#if GLIB_CHECK_VERSION(2, 22, 0)
+#define PHP_G_ARRAY_FE_22200() \
+    PHP_GTK_FE(g_array_ref,              arginfo_g_array_ref)              \
+    PHP_GTK_FE(g_array_unref,            arginfo_g_array_unref)            \
+    PHP_GTK_FE(g_array_get_element_size, arginfo_g_array_get_element_size)
+#else
+#define PHP_G_ARRAY_FE_22200()
+#endif
+
+
+#define PHP_G_ARRAY_FE() \
+    PHP_G_ARRAY_FE_0() \
+    PHP_G_ARRAY_FE_22200() \
+
+
+#define PHP_G_ARRAY_MINIT_FUNCTION(container_ce, parent_ce) \
+    php_g_array_class_minit(container_ce, parent_ce)
+
+#define PHP_G_ARRAY_MSHUTDOWN_FUNCTION() { \
+}
+
+#define PHP_G_ARRAY_RSHUTDOWN_FUNCTION() {\
+}
+
+extern zend_class_entry     *php_g_array_class_entry;
+
+
+typedef struct _php_g_array php_g_array;
+struct _php_g_array {
+    zval data;// array of gchar*
+    zval len;// of guint readonly
+
+    /* behavior */
+    zend_bool zero_terminated;
+    zend_bool clear_;
+    zend_long element_size;
+    zend_long reserved_size;
+
+    zend_long element_id;// Element ID
+
+    zend_object std;
+};
+
+zend_class_entry*
+php_g_array_class_minit(zend_class_entry *container_ce, zend_class_entry *parent_ce);
+
+char *php_g_array_dump(zend_object *obj);
+char *php_zval_dump(zval *val, int tab);
+
+#define IS_COUNTABLE 0
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_g_array___construct, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(g_array, __construct);
+#if IS_COUNTABLE
+ZEND_BEGIN_ARG_INFO_EX(arginfo_g_array_count, 0, 0, 0)
+ZEND_END_ARG_INFO()
+PHP_METHOD(g_array, count);
+#endif
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_new, ZEND_RETURN_VALUE, 3, GArray, 0)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, zero_terminated, _IS_BOOL, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, clear_, _IS_BOOL, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, element_size, IS_LONG, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_new);
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_sized_new, ZEND_RETURN_VALUE, 4, GArray, 0)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, zero_terminated, _IS_BOOL, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, clear_, _IS_BOOL, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, element_size, IS_LONG, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, reserved_size, IS_LONG, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_sized_new);
+
+#if GLIB_CHECK_VERSION(2, 22, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_ref, ZEND_RETURN_VALUE, 1, GArray, 0)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_REF, array, GArray, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_ref);
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_g_array_unref, 0, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, array, GArray, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_unref);
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_g_array_get_element_size, ZEND_RETURN_VALUE, 1, IS_LONG, 0)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, array, GArray, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_get_element_size);
+
+#endif
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_append_val, ZEND_RETURN_VALUE, 2, GArray, 0)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, a, GArray, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, v, IS_MIXED, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_append_val);
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_prepend_val, ZEND_RETURN_VALUE, 2, GArray, 0)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, a, GArray, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, v, IS_MIXED, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_prepend_val);
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_g_array_insert_val, ZEND_RETURN_VALUE, 3, GArray, 0)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, a, GArray, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, i, IS_LONG, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, v, IS_MIXED, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_insert_val);
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_g_array_index, ZEND_RETURN_REFERENCE, 3, IS_MIXED, 1)
+//ZEND_BEGIN_ARG_INFO_EX(arginfo_g_array_index, 0, ZEND_RETURN_VALUE, 3)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_VAL, a, GArray, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, t, IS_MIXED, 1)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, i, IS_LONG, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_index);
+
+//ZEND_BEGIN_ARG_INFO(arginfo_g_array_free, 0)
+//ZEND_BEGIN_ARG_INFO_EX(arginfo_g_array_free, 0, ZEND_RETURN_REFERENCE, 2)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_g_array_free, ZEND_RETURN_REFERENCE, 2, IS_ARRAY, 1)
+    ZEND_ARG_OBJ_INFO(ZEND_SEND_BY_REF, array, GArray, 0)
+    ZEND_ARG_TYPE_INFO(ZEND_SEND_BY_VAL, free_segment, _IS_BOOL, 1)
+ZEND_END_ARG_INFO()
+PHP_FUNCTION(g_array_free);
+
+
+
+#endif  /* PHP_G_ARRAY_H */

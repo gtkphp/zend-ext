@@ -1,0 +1,1675 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+
+
+#include <php.h>
+#include <php_ini.h>
+#include <zend_interfaces.h>
+#include <ext/standard/info.h>
+
+#include <gmodule.h>
+#include "php_glib/type.h"
+#include "php_glib/array.h"
+#include "php_gtk.h"
+
+
+extern HashTable         classes;
+extern zend_module_entry gtk_module_entry;
+
+zend_class_entry     *php_g_array_class_entry;// struct
+zend_object_handlers  php_g_array_handlers;
+
+
+enum _php_g_array_properties {
+    PHP_G_ARRAY_DATA = 1,
+    PHP_G_ARRAY_LEN = 2
+};
+//typedef enum _php_g_array_properties php_g_array_properties;
+
+/*----------------------------------------------------------------------+
+ | Internal                                                             |
+ +----------------------------------------------------------------------*/
+
+static const zend_function_entry
+php_g_array_methods[] = {
+    PHP_ME(g_array, __construct, arginfo_g_array___construct, ZEND_ACC_PUBLIC)
+#if IS_COUNTABLE
+    PHP_ME(g_array, count, arginfo_g_array_count, ZEND_ACC_PUBLIC)
+#endif
+    PHP_FE_END
+};
+
+#if 1 || ZEND_DEBUG
+static char*
+dump_flags(zend_array *array) {
+    char *tmp;
+    char *output = g_strdup("0");
+    if (array->u.flags & HASH_FLAG_CONSISTENCY) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_CONSISTENCY");
+        g_free(tmp);
+    }
+    if (array->u.flags & HASH_FLAG_PACKED) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_PACKED");
+        g_free(tmp);
+    }
+    if (array->u.flags & HASH_FLAG_UNINITIALIZED) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_UNINITIALIZED");
+        g_free(tmp);
+    }
+    if (array->u.flags & HASH_FLAG_STATIC_KEYS) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_STATIC_KEYS");
+        g_free(tmp);
+    }
+    if (array->u.flags & HASH_FLAG_HAS_EMPTY_IND) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_HAS_EMPTY_IND");
+        g_free(tmp);
+    }
+    if (array->u.flags & HASH_FLAG_ALLOW_COW_VIOLATION) {
+        tmp = output;
+        output = g_strdup_printf("%s | %s", tmp, "HASH_FLAG_ALLOW_COW_VIOLATION");
+        g_free(tmp);
+    }
+    tmp = output;
+    output = g_strdup (tmp+4);
+    g_free(tmp);
+
+    return output;
+}
+
+#define CR "\e[31;1m"
+#define CB "\e[30;1m"
+#define CC "\e[35;1m"
+#define CY "\e[34;1m"
+#define Cc "\e[35;2m"
+#define C0 "\e[0;m"
+
+char*
+php_zval_zend_array_dump(zend_array *array, int tab) {
+    //guint id = Z_OBJ_HANDLE_P(obj);
+    char *pad = ".....................................";
+    char *w   = "                                     ";
+    char *s   = g_strndup(w, tab*4);
+    char *__s = tab>0 ? g_strndup(w, (tab-1)*4) : g_strdup("");
+
+    GString *gstr = g_string_new("");
+
+    //g_string_append_printf(gstr, "%.*s", array->nNumOfElements, pad);
+
+    gsize i = 0;
+    char *dump;
+    zval *value;
+    char *glue_comma=",\n";
+    zval *glue="\n";
+    ZEND_HASH_FOREACH_VAL(array, value) {
+        dump = php_zval_dump(value, tab+1);
+        g_string_append_printf(gstr, "%s%s[%d] => %s", glue, s, i, dump);
+        g_free(dump);
+        glue = glue_comma;
+        i++;
+    } ZEND_HASH_FOREACH_END();
+    g_string_append_printf(gstr, "\n%s", __s);
+
+    g_free(s);
+    g_free(__s);
+    char *output = gstr->str;
+    g_string_free(gstr, FALSE);
+    return output;
+}
+
+char*
+php_zval_dump(zval *val, int tab) {
+    if (NULL==val) {
+        return g_strdup("{nil}");
+    }
+    char *dump;
+    char *w   = "                                     ";
+    char *s   = g_strndup(w, tab*4);
+
+    GString *gstr = g_string_new("");
+    g_string_append(gstr, CC"zval"C0);
+    //g_string_append_printf(gstr, CC"zval"C0" &%d{", val->value.counted->gc.refcount);
+
+    switch (Z_TYPE_P(val)) {
+        case IS_ARRAY:
+            dump = php_zval_zend_array_dump(Z_ARR_P(val), tab+1);
+            g_string_append_printf(gstr, "<"Cc"zend_array"C0"> &%d{%s}", val->value.counted->gc.refcount, dump);
+            g_free(dump);
+            break;
+        case IS_REFERENCE:
+            g_string_append_printf(gstr, "<"Cc"zend_reference"C0"> &%d{", val->value.counted->gc.refcount);
+            dump = php_zval_dump(&val->value.ref->val, tab+1);
+            g_string_append_printf(gstr, "%s", dump);
+            g_free(dump);
+            g_string_append(gstr, "}");
+            break;
+        case IS_NULL:
+            g_string_append_printf(gstr, "<"Cc"%s"C0">", "NULL");
+            break;
+        case IS_LONG:
+            g_string_append_printf(gstr, "<"Cc"int"C0"> { "CB"%d"C0"}", val->value.lval);
+            break;
+        case IS_DOUBLE:
+            g_string_append_printf(gstr, "<"Cc"float"C0"> %f", val->value.dval);
+            break;
+        case IS_STRING:
+            g_string_append_printf(gstr, "<"Cc"string"C0">"CB"#%.*p"C0" "CR"\"%s\""C0"", 4, val/*->value.str*/, val->value.str->val);
+            break;
+        default:
+            g_string_append_printf(gstr, "<"Cc"%s"C0">", zend_zval_type_name(val));
+            break;
+    }
+
+    /*
+    GString *gstr = g_string_new("");
+    g_string_append_printf(gstr, CC"zval"C0""CB"#%d"C0" &%d"CB"{"C0"\n", obj->handle, obj->gc.refcount);
+
+    g_string_append_printf(gstr, "  data: "Cc"zend_array"C0" &%d{", intern->data.value.arr->gc.refcount);
+    g_string_append_printf(gstr, "%.*s", intern->data.value.arr->nNumOfElements, pad);
+    g_string_append(gstr, "}\n");
+    */
+
+    g_free(s);
+    char *output = gstr->str;
+    g_string_free(gstr, FALSE);
+    return output;
+}
+
+char*
+php_g_array_dump(zend_object *obj) {
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(obj);
+
+    //guint id = Z_OBJ_HANDLE_P(obj);
+    char *pad = ".....................................";
+
+    GString *gstr = g_string_new("");
+    g_string_append_printf(gstr, CC"GArray"C0""CB"#%d"C0" &%d"CB"{"C0"\n", obj->handle, obj->gc.refcount);
+
+    char *dump = php_zval_dump(&intern->data, 1);
+    g_string_append_printf(gstr, "    "CB"data"C0": %s\n", dump);
+    g_free(dump);
+
+    dump = php_zval_dump(&intern->len, 1);
+    g_string_append_printf(gstr, "    "CB"len"C0": %s\n", dump);
+    g_free(dump);
+
+    g_string_append(gstr, CB"}"C0"\n");
+
+    char *output = gstr->str;
+    g_string_free(gstr, FALSE);
+    return output;
+}
+#endif
+
+/* {{{ php_g_array_create_object */
+static zend_object*
+php_g_array_create_object(zend_class_entry *class_type)
+{
+    php_g_array *intern = zend_object_alloc(sizeof(php_g_array), class_type);
+    zend_object_std_init(&intern->std, class_type);
+    object_properties_init(&intern->std, class_type);
+
+    zend_array *zdata;
+    ALLOC_HASHTABLE(zdata);
+    zend_hash_init(zdata, 1, NULL, ZVAL_PTR_DTOR, 1);
+
+    ZVAL_ARR(&intern->data, zdata);
+    ZVAL_LONG(&intern->len, 0);
+
+    intern->zero_terminated = FALSE;
+    intern->clear_ = FALSE;
+    intern->element_size = 0;
+    intern->reserved_size = 1;
+
+    intern->element_id = 0;// Unknown Element ID
+
+    intern->std.handlers = &php_g_array_handlers;
+
+    return &intern->std;
+} /* }}} */
+
+/*----------------------------------------------------------------------+
+ | Zend Handler                                                         |
+ +----------------------------------------------------------------------*/
+
+/* {{{ php_g_array_free_obj */
+static void
+php_g_array_free_obj(zend_object *object)
+{
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+
+    Z_DELREF(intern->data);
+    if (Z_ISREF(intern->data)) {
+        if (Z_REF(intern->data)->gc.refcount==0) {
+            ZVAL_UNREF(&intern->data);
+            Z_DELREF(intern->data);
+        }
+    }
+    if (Z_ARR(intern->data)->gc.refcount==0) {
+        zend_hash_destroy(Z_ARR(intern->data));
+        FREE_HASHTABLE(Z_ARR(intern->data));
+        ZVAL_NULL(&intern->data);
+    }
+
+    Z_TRY_DELREF(intern->len);
+
+    zend_object_std_dtor(&intern->std);
+
+} /* }}} */
+
+/* {{{ php_g_array_dtor_obj */
+static void
+php_g_array_dtor_obj(zend_object *object)
+{
+    //    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    // TODO
+
+
+} /* }}} */
+
+/* {{{ php_g_array_clone_obj */
+static zend_object*
+php_g_array_clone_obj(zend_object *object)
+{
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    //    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    // TODO
+
+} /* }}} */
+
+
+
+
+/** TODO: implement all the types */
+static void
+php_g_array_setter_guint(php_g_array *intern, zval *value, char *name, zval *dest) {
+    if (Z_TYPE_P(value)==IS_LONG) {
+        ZVAL_SET_LONG(dest, value->value.lval);
+    } else {
+        zend_bool strict_types = ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
+        const char *type_name = zend_zval_type_name(value);
+        if (strict_types) {
+            zend_type_error("Cannot assign %s to property %s::$%s of type float,", ZSTR_VAL(intern->std.ce->name), type_name, name);
+        } else {
+            int allow_errors = -1;
+            zend_long lval=0;
+            double dval=0;
+            if (Z_TYPE_P(value)==IS_STRING) {
+                zend_uchar z_type = is_numeric_string(Z_STRVAL_P(value), Z_STRLEN_P(value), &lval, &dval, allow_errors);
+                if (z_type==IS_LONG) {
+                    ZVAL_SET_LONG(dest, lval);
+                    php_g_log("GLib", E_USER_NOTICE, "Implicit %s(%s) to int(%d) convertion,", type_name, value->value.str->val, lval);
+                    return;
+                } else if(z_type==IS_DOUBLE) {
+                    ZVAL_SET_LONG(dest, (int)dval);
+                    php_g_log("GLib", E_USER_NOTICE, "Implicit %s(%s) to int(%d) convertion,", type_name, value->value.str->val, (int)dval);
+                    return;
+                }
+            }
+            if (Z_TYPE_P(value)==IS_DOUBLE) {
+                ZVAL_SET_LONG(dest, (int)value->value.dval);
+                php_g_log("GLib", E_USER_WARNING, "Implicit float(%f) to int(%d) convertion,", value->value.dval, (int)value->value.dval);
+                return;
+            }
+            php_g_log("GLib", E_USER_NOTICE, "Cannot assign %s to property %s::$%s of type int,", ZSTR_VAL(intern->std.ce->name), type_name, name);
+        }
+    }
+}
+
+
+static void
+php_g_array_write_property_len(php_g_array *intern, zval *value, char *name, zval *dest) {
+    char *msg = 0;
+    zval *val = Z_ISREF_P(value) ? &value->value.ref->val : value;
+
+    switch (Z_TYPE_P(val)) {
+        case IS_LONG:
+            msg = g_strdup_printf("Assignment with (int) %d will have no effect.", Z_LVAL_P(val));
+            break;
+        case IS_DOUBLE:
+            msg = g_strdup_printf("Assignment with (float) %f will have no effect.", Z_DVAL_P(val));
+            break;
+        case IS_STRING:
+            msg = g_strdup_printf("Assignment with (string) \"%s\" will have no effect.", Z_STR_P(val)->val);
+            break;
+        default:
+            msg = g_strdup_printf("Assignment with (%s) will have no effect.", zend_zval_type_name(value));
+            break;
+    }
+    php_g_log("GLib", E_USER_WARNING, "Read-only: Property %s::%s is read only",
+               ZSTR_VAL(intern->std.ce->name), name);
+    g_free(msg);
+}
+
+static void
+php_g_array_write_property_data(php_g_array *intern, zval *value, char *name, zval *dest) {
+    TRACE();
+    zval *val = Z_ISREF_P(value) ? &Z_REF_P(value)->val : value;
+
+    if (IS_ARRAY==Z_TYPE_P(val)) {// Allow-null ?
+        php_g_type_setter_array(value, dest);
+        // synchronize
+        zval *data = Z_ISREF_P(value) ? &Z_REF_P(value)->val : value;
+        zval *val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+        ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+        // end synchronize
+    } else {
+        // TODO try to convert value has Iterator
+        php_g_log("GLib", E_USER_WARNING, "%s::%s: Property must be of type array; %s given",
+                   ZSTR_VAL(intern->std.ce->name), name, zend_zval_type_name(value));
+    }
+}
+
+struct PhpGArrayProperty {
+  const char *name;
+  int code;
+  void (*setter) (php_g_array *intern, zval *rvalue, char *name, zval *dest);
+  //void (*getter) (php_g_array *intern, zval *rvalue, char *name, zval *dest);
+};
+
+static const struct PhpGArrayProperty php_g_array_properties[] = {
+    {"data", PHP_G_ARRAY_DATA, php_g_array_write_property_data},
+    {"len", PHP_G_ARRAY_LEN, php_g_array_write_property_len}
+};
+
+
+const struct PhpGArrayProperty*
+php_g_array_properties_lookup (const char *str, size_t len)
+{
+    if (len == 4) {
+        if (str[0] == 'd' && str[1] == 'a' && str[2] == 't' && str[3] == 'a') {
+            return &php_g_array_properties[0];
+        }
+    } else if (len == 3) {
+        if (str[0] == 'l' && str[1] == 'e' && str[2] == 'n') {
+            return &php_g_array_properties[1];
+        }
+    }
+    return 0;
+}
+
+/*
+static zval*
+php_g_array_write_property_data(zend_object *object, zend_string *member_str, zval *value, void **cache_slot) {
+
+}
+
+static zval*
+php_g_array_read_property_data(zend_object *object, zend_string *member, int type, void **cache_slot, zval *rv) {
+    ZVAL_DUP(rv, &intern->data);
+}
+*/
+
+/* {{{ php_g_array_read_property
+ * type: 0 read
+ * type: 1 from get_property_ptr_ptr return NULL
+ *
+ * type: 3 from isset()/empty()
+ *
+ * type: 5 from unset()
+ *
+    #define BP_VAR_R			0
+    #define BP_VAR_W			1
+    #define BP_VAR_RW			2
+    #define BP_VAR_IS			3
+    #define BP_VAR_FUNC_ARG		4
+    #define BP_VAR_UNSET		5
+ */
+static zval*
+php_g_array_read_property(zend_object *object, zend_string *member, int type, void **cache_slot, zval *rv)
+{
+    TRACE();
+    //php_printf("type: %d\n", type);
+    //php_printf(" val: %s\n", member->val);
+
+
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zend_string *member_str = member;
+    zval *data, *val;
+
+    const struct PhpGArrayProperty *cmd = php_g_array_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+        case PHP_G_ARRAY_DATA:
+            ZVAL_DUP(rv, &intern->data);
+            break;
+        case PHP_G_ARRAY_LEN:
+            // synchronize
+            data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+            val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+            if (intern->zero_terminated && Z_ARR_P(data)->nNumOfElements!=0) {
+                ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements-1);
+            } else {
+                ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+            }
+            ZVAL_COPY(rv, &intern->len);
+            break;
+        default:
+            //zend_internal_type_error(1, "Internal bug,");
+            //zend_error(E_USER_NOTICE, "Internal bug,");
+            break;
+        }
+    } else {
+        php_g_log("GLib", E_USER_WARNING, "Empty: Property: %s::$%s dos not exist",
+                   ZSTR_VAL(object->ce->name), ZSTR_VAL(member_str));
+        ZVAL_NULL(rv);
+    }
+
+    return rv;
+}/* }}} */
+
+/* {{{ php_g_array_write_property */
+static zval*
+php_g_array_write_property(zend_object *object, zend_string *member, zval *value, void **cache_slot)
+{
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zend_string *member_str = member;
+    zval *rv = NULL;
+
+    const struct PhpGArrayProperty *cmd = php_g_array_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+        case PHP_G_ARRAY_DATA:
+            cmd->setter(intern, value, member_str->val, &intern->data);
+        break;
+        case PHP_G_ARRAY_LEN:
+            cmd->setter(intern, value, member_str->val, &intern->len);
+        break;
+        }
+    } else {
+        php_g_log("GLib", E_USER_WARNING, "Cannot create dynamic property %s::$%s",
+                   ZSTR_VAL(php_g_array_class_entry->name), ZSTR_VAL(member_str));
+        /*
+        zend_throw_error(NULL, "Cannot create dynamic property %s::$%s",
+                         ZSTR_VAL(php_g_array_class_entry->name), ZSTR_VAL(member_str));
+        */
+    }
+    return NULL;
+}/* }}} */
+
+
+/* {{{ php_g_array_get_property_ptr_ptr */
+static zval*
+php_g_array_get_property_ptr_ptr(zend_object *object, zend_string *member, int type, void **cache_slot)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zend_string *member_str = member;
+    zval *retval = NULL;
+    zval *val;
+    zval *data;
+
+    const struct PhpGArrayProperty *cmd = php_g_array_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        switch(cmd->code) {
+        case PHP_G_ARRAY_DATA:
+            retval = &intern->data;
+            /* message
+            php_g_log("GLib", E_USER_DEPRECATED, "Property %s::%s is read only. Do not use references( &).",//Assignments will not be notified on the references and will have no effect
+                       ZSTR_VAL(intern->std.ce->name), member_str->val);
+            end message */
+            break;
+        case PHP_G_ARRAY_LEN:
+            if (0) {
+                retval = NULL;// Do not make ref then use read_property
+            } else {
+                // synchronize
+                data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+                val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+                if (intern->zero_terminated && Z_ARR_P(data)->nNumOfElements>0) {
+                    ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements-1);
+                } else {
+                    ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+                }
+                // end synchronize
+                retval = &intern->len;
+            }
+            // message
+            php_g_log("GLib", E_USER_DEPRECATED, "Property %s::%s is read only. Do not use references( &).",//Assignments will not be notified on the references and will have no effect
+                       ZSTR_VAL(intern->std.ce->name), member_str->val);
+            // end message
+            break;
+        }
+    } else {
+        php_g_log("GLib", E_USER_DEPRECATED, "Empty: Property %s::%s is undefined",
+                   ZSTR_VAL(intern->std.ce->name), member_str->val);
+        //retval = &nil;
+    }
+
+    //php_printf("%d\n", Z_TYPE_P(retval));//7==IS_ARRAY
+    return retval;
+}/* }}} */
+
+static void
+php_g_array_unset_property(zend_object *object, zend_string *member, void **cache_slot) {
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zend_string *member_str = member;
+
+    const struct PhpGArrayProperty *cmd = php_g_array_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        php_g_log("GLib", E_USER_NOTICE, "Unset: Property %s::%s is not settable", object->ce->name->val, member_str->val);
+    } else {
+        php_g_log("GLib", E_USER_NOTICE, "Empty: Property %s::%s does not exist", object->ce->name->val, member_str->val);
+    }
+}
+
+/* {{{ php_g_array_has_property */
+static int
+php_g_array_has_property(zend_object *object, zend_string *member, int has_set_exists, void **cache_slot)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zend_string *member_str = member;
+
+    const struct PhpGArrayProperty *cmd = php_g_array_properties_lookup(member_str->val, member_str->len);
+    if (cmd) {
+        // property_exists() whether property exists
+        if (2==has_set_exists) {
+            return 1;
+        }
+        // empty() whether property exists and is true
+        if (1==has_set_exists) {
+            zval *val = NULL;
+            switch(cmd->code) {
+            case PHP_G_ARRAY_DATA:
+                val = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+                if(Z_ARR_P(val)->nNumOfElements){
+                    return 1;
+                }
+                break;
+            case PHP_G_ARRAY_LEN:
+                val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+                if(Z_LVAL_P(val)){
+                    return 1;
+                }
+                break;
+            }
+        }
+        // isset() whether property exists and is not NULL
+        if (0==has_set_exists) {
+            zval *val = NULL;
+            switch(cmd->code) {
+            case PHP_G_ARRAY_DATA:
+                val = &intern->data;
+                break;
+            case PHP_G_ARRAY_LEN:
+                val = &intern->len;
+                break;
+            }
+            if (val && !Z_ISNULL_P(val)) {
+                return 1;
+            }
+        }
+    }
+    return FALSE;
+}/* }}} */
+
+/* {{{ php_g_array_get_properties */
+static HashTable*
+php_g_array_get_properties(zend_object *object)
+{
+
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+
+    HashTable   *debug_info, *std_props;
+    std_props = zend_std_get_properties(object);
+    debug_info = std_props;//zend_array_dup(std_props);
+
+    zval zdata;
+    if (Z_ISREF(intern->data) && Z_REFCOUNT(intern->data)<2) {// If the reference is no longer used by the PHP dev
+        ZVAL_COPY(&zdata, &Z_REF(intern->data)->val);// hide reference (for compatibility)
+    } else {
+        ZVAL_COPY(&zdata, &intern->data);
+    }
+    zend_hash_str_update(debug_info, "data", sizeof("data")-1, &zdata);
+
+    // synchronize
+    zval *data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+    zval *val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+    if (intern->zero_terminated && 0!=Z_ARR_P(data)->nNumOfElements) {
+        ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements-1);
+    } else {
+        ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+    }
+
+    zval zlen; ZVAL_COPY(&zlen, &intern->len);
+    zend_hash_str_update(debug_info, "len", sizeof("len")-1, &zlen);
+
+    return debug_info;
+}/* }}} */
+
+/* {{{ php_g_array_count_elements */
+static int
+php_g_array_count_elements(zend_object *object, zend_long *count)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+    *count = Z_ARR_P(__data)->nNumOfElements;
+
+    return SUCCESS;
+}/* }}} */
+
+/* {{{ php_g_array_read_dimension */
+static zval*
+php_g_array_read_dimension(zend_object *object, zval *offset, int type, zval *rv)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+
+    // fixe offset
+    guint v_guint;
+    zend_long index = 0;
+    if (offset) {
+        zval *__offset = offset ? Z_ISREF_P(offset) ? &Z_REF_P(offset)->val : offset : NULL;
+        php_g_uint_assume_zval(__offset, &v_guint, NULL);// g_size
+        index = v_guint;
+    }
+
+    zval *value = zend_hash_index_find(Z_ARR_P(__data), index);
+    if (value) {
+        ZVAL_COPY(rv, value);
+    } else {
+        rv = NULL;
+        php_g_log("GLib", E_USER_WARNING, "Undefined GArray offset %d", index);
+    }
+
+    return rv;
+}/* }}} */
+
+/* {{{ php_g_array_write_dimension */
+static void
+php_g_array_write_dimension(zend_object *object, zval *offset, zval *value)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zval *key = NULL!=offset ? (Z_ISREF_P(offset) ? &Z_REF_P(offset)->val : offset) : NULL;
+
+
+    zval rv; ZVAL_NULL(&rv);
+    //@TODO: If intern->zero_terminated append null in the array;
+    int terminated = intern->zero_terminated ? -1 : 0;
+    zval clear;
+    zval nil; ZVAL_NULL(&nil);
+    if (intern->clear_) {
+        ZVAL_LONG(&clear, 0);
+    } else {
+        ZVAL_NULL(&clear);
+    }
+
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+
+    zend_long lastOffset = Z_ARR_P(__data)->nNextFreeElement >= 0 ? Z_ARR_P(__data)->nNextFreeElement : -1;
+    lastOffset += terminated;
+    php_g_assume_zval(value, intern->element_id, &rv);
+
+
+    // fixe offset
+    guint v_guint;
+    zend_ulong index = 0;
+    if (key!=NULL) {
+        php_g_uint_assume_zval(key, &v_guint, NULL);// g_size
+        index = v_guint;
+    } else {
+        index = lastOffset < 0 ? 0 : lastOffset;
+    }
+
+    // fixe size
+    int i;
+    int x = lastOffset < 0 ? 0 : lastOffset;
+    int len = lastOffset < 0 ? (index) : (index-lastOffset);
+    for (i=0; i<len; i++) {
+        zend_hash_index_update(Z_ARR_P(__data), i+x, &clear);
+    }
+
+    zend_hash_index_update(Z_ARR_P(__data), index, &rv);
+
+    if (intern->zero_terminated && lastOffset<=index) {
+        //php_printf("Zero terminated = %d\n", intern->zero_terminated);
+        zend_hash_index_update(Z_ARR_P(__data), index+1, &nil);
+    }
+
+    //{char *dump = php_g_array_dump(object); php_printf("%s\n", dump); g_free(dump);}
+
+    // dirty
+    zval *__val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+    ZVAL_LONG(__val, Z_ARR_P(__data)->nNumOfElements+terminated);
+
+}/* }}} */
+
+
+/* {{{ php_g_array_has_dimension */
+static int
+php_g_array_has_dimension(zend_object *object, zval *member, int check_empty)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+
+    // fixe offset
+    guint v_guint;
+    zend_long index = 0;
+    if (member) {
+        zval *__offset = member ? Z_ISREF_P(member) ? &Z_REF_P(member)->val : member : NULL;
+        zval key;
+        php_g_uint_assume_zval(__offset, &v_guint, NULL);// g_size
+        index = v_guint;
+    }
+
+    zval *value = zend_hash_index_find(Z_ARR_P(__data), index);
+    if (value) {
+        return check_empty ? i_zend_is_true(value) : Z_TYPE_P(value) != IS_NULL;
+    }
+    return 0;
+}/* }}} */
+
+/* {{{ php_g_array_unset_dimension */
+static void
+php_g_array_unset_dimension(zend_object *object, zval *offset)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+    zend_array *ht = Z_ARR_P(__data);
+
+    guint terminated = intern->zero_terminated ? 1 : 0;
+    guint length = ht->nNumUsed - terminated;
+
+    zval clear;
+    ZVAL_NULL(&clear);
+    zval nil;
+    ZVAL_NULL(&nil);
+    if (intern->clear_) {
+        // use value of GArray<type>
+        //ZVAL_STR(&clear, "");
+        ZVAL_LONG(&clear, 0);
+    } else {
+        ZVAL_NULL(&clear);
+    }
+
+    // fixe offset
+    zend_ulong index = 0;
+    zval *__offset = Z_ISREF_P(offset) ? &Z_REF_P(offset)->val : offset;
+    guint v_guint;
+    php_g_uint_assume_zval(__offset, &v_guint, NULL);// g_size
+    index = v_guint;
+
+
+    // shift
+    zend_ulong idx;
+    Bucket *p;
+    if (length)
+    for (idx = index; idx < (length-1); idx++) {
+        p = ht->arData + idx+1;
+        zend_hash_index_update(ht, idx, &p->val);
+    }
+    if (terminated) {
+        zend_hash_index_update(ht, length-1, &nil);
+    }
+
+    idx = length + terminated -1;
+    zend_hash_index_del(ht, idx);
+
+    zval *__val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+    ZVAL_LONG(__val, Z_ARR_P(__data)->nNumOfElements-terminated);
+
+}/* }}} */
+
+/* {{{ php_g_array_get_debug_info */
+static HashTable*
+php_g_array_get_debug_info(zend_object *object, int *is_temp)
+{
+    TRACE();
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+
+    HashTable   *debug_info, *std_props;
+    *is_temp = 1;
+    std_props = zend_std_get_properties(object);
+    debug_info = zend_array_dup(std_props);
+
+    zval zdata;
+    if (Z_ISREF(intern->data) && Z_REFCOUNT(intern->data)<2) {// If the reference is no longer used by the PHP dev
+        ZVAL_COPY(&zdata, &Z_REF(intern->data)->val);// hide reference (for compatibility)
+    } else {
+        ZVAL_COPY(&zdata, &intern->data);
+    }
+    zend_hash_str_update(debug_info, "data", sizeof("data")-1, &zdata);
+
+    // synchronize
+    zval *data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+    zval *val = Z_ISREF(intern->len) ? &Z_REF(intern->len)->val : &intern->len;
+    if (intern->zero_terminated && 0!=Z_ARR_P(data)->nNumOfElements) {
+        ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements-1);
+    } else {
+        ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+    }
+
+    zval zlen; ZVAL_COPY(&zlen, &intern->len);
+    zend_hash_str_update(debug_info, "len", sizeof("len")-1, &zlen);
+
+    return debug_info;
+} /* }}} */
+
+static int
+php_g_array_cast_object(zend_object *readobj, zval *retval, int type) {
+    TRACE();
+    int ret = FAILURE;
+
+    php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(readobj);
+    zval *__data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+    zval *arg;
+    zend_string *str_value;
+    char *glue = "";
+    char *comma = ", ";
+    GString *gstr = g_string_new("");
+    char *str = NULL;
+
+    switch (type) {
+        case IS_STRING:
+#if 1
+    {
+        // TODO: serialize
+        char *dump = php_g_array_dump(readobj);
+        ZVAL_STRING(retval, dump);
+        g_free(str);
+        ret = SUCCESS;
+    }
+#else
+        if (intern->element_id==6 || intern->element_id==11) {// 11==UINT, 6==INT
+            ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(__data), arg) {
+                str_value = zend_print_zval_r_to_str(arg, 0);
+                g_string_append_printf(gstr, "%s%s", glue, str_value->val);
+                zend_string_release(str_value);
+                glue = comma;
+            } ZEND_HASH_FOREACH_END();
+
+            str = g_string_free(gstr, FALSE);
+            ZVAL_STRING(retval, str);
+            g_free(str);
+            ret = SUCCESS;
+        }
+#endif
+            break;
+        case IS_ARRAY:
+            // (array)$data is catched by get_properties()
+        default:
+            //php_printf("Unimplemented type %d\n", type);
+            ret = FAILURE;
+            break;
+    }
+    return ret;
+}
+
+
+static HashTable*
+php_g_array_get_properties_for(zend_object *object, zend_prop_purpose purpose)
+{
+    TRACE();
+
+    HashTable *ht;
+    switch (purpose) {
+        case ZEND_PROP_PURPOSE_ARRAY_CAST:
+            {
+                php_g_array *intern = ZOBJ_TO_PHP_G_ARRAY(object);
+                zval *data = Z_ISREF(intern->data) ? &Z_REF(intern->data)->val : &intern->data;
+                // TODO remove the last if null_terminated
+                ht = zend_array_dup(Z_ARR_P(data));
+
+                return ht;
+            }
+        case ZEND_PROP_PURPOSE_SERIALIZE:
+        case ZEND_PROP_PURPOSE_VAR_EXPORT:
+        case ZEND_PROP_PURPOSE_JSON:
+        case ZEND_PROP_PURPOSE_DEBUG:
+            //php_printf("DEBUG => %d==%d\n", purpose, ZEND_PROP_PURPOSE_DEBUG);
+            if (object->handlers->get_debug_info) {
+                int is_temp;
+                ht = object->handlers->get_debug_info(object, &is_temp);
+                if (ht && !is_temp) {
+                    GC_TRY_ADDREF(ht);
+                }
+                return ht;
+            }
+            /* break missing intentionally */
+
+        default:
+            ZEND_UNREACHABLE();
+            return NULL;
+    }
+}/* }}} */
+
+static zend_object_handlers*
+php_g_array_get_handlers()
+{
+    memcpy(&php_g_array_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    php_g_array_handlers.offset = PHP_G_ARRAY_OFFSET;
+
+    php_g_array_handlers.free_obj = php_g_array_free_obj;
+    php_g_array_handlers.dtor_obj = php_g_array_dtor_obj;
+
+    php_g_array_handlers.unset_property  = php_g_array_unset_property;
+    php_g_array_handlers.has_property  = php_g_array_has_property;
+    php_g_array_handlers.read_property = php_g_array_read_property;
+    php_g_array_handlers.write_property = php_g_array_write_property;
+
+    php_g_array_handlers.get_properties = php_g_array_get_properties;
+    php_g_array_handlers.count_elements = php_g_array_count_elements;
+
+    php_g_array_handlers.has_dimension = php_g_array_has_dimension;
+    php_g_array_handlers.read_dimension = php_g_array_read_dimension;
+    php_g_array_handlers.write_dimension = php_g_array_write_dimension;
+    php_g_array_handlers.unset_dimension = php_g_array_unset_dimension;
+
+    php_g_array_handlers.get_property_ptr_ptr = php_g_array_get_property_ptr_ptr;
+
+    php_g_array_handlers.get_debug_info = php_g_array_get_debug_info;
+
+    php_g_array_handlers.cast_object = php_g_array_cast_object;
+
+    //php_g_array_handlers.pretty_print = php_g_array_pretty_print;
+    php_g_array_handlers.get_properties_for = php_g_array_get_properties_for;
+
+
+    return &php_g_array_handlers;
+}
+
+/*----------------------------------------------------------------------+
+ | PHP_MINIT                                                            |
+ +----------------------------------------------------------------------*/
+
+#if 0
+//static int spl_array_skip_protected(php_g_array *intern, HashTable *aht);
+
+static zend_never_inline void php_g_array_create_ht_iter(HashTable *ht, php_g_array* intern) /* {{{ */
+{
+    php_printf("%s\n", "php_g_array_create_ht_iter");
+    /*
+    intern->ht_iter = zend_hash_iterator_add(ht, zend_hash_get_current_pos(ht));
+    zend_hash_internal_pointer_reset_ex(ht, &EG(ht_iterators)[intern->ht_iter].pos);
+    spl_array_skip_protected(intern, ht);
+    */
+}
+/* }}} */
+
+static zend_always_inline uint32_t *php_g_array_get_pos_ptr(HashTable *ht, php_g_array* intern) /* {{{ */
+{
+    php_printf("%s\n", "php_g_array_get_pos_ptr");
+    /*
+    if (UNEXPECTED(intern->ht_iter == (uint32_t)-1)) {
+        spl_array_create_ht_iter(ht, intern);
+    }
+    return &EG(ht_iterators)[intern->ht_iter].pos;
+    */
+}/* }}} */
+
+static void php_g_array_it_dtor(zend_object_iterator *iter) /* {{{ */
+{
+    TRACE();
+
+    zend_user_it_invalidate_current(iter);
+    zval_ptr_dtor(&iter->data);
+}
+/* }}} */
+
+static int php_g_array_it_valid(zend_object_iterator *iter) /* {{{ */
+{
+    TRACE();
+
+    php_g_array *array = ZVAL_GET_PHP_G_ARRAY(&iter->data);
+    zend_object *object = &array->std;
+    HashTable *aht = Z_ARR(array->data);
+
+    /*
+    if (object->ar_flags & SPL_ARRAY_OVERLOADED_VALID) {
+        return zend_user_it_valid(iter);
+    } else {
+        return zend_hash_has_more_elements_ex(aht, spl_array_get_pos_ptr(aht, object));
+    }
+    */
+}
+/* }}} */
+
+static zval *php_g_array_it_get_current_data(zend_object_iterator *iter) /* {{{ */
+{
+    TRACE();
+
+    /*
+    spl_array_object *object = Z_SPLARRAY_P(&iter->data);
+    HashTable *aht = spl_array_get_hash_table(object);
+
+    if (object->ar_flags & SPL_ARRAY_OVERLOADED_CURRENT) {
+        return zend_user_it_get_current_data(iter);
+    } else {
+        zval *data = zend_hash_get_current_data_ex(aht, spl_array_get_pos_ptr(aht, object));
+        if (data && Z_TYPE_P(data) == IS_INDIRECT) {
+            data = Z_INDIRECT_P(data);
+        }
+        return data;
+    }
+    */
+}
+/* }}} */
+
+static void php_g_array_it_get_current_key(zend_object_iterator *iter, zval *key) /* {{{ */
+{
+    TRACE();
+
+    /*
+    spl_array_object *object = Z_SPLARRAY_P(&iter->data);
+    HashTable *aht = spl_array_get_hash_table(object);
+
+    if (object->ar_flags & SPL_ARRAY_OVERLOADED_KEY) {
+        zend_user_it_get_current_key(iter, key);
+    } else {
+        zend_hash_get_current_key_zval_ex(aht, key, spl_array_get_pos_ptr(aht, object));
+    }
+    */
+}
+/* }}} */
+
+static void php_g_array_it_move_forward(zend_object_iterator *iter) /* {{{ */
+{
+    TRACE();
+
+    /*
+    spl_array_object *object = Z_SPLARRAY_P(&iter->data);
+    HashTable *aht = spl_array_get_hash_table(object);
+
+    if (object->ar_flags & SPL_ARRAY_OVERLOADED_NEXT) {
+        zend_user_it_move_forward(iter);
+    } else {
+        zend_user_it_invalidate_current(iter);
+        spl_array_next_ex(object, aht);
+    }
+    */
+}
+/* }}} */
+
+static void php_g_array_it_rewind(zend_object_iterator *iter) /* {{{ */
+{
+    TRACE();
+
+    /*
+    spl_array_object *object = Z_SPLARRAY_P(&iter->data);
+
+    if (object->ar_flags & SPL_ARRAY_OVERLOADED_REWIND) {
+        zend_user_it_rewind(iter);
+    } else {
+        zend_user_it_invalidate_current(iter);
+        spl_array_rewind(object);
+    }
+    */
+}
+/* }}} */
+
+static HashTable *php_g_array_it_get_gc(zend_object_iterator *iter, zval **table, int *n)
+{
+    TRACE();
+
+    /*
+    *n = 1;
+    *table = &iter->data;
+    */
+    return NULL;
+}
+
+/* iterator handler table */
+static const zend_object_iterator_funcs php_g_array_it_funcs = {
+    php_g_array_it_dtor,
+    php_g_array_it_valid,
+    php_g_array_it_get_current_data,
+    php_g_array_it_get_current_key,
+    php_g_array_it_move_forward,
+    php_g_array_it_rewind,
+    NULL,
+    php_g_array_it_get_gc,
+};
+
+static zend_object_iterator*
+php_g_array_get_iterator(zend_class_entry *ce, zval *object, int by_ref) /* {{{ */
+{
+    php_printf("get_iterator\n");
+    zend_user_iterator *iterator;
+    php_g_array *array_object = ZVAL_GET_PHP_G_ARRAY(object);
+
+    /*if (by_ref && (array_object->ar_flags & SPL_ARRAY_OVERLOADED_CURRENT)) {
+        zend_throw_error(NULL, "An iterator cannot be used with foreach by reference");
+        return NULL;
+    }*/
+    /**
+    typedef struct _zend_user_iterator {
+        zend_object_iterator     it;
+            struct _zend_object_iterator {
+                zend_object std;
+                zval data;
+                const zend_object_iterator_funcs *funcs;
+                zend_ulong index;
+            };
+        zend_class_entry         *ce;
+        zval                     value;
+    } zend_user_iterator;
+    */
+
+    iterator = emalloc(sizeof(zend_user_iterator));
+
+    zend_iterator_init(&iterator->it);
+
+    ZVAL_OBJ_COPY(&iterator->it.data, &array_object->std);
+    iterator->it.funcs = &php_g_array_it_funcs;
+    iterator->ce = ce;
+    ZVAL_UNDEF(&iterator->value);
+
+    return &iterator->it;
+}
+/* }}} */
+#endif
+
+/*{{{ php_g_array_class_minit */
+zend_class_entry*
+php_g_array_class_minit(zend_class_entry *container_ce, zend_class_entry *parent_ce) {
+    php_g_array_get_handlers();
+    PHP_GTK_INIT_CLASS_ENTRY((*container_ce), "GArray", php_g_array_methods);
+    php_g_array_class_entry = zend_register_internal_class_ex(container_ce, parent_ce);
+    php_g_array_class_entry->create_object = php_g_array_create_object;
+    php_g_array_class_entry->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+
+    return php_g_array_class_entry;
+}/*}}} */
+
+/*----------------------------------------------------------------------+
+ | Zend-User utils                                                      |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | Zend-User API                                                        |
+ +----------------------------------------------------------------------*/
+
+/*----------------------------------------------------------------------+
+ | PHP_METHOD                                                           |
+ +----------------------------------------------------------------------*/
+
+/* {{{ g_array::__construct() */
+PHP_METHOD(g_array, __construct)
+{
+   //zend_object *zobj = Z_OBJ_P(getThis());
+   //php_g_array *self = ZOBJ_TO_PHP_G_ARRAY(zobj);
+}/* }}} */
+
+#if IS_COUNTABLE
+/* {{{ g_array::count() */
+PHP_METHOD(g_array, count)
+{
+    zend_object *zobj = Z_OBJ_P(getThis());
+    php_g_array *php_array = ZOBJ_TO_PHP_G_ARRAY(zobj);
+
+    RETURN_LONG(php_array->data.value.arr->nNumOfElements);
+}/* }}} */
+#endif
+
+/* {{{ g_array::getIterator(): Traversable */
+/*PHP_METHOD(g_array, getIterator)
+{
+    zend_object *zobj = Z_OBJ_P(getThis());
+    php_g_array *php_array = ZOBJ_TO_PHP_G_ARRAY(zobj);
+
+    RETURN_LONG(php_array->data.value.arr->nNumOfElements);
+}*//* }}} */
+
+/*----------------------------------------------------------------------+
+ | PHP_FUNCTION                                                         |
+ +----------------------------------------------------------------------*/
+static zend_object*
+php_g_array_new(zend_bool zero_terminated, zend_bool clear_, zend_long element_size) {
+
+    zend_object *z_ret = php_g_array_create_object(php_g_array_class_entry);
+    php_g_array *php_ret = ZOBJ_TO_PHP_G_ARRAY(z_ret);
+    zval nil; ZVAL_NULL(&nil);
+
+    php_ret->zero_terminated = zero_terminated;
+    php_ret->clear_ = clear_;
+    php_ret->element_size = php_g_type_sizeof(element_size);
+    php_ret->reserved_size = 0;
+
+    php_ret->element_id = element_size;
+
+    if (zero_terminated) {
+        zend_hash_next_index_insert(Z_ARR(php_ret->data), &nil);
+    }
+
+    return z_ret;
+}
+static zend_object*
+php_g_array_sized_new(zend_bool zero_terminated, zend_bool clear_, zend_long element_size, zend_long reserved_size) {
+
+    zend_object *z_ret = php_g_array_new(zero_terminated, clear_, element_size);
+    php_g_array *php_ret = ZOBJ_TO_PHP_G_ARRAY(z_ret);
+    php_ret->reserved_size = reserved_size;
+    // for i<reserved_size
+
+    return z_ret;
+}
+
+
+/* {{{ g_array_new
+ * Creates a new GArray with a reference count of 1.
+ */
+PHP_FUNCTION(g_array_new)
+{
+    zend_bool zero_terminated;
+    zend_bool clear_;
+    zend_long element_size;
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+        Z_PARAM_BOOL(zero_terminated)
+        Z_PARAM_BOOL(clear_)
+        Z_PARAM_LONG(element_size);
+    ZEND_PARSE_PARAMETERS_END();
+
+#if 1
+    zend_object *z_ret = php_g_array_new(zero_terminated, clear_, element_size);
+#else
+    zend_object *z_ret = php_g_array_create_object(php_g_array_class_entry);
+
+    php_g_array *php_ret = ZOBJ_TO_PHP_G_ARRAY(z_ret);
+    php_ret->zero_terminated = zero_terminated;
+    php_ret->clear_ = clear_;
+    php_ret->element_size = php_g_type_sizeof(element_size);
+    php_ret->reserved_size = 0;
+
+    php_ret->element_id = element_size;
+
+    if (zero_terminated) {
+        zend_hash_next_index_insert(Z_ARR(php_ret->data), &nil);
+    }
+#endif
+
+    //ZVAL_OBJ(return_value, z_ret);
+    //Z_PROTECT_RECURSION_P(return_value);
+
+    RETURN_OBJ(z_ret);
+}/* }}} */
+
+/* {{{ g_array_sized_new
+ * Creates a new GArray with reserved_size elements preallocated and a reference count of 1.
+ */
+PHP_FUNCTION(g_array_sized_new)
+{
+    zend_bool zero_terminated;
+    zend_bool clear_;
+    zend_long element_size;
+    zend_long reserved_size;
+
+    ZEND_PARSE_PARAMETERS_START(4, 4)
+        Z_PARAM_BOOL(zero_terminated)
+        Z_PARAM_BOOL(clear_)
+        Z_PARAM_LONG(element_size);
+        Z_PARAM_LONG(reserved_size);
+    ZEND_PARSE_PARAMETERS_END();
+
+#if 1
+    zend_object *z_ret = g_array_sized_new(zero_terminated, clear_, element_size, reserved_size);
+#else
+    zend_object *z_ret = php_g_array_create_object(php_g_array_class_entry);
+
+    php_g_array *php_ret = ZOBJ_TO_PHP_G_ARRAY(z_ret);
+    php_ret->zero_terminated = zero_terminated;
+    php_ret->clear_ = clear_;
+    php_ret->element_size = php_g_type_sizeof(element_size);
+    php_ret->reserved_size = reserved_size;
+
+    php_ret->element_id = element_size;
+#endif
+
+    RETURN_OBJ(z_ret);
+}/* }}} */
+
+#if GLIB_CHECK_VERSION(2, 22, 0)
+/* {{{ g_array_ref
+ * Atomically increments the reference count of array by one.
+ * Since: 2.22
+ */
+PHP_FUNCTION(g_array_ref)
+{
+}/* }}} */
+
+/* {{{ g_array_unref
+ * Atomically decrements the reference count of array by one.
+ * Since: 2.22
+ */
+PHP_FUNCTION(g_array_unref)
+{
+}/* }}} */
+
+/* {{{ g_array_get_element_size
+ * Gets the size of the elements in array.
+ * Since: 2.22
+ */
+PHP_FUNCTION(g_array_get_element_size)
+{
+    zval *zarray;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zarray, php_g_array_class_entry, 0, 0)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_array = ZVAL_IS_PHP_G_ARRAY(zarray)? ZVAL_GET_PHP_G_ARRAY(zarray): NULL;
+
+    // sizeof() // php_array->element_id[0]
+
+    RETURN_LONG(php_array->element_size);
+}/* }}} */
+
+#endif
+/* {{{ g_array_append_val
+ * Adds the value on to the end of the array.
+ */
+PHP_FUNCTION(g_array_append_val)
+{
+    TRACE();
+    zval *zarray;
+    zval *data=NULL;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zarray, php_g_array_class_entry, 0, 0)
+        Z_PARAM_ZVAL_OR_NULL(data)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_array = ZVAL_IS_PHP_G_ARRAY(zarray)? ZVAL_GET_PHP_G_ARRAY(zarray): NULL;
+
+    php_g_array_write_dimension(&php_array->std, NULL, data);
+    php_g_array *z_ret = php_array;
+
+    GC_ADDREF(&z_ret->std);
+    RETURN_OBJ(&z_ret->std);
+    //GC_ADDREF(&php_array->std);
+    //RETURN_OBJ(&php_array->std);
+    ///RETURN_ZVAL(zarray, 1, 0);
+}/* }}} */
+
+//#include "ext/standard/array.c"
+
+/* {{{ g_array_prepend_val
+ * Adds the value on to the start of the array.
+ */
+PHP_FUNCTION(g_array_prepend_val)
+{
+    TRACE();
+    zval *za;
+    zval *zv;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT_OF_CLASS_EX(za, php_g_array_class_entry, 0, 0)
+        Z_PARAM_ZVAL(zv)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_a = ZVAL_IS_PHP_G_ARRAY(za)? ZVAL_GET_PHP_G_ARRAY(za): NULL;
+
+    int is_ref = Z_ISREF(php_a->data) ? 1 : 0;
+
+    zend_object *z_ret = &php_a->std;
+
+    //zval *val;  = php_a->data;
+    //zval ref; ZVAL_REF();
+    //int result;
+    char *function_name = "array_unshift";
+    zend_fcall_info fci;
+    zval retval;
+    zval params[2];
+    if (is_ref) {
+        ZVAL_COPY(&params[0], &php_a->data);
+    } else {
+        //ZVAL_COPY(&params[0], &php_a->data);
+        ZVAL_NEW_REF(&params[0], &php_a->data);
+        //Z_ADDREF(php_a->data);
+    }
+//php_printf("2] refcount: %d\n", Z_ARR(php_a->data)->gc.refcount);
+    ZVAL_COPY(&params[1], zv);
+    fci.size = sizeof(fci);
+    fci.object = NULL;
+    fci.retval = &retval;
+    fci.param_count = 2;
+    fci.params = params;
+    fci.named_params = NULL;
+    ZVAL_STRINGL(&fci.function_name, function_name, strlen(function_name));
+
+    if (SUCCESS != zend_call_function(&fci, NULL)) {
+        php_printf("Failure: zend_call_function(%s)\n", function_name);
+    }
+    zval_ptr_dtor(&fci.function_name);
+    if (is_ref) {
+        Z_DELREF(params[0]);
+        //Z_TRY_DELREF(params[0]);
+    } else {
+        ZVAL_UNREF(&params[0]);
+        //Z_DELREF(php_a->data);
+    }
+
+//php_printf("3] refcount: %d\n", GC_REFCOUNT(Z_ARR(php_a->data)));
+
+    zval *data = Z_ISREF(php_a->data) ? &Z_REF(php_a->data)->val : &php_a->data;
+    zval *val = Z_ISREF(php_a->len) ? &Z_REF(php_a->len)->val : &php_a->len;
+    ZVAL_LONG(val, Z_ARR_P(data)->nNumOfElements);
+
+
+    //GC_ADDREF(z_ret);
+    //RETURN_OBJ(z_ret);
+    RETURN_ZVAL(za, 1, 0);
+}/* }}} */
+
+
+php_g_array* php_g_array_insert_vals(php_g_array *array, guint index, zend_array *data, guint len) {
+    TRACE();
+    zval *__data = Z_ISREF(array->data) ? &Z_REF(array->data)->val : &array->data;
+    zend_array *ht = Z_ARR_P(__data);
+
+    guint terminated = array->zero_terminated ? 1 : 0;
+
+    // ASSERT(len <= data->nNumUsed)
+    guint length = ht->nNumUsed - terminated;
+    guint size = index + len;
+    zend_bool resized = (length+1) < size;
+    if (resized) {
+        php_g_log("GLib", E_USER_NOTICE, "Implicit call to g_array_set_size(#%d, %d)", array->std.handle, (index + data->nNumUsed));
+    }
+    size += terminated;
+
+    zval clear;
+    if (array->clear_) {
+        ZVAL_LONG(&clear, 0);
+        //ZVAL_NULL(&clear);
+    } else {
+        ZVAL_NULL(&clear);
+    }
+    // fill
+    uint32_t idx;
+    for (idx = length; idx < size; idx++) {
+        zend_hash_index_update(ht, idx, &clear);
+    }
+    if (terminated) {
+        ZVAL_NULL(&clear);
+        zend_hash_index_update(ht, ht->nNumUsed-1, &clear);
+    }
+
+    // shift
+    Bucket *p;
+    if (length)
+    for (idx = length; index <= idx; idx--) {
+        p = ht->arData + idx;
+        zend_hash_index_update(ht, idx+1, &p->val);
+    }
+
+    // copy data
+    for (idx = 0; idx < len; idx++) {
+        p = data->arData + idx;
+        zend_hash_index_update(ht, idx + index, &p->val);
+    }
+    //zend_hash_index_update(ht, index, &(data->arData[0].val));
+
+
+    // dirty
+    zval *__val = Z_ISREF(array->len) ? &Z_REF(array->len)->val : &array->len;
+    ZVAL_LONG(__val, Z_ARR_P(__data)->nNumOfElements-terminated);
+
+    return array;
+}
+
+php_g_array* php_g_array_insert_val(php_g_array *array, guint index, zval *data) {
+    zend_array datas;
+    zend_hash_init(&datas, 1, NULL, NULL/*ZVAL_PTR_DTOR*/, 1);
+    zend_hash_next_index_insert(&datas, data);
+
+    php_g_array *ret = php_g_array_insert_vals(array, index, &datas, 1);
+
+    zend_hash_destroy(&datas);
+
+    return ret;
+}
+
+/* {{{ g_array_insert_val
+ * Inserts an element into an array at the given index.
+ */
+PHP_FUNCTION(g_array_insert_val)
+{
+    TRACE();
+    zval *zval_a;
+    zend_long zval_i;
+    zval *zval_v;
+
+    zend_execute_data *ex = execute_data;
+    zval *ret = return_value;
+
+
+    // g_array_insert_val($arr, 1, 20);
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+        Z_PARAM_OBJECT_OF_CLASS_EX(zval_a, php_g_array_class_entry, 0, 0)
+        Z_PARAM_LONG(zval_i)
+        Z_PARAM_ZVAL(zval_v)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_a = ZVAL_IS_PHP_G_ARRAY(zval_a)? ZVAL_GET_PHP_G_ARRAY(zval_a): NULL;
+
+
+    zval *__v = Z_ISREF_P(zval_v) ? &Z_REF_P(zval_v)->val : zval_v;
+
+    guint g_i = zval_i;//gboolean success = php_g_uint_from_zend_long(zval_i, &g_i, &error);
+    php_g_array *g_ret = php_g_array_insert_val(php_a, g_i, __v);
+    zend_object *z_ret = &g_ret->std;
+    GC_ADDREF(z_ret);
+
+    RETURN_OBJ(z_ret);
+
+}/* }}} */
+
+/* {{{ g_array_index
+ * Returns the element of a GArray at the given index.
+ */
+PHP_FUNCTION(g_array_index)
+{
+    zval *za;
+    zval *zt;
+    zend_long i;
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+        Z_PARAM_OBJECT_OF_CLASS_EX2(za, php_g_array_class_entry, 0, 0, 0)
+        Z_PARAM_ZVAL(zt)
+        Z_PARAM_LONG(i)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_a = ZVAL_IS_PHP_G_ARRAY(za)? ZVAL_GET_PHP_G_ARRAY(za): NULL;
+
+
+    zval *__data = Z_ISREF(php_a->data) ? &Z_REF(php_a->data)->val : &php_a->data;
+    zend_array *z_data = Z_ARR_P(__data);
+
+    if (Z_TYPE_P(zt)==IS_ARRAY) {
+        char *function_name = "count";
+        zend_fcall_info fci;
+        zval retval;
+        zval params[1];
+        ZVAL_COPY(&params[0], zt);
+        fci.size = sizeof(fci);
+        fci.object = NULL;
+        fci.retval = &retval;
+        fci.param_count = 1;
+        fci.params = params;
+        fci.named_params = NULL;
+        ZVAL_STRINGL(&fci.function_name, function_name, strlen(function_name));
+
+        if (SUCCESS != zend_call_function(&fci, NULL)) {
+            php_printf("Failure: zend_call_function(%s)\n", function_name);
+        } else {
+
+            if (php_a->element_id != Z_LVAL(retval)) {
+                const char *expected_typename = php_g_type_name(php_a->element_id, NULL);
+                const char *given_typename = php_g_type_name(Z_LVAL(retval), NULL);
+                if(expected_typename && given_typename) {
+                    php_g_log("GLib", E_USER_NOTICE, "g_array_index() expects parameter 2 to be %s; %s given.",
+                                expected_typename, given_typename);
+                } else {
+                    php_g_log("GLib", E_USER_NOTICE, "g_array_index() expects parameter 2 to be %s; %s given.",
+                                expected_typename, "unknown");
+                }
+            }
+        }
+        zval_ptr_dtor(&fci.function_name);
+        Z_DELREF(params[0]);
+
+    } else {
+        php_g_log("GLib", E_WARNING, "g_array_index() expects parameter 2 to be constant array has identifier; %s given.", zend_zval_type_name(zt));
+    }
+    // end User help
+
+    zval *z_ret = zend_hash_index_find(z_data, i);
+
+    if (z_ret) {
+        ZVAL_COPY(return_value, z_ret);
+    } else {
+        zval nil; ZVAL_NULL(&nil);
+        ZVAL_COPY(return_value, &nil);
+        php_g_log("GLib", E_USER_WARNING, "Array offset %d does not exists, ", i);
+    }
+    ZVAL_MAKE_REF(return_value);
+
+}/* }}} */
+
+/* {{{ g_array_free
+ * Frees the memory allocated for the GArray.
+ */
+PHP_FUNCTION(g_array_free)
+{
+    zval *zarray;
+    zend_bool zfree_segment;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_OBJECT_OF_CLASS_EX2(zarray, php_g_array_class_entry, 0, 1, 0)
+        Z_PARAM_BOOL(zfree_segment)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_g_array *php_array = ZVAL_IS_PHP_G_ARRAY(zarray)? ZVAL_GET_PHP_G_ARRAY(zarray): NULL;
+
+
+
+    if (zfree_segment) {
+        ZVAL_NULL(return_value);
+    } else {
+        if (Z_ISREF(php_array->data)) {
+            ZVAL_COPY(return_value, &php_array->data);
+        } else {
+            ZVAL_DUP(return_value, &php_array->data);
+        }
+    }
+    ZVAL_MAKE_REF(return_value);
+
+    zend_object_release(&php_array->std);
+
+    ZVAL_NULL(zarray);
+}/* }}} */

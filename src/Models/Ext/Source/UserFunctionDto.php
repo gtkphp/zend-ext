@@ -16,7 +16,7 @@ class UserFunctionDto
     /** @var string */
     public $info;
 
-    /** @var ArgumentsDto TODO: rename by FunctionArgumentsDto */
+    /** @var FunctionArgsDto */
     public $zend_parameters;
 
     /** @var FunctionCallsDto */
