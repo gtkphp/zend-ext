@@ -1,7 +1,7 @@
 <?php
 
-//namespace ZendExt\Dto\Ext\Source;
-namespace ZendDto\Ext\Source;
+namespace ZendExt\Dto\Ext\Source\_8\_1;
+//namespace ZendDto\Ext\Source;
 
 use Zend\Ext\Models\Code\Generator\AbstractGenerator;
 use Zend\Ext\Models\Code\Generator\FileGenerator;

@@ -79,14 +79,20 @@ class CodeGeneratorRenderer
     public function loadClass($filePath)
     {
         $klass = null;// default ?
-
+        
         // Ensure we remove the file extension
         $suffix = pathinfo($filePath, PATHINFO_EXTENSION);
         foreach ($this->map as $path=>$namespace) {
             if (0===strpos($filePath, $path)) {
-                $klass = substr($filePath, strlen($path)+1, - strlen($suffix) - 1);// ".php"
-                $klass = $namespace . str_replace('/', '\\', $klass);
+                $filename = basename($filePath, '.php');
+                $pathname = dirname($filePath);
+                $pathname = '/'.substr($pathname, strlen($path)+1);
+                $pathname = preg_replace('#/(\d+)#i', '/_$1', $pathname, 3);
+                $klass = $namespace . str_replace('/', '\\', substr($pathname, 1)) . '\\' . $filename;
 
+                //$klass = substr($filePath, strlen($path)+1, - strlen($suffix) - 1);// ".php"
+                //$klass = $namespace . str_replace('/', '\\', $klass);
+                
                 require_once $filePath;
         
                 return $klass;

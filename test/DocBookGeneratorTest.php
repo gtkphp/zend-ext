@@ -508,29 +508,36 @@ typedef unsigned short int guint16;
         ];
         Classifier::$map_function = [
             // PHP_FUNCTION()              => file-object
+            // =========================== = =============================
             'cairo_create'                 => 'cairo_t',
             'cairo_rectangle_list_destroy' => 'cairo_rectangle_list_t',
             'cairo_copy_path'              => 'cairo_path_t',// depend on cairo_t
             'gtk_widget_new'               => 'GtkWidget',
             'gtk_cairo_should_draw_window' => 'GtkWidget',// PHP_FUNCTION(gtk_cairo_should_draw_window) in php_gtk/widget.c
 
-            /*
+            /** GError */
             'g_set_error'                  => 'GError',
             'g_set_error_literal'          => 'GError',
             'g_propagate_error'            => 'GError',
             'g_clear_error'                => 'GError',
             'g_prefix_error'               => 'GError',
             'g_propagate_prefixed_error'   => 'GError',
-            */
 
+            /** GQuark */
+            'g_intern_string'             => 'GQuark',
+            'g_intern_static_string'      => 'GQuark',
+
+            /** GChecksum */
             'g_compute_checksum_for_data'  => 'GChecksum',
             'g_compute_checksum_for_string'=> 'GChecksum',
             'g_compute_checksum_for_bytes' => 'GChecksum',
 
+            /** GHmac */
             'g_compute_hmac_for_data'      => 'GHmac',
             'g_compute_hmac_for_string'    => 'GHmac',
             'g_compute_hmac_for_bytes'     => 'GHmac',
 
+            /** GThread */
             'g_thread_init'                => 'GThread',
             'g_thread_get_initialized'     => 'GThread',
             'g_thread_create'              => 'GThread',
@@ -538,9 +545,11 @@ typedef unsigned short int guint16;
             'g_thread_set_priority'        => 'GThread',
             'g_thread_foreach'             => 'GThread',
 
+            /** GMutex */
             'g_mutex_new'                  => 'GMutex',
             'g_mutex_free'                 => 'GMutex',
 
+            /** GCond */
             'g_cond_new'                   => 'GCond',
             'g_cond_free'                  => 'GCond',
 
@@ -677,13 +686,17 @@ typedef unsigned short int guint16;
         //Agent::save() near line 238, add : $transformer->addMap(__DIR__.'/../src/Models/Ext/Source/7', 'ZendDto\\Ext\\Source\\');
         //Agent::save() near line 238, add : $transformer->addMap(__DIR__.'/../src/Models/Ext/Source/8/2', 'ZendDto\\Ext\\Source\\');
 
+        // $transformer->addMap(__DIR__.'/../src/Models/<Ext/Source/><cairo/cairo_t/cairo_create>', 'ZendDto\\Ext\\Source\\Cairo\\Cairo_t\\Cairo_create');// FunctionArgsDto;
+        // $transformer->addMap(__DIR__.'/../src/Models/<Ext/Source/><8/1>/<cairo/cairo_t/cairo_create>', 'ZendDto\\Ext\\Source\\Cairo\\Cairo_t\\Cairo_create');// FunctionArgsDto;
+        // $transformer->addMap(__DIR__.'/../src/Models/<Ext/Source/><8/2>/<cairo/cairo_t/cairo_create>', 'ZendDto\\Ext\\Source\\Cairo\\Cairo_t\\Cairo_create');// FunctionArgsDto;
+
         //$agent->useWhitelist(['cairo_t'=>['cairo_get_dash'/*, 'cairo_set_dash'*/], 'GtkWidget'=>['gtk_widget_new', 'gtk_widget_show'], 'GObject'=>[]]);
         //$agent->useBlacklist(['GDate'=>['g_date_to_struct_tm']]);
         //$agent->useWhitelist(['GBookmarkFile'=>['g_bookmark_file_get_uris']]);//'g_bookmark_file_new', 'g_bookmark_file_load_from_file', 
         //$agent->useWhitelist(['GQuark'=>[], 'GError'=>['g_error_new']]);
-        //$agent->useWhitelist(['GQuark'=>[], 'GError'=>[], 'GBookmarkFile'=>[]]);
+        $agent->useWhitelist(['GQuark'=>[], 'GError'=>[], 'GBookmarkFile'=>[]]);
         //gboolean 	g_bookmark_file_load_from_data_dirs ()
-        $agent->useWhitelist(['GRelation'=>[], 'GTuples'=>[]]);
+        //$agent->useWhitelist(['GRelation'=>[], 'GTuples'=>[]]);
         
         //$agent->clearCache();// use rm ../data/cache.txt
         $sourceCode = $agent->loadCode($dist[$key]['headers'], $dist[$key]['overwrite']);
@@ -729,6 +742,38 @@ typedef unsigned short int guint16;
 
         echo '<?php ', PHP_EOL;
         echo $output_str;
+
+        $this->assertTrue(true);
+    }
+
+    public function testDto() {
+        // ZendExt\Dto\Ext\Source\FunctionArgsDto == src/Models/Ext/Source/FunctionArgsDto.php
+        // ZendExt\Dto\Ext\Source\...\FunctionArgsDto == src/Models/Ext/Source/8/1/FunctionArgsDto.php
+        // ZendExt\Dto\Ext\Source\...\FunctionArgsDto == src/Models/Ext/Source/8/1/Cairo/FunctionArgsDto.php
+        // ZendExt\Dto\Ext\Source\_8\_1\...\FunctionArgsDto == src/Models/Ext/Source/8/1/Cairo/Cairo_create/FunctionArgsDto.php
+
+        $php_version = '8.1.2';
+        $resolver = new \Zend\Ext\View\Resolver\TemplatePathStack($php_version);
+        $resolver->addPath(__DIR__.'/../src/Models'.'/Ext/Source');// '/Ext/Header'
+        $resolver->setViewContext('Cairo', 'cairo_create');
+
+        $render = new \Zend\Ext\View\Renderer\CodeGeneratorRenderer();
+        $render->setResolver($resolver);
+        //$render->addMap(__DIR__.'/../src/Models/', '');
+        //$render->addMap(__DIR__.'/../src/Models/Ext/Header', 'ZendDto\\Ext\\Header\\');
+        $render->addMap(__DIR__.'/../src/Models/Ext/Source', 'ZendExt\\Dto\\Ext\\Source\\');
+        //$render->addMap(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
+        
+        //$modelClass = new \Zend\Ext\View\Model\CodeGeneratorModel();
+        //$modelClass->setTemplate('FunctionArgsDto.php');
+        $modelClass = 'FunctionArgsDto.php';
+
+        $model = new \Zend\Ext\Models\Code\Generator\MethodGenerator();
+        $dto = $render->transfer($modelClass, $model);
+
+        var_dump($dto);
+
+
 
         $this->assertTrue(true);
     }

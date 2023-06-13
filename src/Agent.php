@@ -235,8 +235,6 @@ class Agent
             $transformer->getResolver()->addPath($this->model_path.$stack_dir);
             $this->resolver->addPath($this->view_path.$stack_dir);// priority low
         }
-        $transformer->addMap(__DIR__.'/../src/Models/Ext/Source/8/1', 'ZendDto\\Ext\\Source\\');
-        $transformer->addMap(__DIR__.'/../src/Models/Ext/Header/8/1', 'ZendDto\\Ext\\Header\\');
         $transformer->addMap(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
 
         $total = 0;
@@ -314,7 +312,7 @@ class Agent
                 $filename = $path . $fileDto->filename;
 
                 $count++;
-                //echo "\t\t + " . $fileDto->filename, PHP_EOL;
+                echo "\t\t + " . $fileDto->filename, PHP_EOL;
                 if ($dry_run) {
                     //echo $content, PHP_EOL;
                 } else {
