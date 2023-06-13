@@ -29,12 +29,12 @@ class FunctionArgsDto
         $parameters = $methodGenerator->getParameters();
         //$enums = $methodGenerator->getOwnPackage()->getPackage()->getListTypeEnum();
 
-        $send_by = 'ZEND_SEND_BY_VAL';
+        $return_by = 'ZEND_SEND_BY_VAL';
         $is_deref = $methodGenerator->returnsReference();
         if ($is_deref) {
             // if return "void *"
             if (array_key_exists($methodGenerator->getReturnType()->__toString(), TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE)) {
-                $send_by = 'ZEND_SEND_BY_REF';
+                $return_by = 'ZEND_SEND_BY_REF';
             } else {
             }
         }
@@ -48,6 +48,7 @@ class FunctionArgsDto
             $allow_null = '0';
             $send_by = 'ZEND_SEND_BY_VAL';
             $is_deref = $parameter->getPassedByReference();
+            $is_array = $parameter->isArray();
             if ($is_deref) {
                 $send_by = 'ZEND_SEND_BY_REF';
                 $allow_null = $parameter->type()->nullable() ? '1' : '0';
@@ -83,7 +84,11 @@ class FunctionArgsDto
                     $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_DOUBLE, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
                     break;
                 case 'string':
-                    $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_STRING, '.$allow_null.')'. PHP_EOL;// 0 = allow_null
+                    if ($is_array) {
+                        $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_ARRAY, '.$allow_null.')'. PHP_EOL;
+                    } else {
+                        $output .= '    ZEND_ARG_TYPE_INFO('.$send_by.', '.$parameter->getName().', IS_STRING, '.$allow_null.')'. PHP_EOL;
+                    }
                     break;
                 case 'array':
                 case 'callable':
@@ -138,7 +143,7 @@ class FunctionArgsDto
             */
         }
 
-        $info = 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$methodGenerator->getName().', 0, '.$send_by.', '.(count($parameters)-$optional).')'. PHP_EOL;
+        $info = 'ZEND_BEGIN_ARG_INFO_EX(arginfo_'.$methodGenerator->getName().', 0, '.$return_by.', '.(count($parameters)-$optional).')'. PHP_EOL;
         $info .= $output;
         $info .= 'ZEND_END_ARG_INFO()'. PHP_EOL;
 

@@ -137,7 +137,7 @@ class AnnotationDocBook extends AbstractDocBook
     public function hasAttribute(string $name):bool {
         return isset($this->attributes[$name]);
     }
-    public function getAttribute(string $name):string {
+    public function getAttribute(string $name=''):string {
         return $this->attributes[$name];
     }
     public function getAttributes():array {

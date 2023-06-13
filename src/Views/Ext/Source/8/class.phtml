@@ -13,9 +13,6 @@ $has_members = false;//count($this->members);
 #include <zend_interfaces.h>
 #include <ext/standard/info.h>
 
-#define ZEND_SEND_NULLABLE 1
-#define ZEND_SEND_NOTNULL 0
-
 
 <?php foreach($this->requires as $require): ?>
 <?php echo '#include <' . $require .'>' . PHP_EOL; ?>
@@ -180,7 +177,7 @@ php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend
 /*----------------------------------------------------------------------+
  | Zend-User API                                                        |
  +----------------------------------------------------------------------*/
- <?php echo $this->render('user-function.phtml', $this->vars()); ?>
+<?php echo $this->render('user-function.phtml', $this->vars()); ?>
 
 /*----------------------------------------------------------------------+
  | PHP_METHOD                                                           |
@@ -190,6 +187,7 @@ PHP_METHOD(<?php echo $name_function ?>, __construct)/* {{{ */
 {
     zend_object *zobj = Z_OBJ_P(getThis());
     php_<?php echo $name_function ?> *self = ZOBJ_TO_PHP_<?php echo $name_macro ?>(zobj);
+    self->ptr = <?php echo $name_function ?>_new();
 
 }/* }}} */
 

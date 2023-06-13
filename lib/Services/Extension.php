@@ -20,6 +20,7 @@ use Zend\Ext\Models\DocBook\RefEntryDocBook;
 use Zend\Ext\Models\DocBook\VarDocBook;
 use Zend\Ext\Models\DocBook\StructDocBook;
 use Zend\Ext\Models\DocBook\TypedefDocBook;
+use Zend\Ext\Models\DocBook\EnumDocBook;
 use Zend\Ext\Models\DocBook\FunctionDocBook;
 use Zend\Ext\Models\DocBook\ParameterDocBook;
 use Zend\Ext\Models\DocBook\TypeDocBook;
@@ -428,6 +429,7 @@ class Extension
                 $functionGenerator->setMemoryManagement();
                 if ($classifier->isMMFree($functionDocBook)) {
                     $classGenerator->setDestroyFunction($functionDocBook->name);
+                    $functionGenerator->is_free = true;
                 }
                 if ($classifier->isMMNew($functionDocBook)) {
                     $classGenerator->setCreatorFunction($functionDocBook->name);
@@ -566,14 +568,43 @@ class Extension
                     throw new Exception("stop here");
                 }
     
-                if ($parameterDocBook->getPass())
-                    $methodGenerator->setReturnsReference(true);
+                //if ($parameterDocBook->getPass())
+                //    $methodGenerator->setReturnsReference(true);
             }
             
             $methodGenerator->setReturnType($typeGenerator);
-            $methodGenerator->getReturnType($typeGenerator);
+            //$methodGenerator->getReturnType($typeGenerator);
 
             $this->useFiles[$type->getName()] = $typeGenerator->__toString();
+
+
+
+            
+            //$parameterDocBook->parent = NULL;
+            //var_dump($parameterDocBook);
+            
+            $pointers = $parameterDocBook->getPass();
+            if (!empty($pointers)) {
+                $methodGenerator->setReturnsPointer($pointers);
+            }
+            
+            /*if ($parameterDocBook->hasAnnotation(AnnotationDocBook::ANNOTATION_OUT)) {
+               $methodGenerator->setReturnsReference(true);
+            }*/
+
+            if ($parameterDocBook->hasAnnotation(AnnotationDocBook::ANNOTATION_ARRAY)) {
+                $methodGenerator->setReturnsArray(true);
+                $annotation = $parameterDocBook->getAnnotation(AnnotationDocBook::ANNOTATION_ARRAY);
+                /*if ($annotation->hasAttribute('length')) {
+                    $length_param_name = $annotation->getAttribute('length');
+                    $methodGenerator->setReturnsArrayLengthParameter($length_param_name);
+                }*/
+                //$parameterGenerator->setArrayDimensions(true);
+                $annotation = $parameterDocBook->getAnnotation(AnnotationDocBook::ANNOTATION_ELEMENT_TYPE);
+                if ($annotation && 'guint8'==$annotation->getAttribute()) {
+                    $methodGenerator->setReturnsArray(false);// array of char is string
+                }
+            }
         }
     }
 
@@ -614,7 +645,11 @@ class Extension
             //return null;
         }
 
-        
+        $pointers = $parameterDocBook->getPass();
+        if (!empty($pointers)) {
+            $parameterGenerator->setPointer($pointers);
+        }
+
         //echo $parameterDocBook->getPass(), ' :: ', $parameterGenerator->getType(), ' -> ', $parameterGenerator->type->internal_type, '==', $parameterGenerator->type->explicite_type, PHP_EOL;
         if ('object'==$parameterGenerator->getType() && '**'==$parameterDocBook->getPass()) {
             $parameterGenerator->setPassedByReference(true);
@@ -636,7 +671,10 @@ class Extension
                 $parameterGenerator->setArrayLengthParameter($length_param_name);
             }
             //$parameterGenerator->setArrayDimensions(true);
-            
+            $annotation = $parameterDocBook->getAnnotation(AnnotationDocBook::ANNOTATION_ELEMENT_TYPE);
+            if ($annotation && 'guint8'==$annotation->getAttribute()) {
+                $parameterGenerator->isArray(false);// array of char is string
+            }
         }
 
         /** @var AnnotationDocBook $annotation
@@ -714,14 +752,16 @@ class Extension
     /**
      * @param ClassGenerator|EnumGenerator $classGenerator
      */
-    public function fixeUse(FileGenerator $fileGenerator, $codeGenerator) {
+    public function fixeUse(FileGenerator $fileGenerator, $codeGenerator=null) {
 
         /** @var ClassGenerator $classGenerator */
-        $classGenerator = $codeGenerator;
-
-        /** @var EnumGenerator $enumGenerator */
-        $enumGenerator = $codeGenerator;
-
+        if ($fileGenerator->hasClass())
+            $classGenerator = $fileGenerator->getClass();
+        else if ($fileGenerator->hasEnum()) {
+            $classGenerator = $fileGenerator->getEnum();
+        } else {
+            throw new Exception("Unexpected fileGenerator content : " . $fileGenerator->getFilename());
+        }
         // foreach class ClassGenerator $classGenerator
         // foreach property
         // foreach trait ?
@@ -732,10 +772,17 @@ class Extension
         /*
         $classifier = new CairoClassifier();
         */
-        $fileGenerator->setRequiredFiles([$fileGenerator->getNamespace() .'/'. $fileGenerator->getNamespace() . '.h']);
+        //$fileGenerator->setRequiredFiles([$fileGenerator->getNamespace() .'/'. $fileGenerator->getNamespace() . '.h']);
+        $fileGenerator->setRequiredFiles([$fileGenerator->getNamespace() . '.h']);
 
+        $useFiles = array_filter($fileGenerator->user_data['uses'], function($v){ return 'object' == $v;});
+        $useFiles = array_keys($useFiles);
+        //print_r($useFiles);
+
+        $name = $classGenerator->getName();
+        $current_ns = '';
+        $current_name = '';
         $includeFiles = [];
-        $useFiles = array_filter($this->useFiles, function($v){ return !array_key_exists($v, TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE);});
         foreach ($useFiles as $useFile) {
             if ('cairo_t'==$useFile) {
                 if ('cairo'==$fileGenerator->getNamespace()) {
@@ -754,25 +801,35 @@ class Extension
                 }
                 if ($object) {
                     $namespace = $object->getBook()->id;
+                    $ns = CairoClassifier::$map_namespace[$namespace];
                     $useFile = CairoClassifier::Suffix($useFile);
                     $useFile = CairoClassifier::PascalToSnake($useFile);
                     $useFile = CairoClassifier::SnakeToDashe($useFile);// SnakeToDashe for cairo; or PascalToDashe for Gtk
-                    $useFile = CairoClassifier::Prefix($useFile, $namespace.'-');
+                    $useFile = CairoClassifier::Prefix($useFile, $ns.'-');
 
+                    $includeFiles[] = ['pkg'=>$namespace, 'name'=>$useFile];// fixe priority
+                    if ($object->getName()==$name) {
+                        $current_ns = $namespace;
+                        $current_name = $useFile;
+                    }
+                    
                     if ($namespace==$fileGenerator->getNamespace()) {
                         $useFile = $useFile.'.h';
                     } else {
                         $useFile = 'php_'.$namespace.'/'.$useFile.'.h';
                     }
-                    $includeFiles[] = $useFile;// TODO fixe priority
-                    $fileGenerator->setUse($useFile);
+                    
+                    //$fileGenerator->setUse($useFile);
                 } else {
-                    echo '"'.$useFile . '" Unexpected ' . __FILE__ . PHP_EOL;
+                    echo 'Unexpected include ' . '"'.$useFile . '"' . __FILE__ . PHP_EOL;
                 }
             }
-            
-            //$fileGenerator->setUse('vendor/gtk/gdk/GdkWindow');
         }
+        //print_r($includeFiles);
+        $useFile = CairoClassifier::reorder($current_ns, $current_name, $includeFiles);
+        $fileGenerator->uses = $useFile;
+        
+        //$fileGenerator->setUse('vendor/gtk/gdk/GdkWindow');
 
         /*
         print_r($this->requiredFiles);
@@ -922,6 +979,7 @@ class Extension
             ]);
             $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
             $fileGenerator = new FileGenerator();
+            $fileGenerator->user_data = ['uses'=>[], 'required'=>[]];
             $fileGenerator->setDocBlock($docFileGenerator);
 
             $docClassGenerator = new DocBlockGenerator();
@@ -1076,6 +1134,11 @@ class Extension
                 $fileGenerator->setFunction($functionGenerator);
                 /*
                 */
+                //$fileGenerator->setUses();// $this->fixeUse
+                //$fileGenerator->setUse();
+                
+                $fileGenerator->user_data['uses'] = array_merge($fileGenerator->user_data['uses'], $this->useFiles);
+                $fileGenerator->user_data['required'] = array_merge($fileGenerator->user_data['required'], $this->requiredFiles);
 
             } else {
                 $method_name = $classifier->getNamespaceOfFunction($functionDocBook);
@@ -1169,6 +1232,14 @@ class Extension
         */
 
     }
+    protected function loadGlobalUse(AbstractDocBook $docBook) {
+        /** */
+        foreach ($this->packages as $id=>$package) {
+            foreach ($package->files as $name=>$fileGenerator) {
+                $this->fixeUse($fileGenerator);
+            }
+        }
+    }
 
     protected function resumRefEntry(AbstractDocBook $docBook) {
         $refs = [];
@@ -1253,6 +1324,7 @@ class Extension
             ]);
             $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
             $fileGenerator = new FileGenerator();
+            $fileGenerator->user_data = ['uses'=>[], 'required'=>[]];
             $fileGenerator->setDocBlock($docFileGenerator);
 
             $docClassGenerator = new DocBlockGenerator();
@@ -1277,7 +1349,7 @@ class Extension
 
             $this->loadNamespace($fileGenerator, $object);
             $this->loadFilename($fileGenerator, $object);
-            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
+            //$this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
 
             $docBook = $object->getBook();
             $this->packages[$docBook->id]->files[$name] = $fileGenerator;
@@ -1309,6 +1381,7 @@ class Extension
             ]);
             $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
             $fileGenerator = new FileGenerator();
+            $fileGenerator->user_data = ['uses'=>[], 'required'=>[]];
             $fileGenerator->setDocBlock($docFileGenerator);
 
             $docClassGenerator = new DocBlockGenerator();
@@ -1333,7 +1406,7 @@ class Extension
             
             $this->loadNamespace($fileGenerator, $enum);
             $this->loadFilename($fileGenerator, $enum);
-            $this->fixeUse($fileGenerator, $enumGenerator);// Dependencies & Includes
+            //$this->fixeUse($fileGenerator, $enumGenerator);// Dependencies & Includes
 
             $docBook = $enum->getBook();
             $this->packages[$docBook->id]->files[$name] = $fileGenerator;
@@ -1363,6 +1436,7 @@ class Extension
             ]);
             $docFileGenerator->setLongDescription("Zeng Extension (https://github.com/)");
             $fileGenerator = new FileGenerator();
+            $fileGenerator->user_data = ['uses'=>[], 'required'=>[]];
             $fileGenerator->setDocBlock($docFileGenerator);
 
             $docClassGenerator = new DocBlockGenerator();
@@ -1375,7 +1449,7 @@ class Extension
 
             $this->loadNamespace($fileGenerator, $union);
             $this->loadFilename($fileGenerator, $union);
-            $this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
+            //$this->fixeUse($fileGenerator, $classGenerator);// Dependencies & Includes
             
             $docBook = $union->getBook();
             $this->packages[$docBook->id]->files[$name] = $fileGenerator;
@@ -1392,6 +1466,7 @@ class Extension
             foreach ($fields as $field) {
                 if ($field->getType()->isAnonymous()) {
                     $fileStructGenerator = new FileGenerator();
+                    $fileStructGenerator->user_data = ['uses'=>[], 'required'=>[]];
 
                     $type_union_name = $field->getType()->getName();
                     $classGenerator = new ClassGenerator($type_union_name);// UnionGenerator|EnumGenerator|AliasGenerator|ClassGenerator
@@ -1440,7 +1515,7 @@ class Extension
 
                     $this->loadNamespace($fileStructGenerator, $union);
                     $this->loadFilename($fileStructGenerator, $union);
-                    $this->fixeUse($fileStructGenerator, $classGenerator);// Dependencies & Includes
+                    //$this->fixeUse($fileStructGenerator, $classGenerator);// Dependencies & Includes
                     
                     $docBook = $union->getBook();
                     $this->packages[$docBook->id]->files[$type_union_name] = $fileStructGenerator;
@@ -1504,6 +1579,7 @@ class Extension
                 // echo "Alias found : $typedef->name => $class_name\n";
 
                 $fileGenerator = new FileGenerator();
+                $fileGenerator->user_data = ['uses'=>[], 'required'=>[]];
 
                 $aliasGenerator = new AliasClassGenerator($typedef->name);
                 $aliasGenerator->setClassName($class_name);
@@ -1514,7 +1590,7 @@ class Extension
 
                 $this->loadNamespace($fileGenerator, $typedef);
                 $this->loadFilename($fileGenerator, $typedef);
-                $this->fixeUse($fileGenerator, $aliasGenerator);// Dependencies & Includes
+                //$this->fixeUse($fileGenerator, $aliasGenerator);// Dependencies & Includes
                 // print_r($fileGenerator->getRequiredFiles());
                 // echo $fileGenerator->getNamespace(), PHP_EOL;
                 // echo $fileGenerator->getFilename(), PHP_EOL;
@@ -1540,6 +1616,12 @@ class Extension
             $typeGenerator->internal_type = $type;
             $typeGenerator->explicite_type = $php_type;
             $this->typesGenerator[$type] = $typeGenerator;
+        }
+        foreach (CairoClassifier::$map_object as $type=>$php_type) {
+            $typeGenerator = TypeGenerator::fromTypeString('object');
+            $typeGenerator->internal_type = $php_type;
+            $typeGenerator->explicite_type = $php_type;
+            $this->typesGenerator[$php_type] = $typeGenerator;
         }
         foreach (array_keys(TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE) as $php_type) {
             $internal_types = [
@@ -1584,9 +1666,10 @@ class Extension
                     $typeGenerator->explicite_type = $typdef['type'];
                     //var_dump($typdef);
                 } else {
-                    $typeGenerator = TypeGenerator::fromTypeString($typedef->name);// object ?
+                    $php_type = $this->loadTypePhp($typedef->name);
+                    $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);// object ?
                     $typeGenerator->internal_type = $typedef->name;
-                    $typeGenerator->explicite_type = $typedef->name;
+                    $typeGenerator->explicite_type = $php_type['specific'];
                 }
             }
 
@@ -1612,24 +1695,12 @@ class Extension
                 $typeGenerator->internal_type = $struct_name;
                 $typeGenerator->explicite_type = $php_type['specific'];
                 $this->typesGenerator[$struct->name] = $typeGenerator;
-/*
-                $typeGenerator = TypeGenerator::fromTypeString('string');
-                $typeGenerator->internal_type = $struct->name;//.'Class';
-                $typeGenerator->explicite_type = 'string';
-                $this->typesGenerator[$struct->name] = $typeGenerator;
-*/
             } else {
                 $php_type = $this->loadTypePhp($struct_name);
                 $typeGenerator = TypeGenerator::fromTypeString($php_type['generic']);
                 $typeGenerator->internal_type = $struct_name;
                 $typeGenerator->explicite_type = $php_type['specific'];
                 $this->typesGenerator[$struct->name] = $typeGenerator;
-/*
-                $typeGenerator = TypeGenerator::fromTypeString($struct_name);
-                $typeGenerator->internal_type = $struct->name;
-                $typeGenerator->explicite_type = $struct->name;
-                $this->typesGenerator[$struct->name] = $typeGenerator;
-*/
             }
         }
 
@@ -1980,7 +2051,23 @@ class Extension
                 $typeDocBook = $parameterDocBook->getType();
                 if ($typeDocBook) {
                     $type = $parameterDocBook->getType();
-
+/*if ('g_bookmark_file_load_from_data'==$functionDocBook->name && 'data'==$parameterDocBook->getName()) {
+    var_dump($this->typesGenerator[$parameterDocBook->getType()->getName()]);
+    echo $parameterDocBook->getName(), ':', $parameterDocBook->getType();
+    echo '(', $parameterDocBook->getPass(), ')', PHP_EOL;
+    //echo $parameterDocBook->isArray(), PHP_EOL;
+    //echo $parameterDocBook->getArrayOf(), PHP_EOL;
+    //var_dump($parameterDocBook->getAnnotations());
+    $annotations = $parameterDocBook->getAnnotations();
+    foreach ($annotations as $annotation) {
+        echo '  '.$annotation->getName(), PHP_EOL;
+        $attributes = $annotation->getAttributes();
+        foreach ($attributes as $key=>$attribute) {
+            echo '    '.$attribute, '("', $key, '")', PHP_EOL;
+        }
+    }
+}*/
+                    
                     if (!array_key_exists($type->getName(), $this->typesGenerator)) {
                         $php_type = $this->loadTypePhp($type->getName());
 
@@ -2257,16 +2344,21 @@ class Extension
 
         // step 3] creat function for each class (after each object exist)
         // ====================================================================
-        //$this->loadClassFunctions($docBook);// GtkWidget[Class]
-        //$this->loadObjectFunctions($docBook);// GDate
+        /*
+        TODO: remove this methods:
+        //$this->loadClassFunctions($docBook);// use $this->loadMethodsGenerator()
+        //$this->loadObjectFunctions($docBook);// use $this->loadMethodsGenerator()
         //unused $this->loadEnumFunctions($docBook);// GtkWidget[Class]
         //unused $this->loadAliasFunctions($docBook);// GtkWidget[Class]
         //unused $this->loadUnionFunctions($docBook);// GtkWidget[Class]
+        */
         $this->loadGlobalFunctions($docBook);// functions that is not attached with struct/class/enum/union (create an additional file)
 
         //TODO $this->loadGlobalVariable($docBook);
-
         //print_r($this->resumRefEntry($docBook));
+
+        $this->loadGlobalUse($docBook);// functions that is not attached with struct/class/enum/union (create an additional file)
+
 
         return $this->packages;
     }

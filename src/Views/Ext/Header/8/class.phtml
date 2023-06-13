@@ -45,7 +45,7 @@ typedef struct _php_<?php echo $name_function ?> php_<?php echo $name_function ?
 
 zend_class_entry*
 php_<?php echo $name_function ?>_class_init(zend_class_entry *container_ce, zend_class_entry *parent_ce);
-
+<?php echo $this->render('user-function.phtml', $this->vars()); ?>
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_<?php echo $name_function ?>___construct, 0, 0, 0)
 ZEND_END_ARG_INFO()

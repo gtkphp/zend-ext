@@ -1,0 +1,15 @@
+<?php
+$args = '';
+if (isset($function_create)) {
+    $comma = '';
+    foreach ($function_create->parameters as $parameter) {
+        $args .= $comma;
+        $args .= $parameter->type;
+        $args .= ' ';
+        $args .= $parameter->name;
+
+        $comma = ', ';
+    }
+}
+?>
+php_<?php echo $name_function ?> *php_<?php echo $name_function ?>_new(<?php echo $args; ?>);

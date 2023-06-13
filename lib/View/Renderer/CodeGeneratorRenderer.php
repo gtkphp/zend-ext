@@ -86,7 +86,7 @@ class CodeGeneratorRenderer
             if (0===strpos($filePath, $path)) {
                 $klass = substr($filePath, strlen($path)+1, - strlen($suffix) - 1);// ".php"
                 $klass = $namespace . str_replace('/', '\\', $klass);
-                
+
                 require_once $filePath;
         
                 return $klass;

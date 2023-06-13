@@ -31,6 +31,22 @@ class Cairo
     static public $map_object = [];
     static public $map_class = [];
     
+    static public function reorder(string $pkg, string $name, array $includeFiles):array {
+        $includes = [];
+        foreach ($includeFiles as $includeFile) {
+            if ($includeFile['pkg']==$pkg) {
+                if ($includeFile['name']==$name) {
+
+                } else {
+                    $includes[] = $includeFile['name'].'.h';
+                }
+            } else {
+                $includes[] = 'php_'.$includeFile['pkg'].'/'.$includeFile['name'].'.h';
+            }
+        }
+        $includes[] = $name.'.h';
+        return $includes;
+    }
 
     public function isExportable(ObjectGenerator $object):bool {
         // union, macro, typedef

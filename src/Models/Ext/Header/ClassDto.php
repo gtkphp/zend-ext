@@ -33,6 +33,9 @@ class ClassDto extends BaseClassDto
     /** @var string */
     public $name_function;
 
+    /** @var string code of function */
+    public $function_create;
+
     static public function create($codeGenerator, $renderer)
     {
         $dto = new self();
@@ -43,6 +46,8 @@ class ClassDto extends BaseClassDto
         /** @var ClassGenerator $classGenerator */
         if ($fileGenerator->hasClass()) {
             $classGenerator = $fileGenerator->getClass();
+
+            $dto->function_create = $renderer->transfer('UserFunctionDto.php', $classGenerator);
 
             /** @var PropertyGenerator $propertyGenerator */
             foreach($classGenerator->getProperties() as $propertyGenerator) {

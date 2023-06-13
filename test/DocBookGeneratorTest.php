@@ -610,10 +610,12 @@ typedef unsigned short int guint16;
             "GDateDay",
             "GDateYear",
             "GTimeSpan",
-            "GQuark",
-            "GSignalCMarshaller",
-            "GSignalCVaMarshaller",
+            "GQuark",// GQuark is alias of long
         ];
+        /*
+        "GSignalCMarshaller",
+        "GSignalCVaMarshaller",
+        */
 
         /*
         $name:
@@ -660,6 +662,9 @@ typedef unsigned short int guint16;
             ]
         ];
 
+        $features_threads = ['GAsyncQueue', 'GThreadPool', 'GThreadError', 'GThread', 'GMutex', 'GMutexLocker', 'GRecMutex', 'GRWLock', 'GCond', 'GPrivate', 'GOnce', 'GOnceStatus'];
+        $features_database = ['GRelation', 'GTuples'];
+
         $gnome_version = '3.28.2';
         $php_version = '8.1.0';
         $key = 'gnome-'.$gnome_version;
@@ -668,12 +673,17 @@ typedef unsigned short int guint16;
         $agent->setCachePath(__DIR__.'/../data');// use ../tmp
         $agent->setViewPath(__DIR__.'/../src/Views');
         $agent->setModelPath(__DIR__.'/../src/Models', 'ZendExt\\Dto\\');
+        //$agent->setModelPath(__DIR__.'/../src/Models/Ext/Source', 'ZendExt\\Dto\\Ext\\Source');
+        //Agent::save() near line 238, add : $transformer->addMap(__DIR__.'/../src/Models/Ext/Source/7', 'ZendDto\\Ext\\Source\\');
+        //Agent::save() near line 238, add : $transformer->addMap(__DIR__.'/../src/Models/Ext/Source/8/2', 'ZendDto\\Ext\\Source\\');
 
         //$agent->useWhitelist(['cairo_t'=>['cairo_get_dash'/*, 'cairo_set_dash'*/], 'GtkWidget'=>['gtk_widget_new', 'gtk_widget_show'], 'GObject'=>[]]);
         //$agent->useBlacklist(['GDate'=>['g_date_to_struct_tm']]);
-        //$agent->useWhitelist(['GBookmarkFile'=>['g_bookmark_file_new', 'g_bookmark_file_load_from_file', 'g_bookmark_file_load_from_data']]);
-        $agent->useWhitelist(['GBookmarkFile'=>[]]);
+        //$agent->useWhitelist(['GBookmarkFile'=>['g_bookmark_file_get_uris']]);//'g_bookmark_file_new', 'g_bookmark_file_load_from_file', 
+        //$agent->useWhitelist(['GQuark'=>[], 'GError'=>['g_error_new']]);
+        //$agent->useWhitelist(['GQuark'=>[], 'GError'=>[], 'GBookmarkFile'=>[]]);
         //gboolean 	g_bookmark_file_load_from_data_dirs ()
+        $agent->useWhitelist(['GRelation'=>[], 'GTuples'=>[]]);
         
         //$agent->clearCache();// use rm ../data/cache.txt
         $sourceCode = $agent->loadCode($dist[$key]['headers'], $dist[$key]['overwrite']);
@@ -687,10 +697,10 @@ typedef unsigned short int guint16;
         //$agent->save('Stub/Poo', __DIR__.'/../output/stub/poo', $run_dry);
         //$agent->save('Stub/Pp', __DIR__.'/../output/stub/pp', $run_dry);
         
-        $agent->save('Ext/Header', __DIR__.'/../output/ext', $run_dry);
-        $agent->save('Ext/Source', __DIR__.'/../output/ext', $run_dry);
         /*
         */
+        $agent->save('Ext/Header', __DIR__.'/../output/ext', $run_dry);
+        $agent->save('Ext/Source', __DIR__.'/../output/ext', $run_dry);
 
         $this->assertTrue(true);
     }

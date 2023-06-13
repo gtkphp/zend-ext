@@ -1,6 +1,7 @@
 <?php
 
-namespace ZendExt\Dto\Ext\Source;
+//namespace ZendExt\Dto\Ext\Source;
+namespace ZendDto\Ext\Source;
 
 use Zend\Ext\Models\Code\Generator\AbstractGenerator;
 use Zend\Ext\Models\Code\Generator\FileGenerator;
@@ -91,7 +92,7 @@ class FunctionArgsDto
                         }*/
                     } else {
                         $output .= '    char *'.$prefix.$parameter->getName().';'.PHP_EOL;
-                        $output .= '    int '.$prefix.$parameter->getName().'_len;';
+                        $output .= '    size_t '.$prefix.$parameter->getName().'_len;';
                     }
                     break;
                 case 'array':
@@ -159,7 +160,7 @@ class FunctionArgsDto
             //@see TypeGenerator\AtomicType::BUILT_IN_TYPES_PRECEDENCE
             // $parameter->type->internal_type
             if ($parameter->getVariadic()) {
-                $output .= '        Z_PARAM_VARIADIC(\'+\', z_args, z_argc);'. PHP_EOL;
+                $output .= '        Z_PARAM_VARIADIC(\'+\', z_args, z_argc)'. PHP_EOL;
                 continue;
             }
 
@@ -169,7 +170,7 @@ class FunctionArgsDto
                     if ($is_deref) {
                         echo "Unexpected ".$methodGenerator->getName()."(".$parameter->getType() . ': ' . $parameter->getName().") at ".__FILE__.":".__LINE__." \n";
                     } else {
-                        $output .= '        Z_PARAM_BOOL('.$prefix.$parameter->getName().');'. PHP_EOL;// 0 = allow_null
+                        $output .= '        Z_PARAM_BOOL('.$prefix.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
 
                         $extra  .= '    ';
                         $extra  .= $parameter->type->internal_type.' '. $parameter->getName();
@@ -178,13 +179,13 @@ class FunctionArgsDto
                     break;
                 case 'int':
                     if ($is_deref) {
-                        $output .= '        Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$allow_null.', '.$send_by.', 0);'.PHP_EOL;
+                        $output .= '        Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$allow_null.', '.$send_by.', 0)'.PHP_EOL;
                         
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' '. $parameter->getPointer(1) . $parameter->getName();
                         $extra  .= ' = NULL;'.PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_LONG('.$prefix.$parameter->getName().');'. PHP_EOL;// 0 = allow_null
+                        $output .= '        Z_PARAM_LONG('.$prefix.$parameter->getName().')'. PHP_EOL;// 0 = allow_null
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' ' . $parameter->getName();
                         $extra  .= ' = '.$prefix.$parameter->getName().';'.PHP_EOL;
@@ -196,7 +197,7 @@ class FunctionArgsDto
                     if ($is_deref) {
                         // is_deref && is_array ?
                         $output .= '        ';
-                        $output .= 'Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$check_null.', ZEND_SEND_BY_REF, 0);'.PHP_EOL;
+                        $output .= 'Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$check_null.', ZEND_SEND_BY_REF, 0)'.PHP_EOL;
                         if ($is_array) {
                             $extra  .= '    ';
                             $extra  .= $parameter->type->internal_type.' ' . $parameter->getName() . '[1024]';
@@ -209,7 +210,7 @@ class FunctionArgsDto
                             //Z_DVAL_P(z_'.$parameter->getName().');'.$is_array.PHP_EOL;
                         }
                     } else if ($is_array) {
-                        $output .= '        Z_PARAM_ARRAY_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0);'.PHP_EOL;
+                        $output .= '        Z_PARAM_ARRAY_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0)'.PHP_EOL;
                         
                         //const double *dashes = zval_get_array_double(zdashes, &num_dashes);
                         $extra  .= '    ';
@@ -219,11 +220,11 @@ class FunctionArgsDto
                         //$extra  .= ' = array_double_free(z_'.$parameter->getName().';'.PHP_EOL;
 
                     } else if ($is_nullable) {
-                        $output .= '        Z_PARAM_ARRAY_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0);'.PHP_EOL;
+                        $output .= '        Z_PARAM_ARRAY_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0)'.PHP_EOL;
                         $extra  .= '    ';
                         $extra  .= PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_DOUBLE('.$prefix.$parameter->getName().');'.PHP_EOL;
+                        $output .= '        Z_PARAM_DOUBLE('.$prefix.$parameter->getName().')'.PHP_EOL;
                         //$output .= '        Z_PARAM_ZVAL_EX2(z'.$parameter->getName().', '.$check_null.', '.$send_by.', 0);';// Z_PARAM_DOUBLE|Z_PARAM_DOUBLE_OR_NULL(ZEND_SEND_BY_VAL)
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' ' . $parameter->getName();
@@ -234,20 +235,20 @@ class FunctionArgsDto
                 case 'string':
                     $output .= '        ';
                     if ($is_deref) {
-                        $output .= 'Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$allow_null.', '.$send_by.', 0);'.PHP_EOL;
+                        $output .= 'Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$allow_null.', '.$send_by.', 0)'.PHP_EOL;
                         //$output .= 'Z_PARAM_STRING_EX2('.$prefix.$parameter->getName().', '.$prefix.$parameter->getName().'_len, '.$allow_null.', '.$send_by.', 0);'.PHP_EOL;
                         
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' *' . $parameter->getName();
                         $extra  .= ' = NULL;'.PHP_EOL;
                     } else if ($is_array) {
-                        $output .= 'Z_PARAM_ARRAY('.$prefix.$parameter->getName().');'.PHP_EOL;
+                        $output .= 'Z_PARAM_ARRAY('.$prefix.$parameter->getName().')'.PHP_EOL;
 
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' ' . $parameter->getPointer() . $parameter->getName();
                         $extra  .= ' = convert_array_to_strv('.$prefix.$parameter->getName().');'.PHP_EOL;
                     } else {
-                        $output .= 'Z_PARAM_STRING('.$prefix.$parameter->getName().', '.$prefix.$parameter->getName().'_len);'.PHP_EOL;
+                        $output .= 'Z_PARAM_STRING('.$prefix.$parameter->getName().', '.$prefix.$parameter->getName().'_len)'.PHP_EOL;
 
                         $extra  .= '    ';
                         $extra  .= ''.$parameter->type->internal_type.' *' . $parameter->getName();
@@ -276,9 +277,9 @@ class FunctionArgsDto
                         $optinal++;
                     }
                     if ($is_deref) {
-                        $output .= '        Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0);'. PHP_EOL;
+                        $output .= '        Z_PARAM_ZVAL_EX2('.$prefix.$parameter->getName().', '.$check_null.', '.$send_by.', 0)'. PHP_EOL;
                     } else {
-                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX2('.$prefix.$parameter->getName().', php_'.$name_function.'_class_entry, '.$check_null.', '.$send_by.', 0);'. PHP_EOL;
+                        $output .= '        Z_PARAM_OBJECT_OF_CLASS_EX('.$prefix.$parameter->getName().', php_'.$name_function.'_class_entry, '.$check_null.', '.$send_by.')'. PHP_EOL;
                     }
 
                     if ($is_deref) {

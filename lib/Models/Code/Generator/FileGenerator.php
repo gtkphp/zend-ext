@@ -58,6 +58,9 @@ class FileGenerator extends AbstractGenerator
     /** @var DocBlockGenerator|null */
     protected $docBlock = null;
 
+    /** @var mixed */
+    public $user_data = [];
+
     /** @var string[] */
     protected $requiredFiles = [];
 

@@ -43,6 +43,9 @@ class ParameterGenerator extends AbstractGenerator
 
     /** @var ParameterGenerator $array_length_parameter */
     private $array_length_parameter;
+
+    /** @var string $pointer */
+    private $pointer = '';
     
 
     /**
@@ -380,6 +383,26 @@ class ParameterGenerator extends AbstractGenerator
     public function arrayLengthParameter()
     {
         return $this->array_length_parameter;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPointer(int $deref=0)
+    {
+        if ($deref) {
+            return substr($this->pointer, $deref);
+        }
+        return $this->pointer;
+    }
+    
+    /**
+     * @return string
+     */
+    public function setPointer(string $pointer='')
+    {
+        $this->pointer = $pointer;
+        return $this;
     }
 
     /**

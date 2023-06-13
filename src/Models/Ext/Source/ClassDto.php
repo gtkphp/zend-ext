@@ -112,7 +112,7 @@ class ClassDto extends BaseClassDto
         }
 
         foreach($fileGenerator->uses as $use) {
-            $dto->uses[] = $use[0];
+            $dto->uses[] = $use;//[0];
         }
         $dto->requires = $fileGenerator->getRequiredFiles();
         

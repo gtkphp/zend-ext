@@ -40,7 +40,7 @@ class FunctionReturnsDto
         /** @var ParameterGenerator $parameter */
         foreach ($methodGenerator->getParameters() as $parameter) {
             $is_deref = $parameter->getPassedByReference();
-            $is_array = 0;
+            $is_array = $parameter->isArray();
             $is_nullable = 0;
             /** @var TypeGenerator $type */
             $type = $parameter->getType();
@@ -48,44 +48,97 @@ class FunctionReturnsDto
             if ($is_deref) {
                 switch ($type) {
                     case 'bool':
-                        $output .= '    if ('.$name.') {'.PHP_EOL;
-                        $output .= '        ZVAL_TRUE(z_'.$name.');'.PHP_EOL;
-                        $output .= '    } else {'.PHP_EOL;
-                        $output .= '        ZVAL_FALSE(z_'.$name.');'.PHP_EOL;
-                        $output .= '    }'.PHP_EOL;
+                        if ($is_array) {
+                            //$output .= '    ZVAL_LONG(&Z_REF_P(z_ref_'.$name.')->val, '.$name.');'.PHP_EOL;
+                            throw new \Exception("Unexpected");
+                        } else {
+                            $output .= '    if (IS_REFERENCE==Z_TYPE_P(z_ref_'.$name.')) {'.PHP_EOL;
+                            $output .= '        if ('.$name.') {'.PHP_EOL;
+                            $output .= '            ZVAL_TRUE(&(z_ref_'.$name.')->value.ref->val);'.PHP_EOL;
+                            $output .= '        } else {'.PHP_EOL;
+                            $output .= '            ZVAL_FALSE(&(z_ref_'.$name.')->value.ref->val);'.PHP_EOL;
+                            $output .= '        }'.PHP_EOL;
+                            $output .= '    } else {'.PHP_EOL;
+                            $output .= '        if ('.$name.') {'.PHP_EOL;
+                            $output .= '            ZVAL_TRUE(z_ref_'.$name.');'.PHP_EOL;
+                            $output .= '        } else {'.PHP_EOL;
+                            $output .= '            ZVAL_FALSE(z_ref_'.$name.');'.PHP_EOL;
+                            $output .= '        }'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
+                        }
                         break;
                     case 'int':
-                        if ($is_array || $is_nullable) {
-                            //$output .= '    zval *z_'.$parameter->getName().';';
+                        if ($is_array) {
+                            //$output .= '    ZVAL_LONG(&Z_REF_P(z_ref_'.$name.')->val, '.$name.');'.PHP_EOL;
+                            throw new \Exception("Unexpected");
                         } else {
-                            $output .= '    ZVAL_LONG(z_'.$name.', '.$name.');'.PHP_EOL;
+                            $output .= '    if (IS_REFERENCE==Z_TYPE_P(z_ref_'.$name.')) {'.PHP_EOL;
+                            $output .= '        ZVAL_LONG(&(z_ref_'.$name.')->value.ref->val, '.$name.');'.PHP_EOL;
+                            $output .= '    } else {'.PHP_EOL;
+                            $output .= '        ZVAL_LONG((z_ref_'.$name.'), '.$name.');'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
                         }
                         break;
                     case 'float':
                         if ($is_array) {
                             //$output .= '    zval *z_'.$parameter->getName().';';
+                            throw new \Exception("Unexpected");
                         } else {
-                            $output .= '    ZVAL_DOUBLE(z_'.$name.', '.$name.');'.PHP_EOL;
+                            $output .= '    if (IS_REFERENCE==Z_TYPE_P(z_ref_'.$name.')) {'.PHP_EOL;
+                            $output .= '        ZVAL_DOUBLE(&(z_ref_'.$name.')->value.ref->val, '.$name.');'.PHP_EOL;
+                            $output .= '    } else {'.PHP_EOL;
+                            $output .= '        ZVAL_DOUBLE((z_ref_'.$name.'), '.$name.');'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
                         }
                         break;
                     case 'string':
-                        if ($is_array || $is_nullable) {
+                        if ($is_array) {
                             //$output .= '    zval *z_'.$parameter->getName().';';
+                            throw new \Exception("Unexpected");
                         } else {
-                            $output .= '    ZVAL_STRING(z_'.$name.', '.$name.', strlen('.$name.'));'.PHP_EOL;
+                            $output .= '    if (IS_REFERENCE==Z_TYPE_P(z_ref_'.$name.')) {'.PHP_EOL;
+                            $output .= '        ZVAL_STRING(&(z_ref_'.$name.')->value.ref->val, '.$name.');'.PHP_EOL;
+                            $output .= '    } else {'.PHP_EOL;
+                            $output .= '        ZVAL_STRING((z_ref_'.$name.'), '.$name.');'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
+    
+                            //$output .= '    ZVAL_STRINGL(&Z_REF_P(z_ref_'.$name.')->val, '.$name.', strlen('.$name.'));'.PHP_EOL;
+                            //$output .= '    ZVAL_STRING(z_'.$name.', '.$name.');'.PHP_EOL;
                         }
                         break;
                     case 'array':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        //throw new \Exception("Unexpected");
                         break;
                     case 'callable':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        //throw new \Exception("Unexpected");
                         break;
                     case 'iterable':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        //throw new \Exception("Unexpected");
                         break;
                     case 'static':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        //throw new \Exception("Unexpected");
                         break;
                     case 'mixed':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        /*
+                        throw new \Exception("Unexpected " . $methodGenerator->getName() . '('.$name.')');
+                        if ($is_array) {
+                            throw new \Exception("Unexpected");
+                        } else {
+                            $output .= '    if (IS_REFERENCE==Z_TYPE_P(z_ref_'.$name.')) {'.PHP_EOL;
+                            $output .= '        ZVAL_STRING(&(z_ref_'.$name.')->value.ref->val, '.$name.');'.PHP_EOL;
+                            $output .= '    } else {'.PHP_EOL;
+                            $output .= '        ZVAL_STRING((z_ref_'.$name.'), '.$name.');'.PHP_EOL;
+                            $output .= '    }'.PHP_EOL;
+                        }*/
                         break;
                     case 'void':
+                        echo "Unexpected " . $methodGenerator->getName() . '('.$name.')' . ' at ' . __FILE__.':'.__LINE__ . PHP_EOL;
+                        //throw new \Exception("Unexpected");
                         break;
                     case 'object':
                         if ($parameter && 'GError'==$parameter->type->internal_type) {
@@ -128,7 +181,7 @@ class FunctionReturnsDto
         if ($returnType) {
             $is_nullable = $returnType->nullable();
             $is_deref = $methodGenerator->returnsReference();
-            $is_array = 0;
+            $is_array = $methodGenerator->getReturnsArray();
 
             switch ($returnType->__toString()) {
                 case 'bool':
@@ -139,47 +192,68 @@ class FunctionReturnsDto
                     $output .= '    }';
                     break;
                 case 'int':
-                    if ($is_deref || $is_array || $is_nullable) {
+                    if ($is_array) {
                         //$output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zend_array *ret_z_arr = convert_intv_to_array(ret_value);'.PHP_EOL;
+                        $output .= '    g_free(ret_value);'.PHP_EOL;
+                        $output .= '    RETURN_ARR(ret_z_arr);';
                     } else {
                         $output .= '    RETURN_LONG(ret_value);';
                     }
                     break;
                 case 'float':
-                    if ($is_deref || $is_array) {
+                    if ($is_array) {
                         //$output .= '    zval *z_'.$parameter->getName().';';
+                        $output .= '    zend_array *ret_z_arr = convert_floatv_to_array(ret_value);'.PHP_EOL;
+                        $output .= '    g_free(ret_value);'.PHP_EOL;
+                        $output .= '    RETURN_ARR(ret_z_arr);';
+                    } else if ($is_deref) {
+                        throw new \Exception("Unexpected " . $methodGenerator->getName());
                     } else {
                         $output .= '    RETURN_DOUBLE(ret_value);';
                     }
                     break;
                 case 'string':
-                    if ($is_deref || $is_array || $is_nullable) {
-                        //$output .= '    zval *z_'.$parameter->getName().';';
+                    if ($is_array) {//$is_deref || $is_nullable || 
+                        $output .= '    zend_array *ret_z_arr = convert_strv_to_array(ret_value);'.PHP_EOL;
+                        $output .= '    g_strfreev(ret_value);'.PHP_EOL;
+                        $output .= '    RETURN_ARR(ret_z_arr);';
                     } else {
+                        $output .= '    RETURN_STRING(ret_value);';
                         //$output .= '    char *php_'.$parameter->getName().';';
                         //$output .= '    int php_'.$parameter->getName().'_len;';
                     }
                     break;
                 case 'array':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'callable':
+                    $output .= '    ZVAL_FUNC(return_value, ret_value);';
+                    $output .= PHP_EOL . "//Unexpected " .$returnType->internal_type .' for '. $methodGenerator->getName();
                     break;
                 case 'iterable':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'static':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'mixed':
+                    $output .= '    RETURN_ZVAL(ret_value);';
                     break;
                 case 'void':
-                    $output .= '    RETURN_NULL();';
+                    $output .= '    RETURN_NULL();';// what about deref ? (void*)
                     break;
                 case 'false':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'true':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'null':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'never':
+                    throw new \Exception("Unexpected " . $methodGenerator->getName());
                     break;
                 case 'object':
                     $this_name = strtolower(preg_replace('/[A-Z]([A-Z](?![a-z]))*/', '_$0', lcfirst($returnType->internal_type)));

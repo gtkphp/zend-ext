@@ -39,6 +39,8 @@ class MethodGenerator extends AbstractMemberGenerator
      */
     protected $nick_name;
     protected $is_mm = false;
+    public $is_new = false;
+    public $is_free = false;
     
     public function setMemoryManagement($is_mm=true) {
         $this->is_mm = $is_mm;
@@ -83,6 +85,12 @@ class MethodGenerator extends AbstractMemberGenerator
     /** @var bool */
     private $returnsReference = false;
 
+    /** @var string of '*' */
+    private $returnsPointer = '';
+
+    /** @var bool */
+    private $returnsArray = false;
+    
     /**
      * @return MethodGenerator
      */
@@ -381,6 +389,38 @@ class MethodGenerator extends AbstractMemberGenerator
     public function returnsReference(): bool
     {
         return $this->returnsReference;
+    }
+
+    /**
+     * @param bool $pointer
+     * @return MethodGenerator
+     */
+    public function setReturnsPointer($pointer)
+    {
+        $this->returnsPointer = $pointer;
+
+        return $this;
+    }
+
+    public function getReturnsPointer(): string
+    {
+        return $this->returnsPointer;
+    }
+    
+    /**
+     * @param bool $is_array
+     * @return MethodGenerator
+     */
+    public function setReturnsArray($is_array=true)
+    {
+        $this->returnsArray = $is_array;
+
+        return $this;
+    }
+
+    public function getReturnsArray(): bool
+    {
+        return $this->returnsArray;
     }
 
     /**
